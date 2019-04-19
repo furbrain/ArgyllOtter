@@ -1,0 +1,33 @@
+Plan:
+Motors with encoders
+Separate board to control motors, communicate via I2C with pi
+interface:
+	Set speed
+	Set distance
+	Possibly just set X,Y coordinates to visit next
+	Set rotation angle
+	
+	
+PiCamera with computer visiony type stuff
+
+Use a laser range finder also
+
+Have suspension which can be enabled or disabled
+
+Use home made chassis
+
+Cannon - use miniature ping-pong balls, use pvc pipe for a barrel
+Use a servo to dispense balls into firing chamber
+Use a rod and piston to fire it. Power piston with elastic band.
+Use a worm drive to pull elastic band tight, possibly another servo to release the band...
+
+Maze - use computer vision to identify faces and orient correctly.
+	 - use laser range finder to get distance to them - then drive correct
+       distance and use the stored list of turns to 
+       
+Similar approach for nebula...       
+       
+Use bluetooth and games controller to communicate??
+
+
+
