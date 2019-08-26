@@ -1,0 +1,44 @@
+Microcontroller requirements:
+Function	Pins
+Power 		4
+Drive		2*4 = 8
+Encoder		2*4 = 8
+I2C			2
+Battery		3 or 4
+Crnt sense 	4
+Programming	3
+
+Total: 33
+
+I2C protocol:
+Write:
+Byte 0: LOCK Flag = if set to 1 do not read or write to this
+Bytes 1: 0x00 = STOP
+         0x01 = Direct Drive
+         0x02 = Location
+         0x03 = Rotate
+         0xFF = Calibrate
+        
+Direct Drive:
+Byte 2-3: Left wheel speed (signed int16_t) (max is +0x3ff, min is -0x3ff)
+Byte 3-4: Right wheel speed (signed int16_t) 
+
+Location:
+Byte 2-3: Distance for left wheels to travel in mm (signed int32_t)
+Byte 4-5: Distance for right wheels to travel in mm (signed int32_t)
+Byte 6-7: Max Speed (uint16_t) (but max is 127)
+
+Rotate:
+Byte 2-3: Angle to rotate by in degrees (signed int16_t)
+
+Calbrate:
+Start calibration sequence
+
+Read:
+0x00 - 0x0F New command
+0x10 - 0x1F Current command
+0x20 - 0x27 Velocity in mm/s (signed int16_t) (per wheel)
+0x28 - 0x2F Distance in mm (signed int32_t) (per side)
+0x30 - 0x37 Cell voltage in mV (signed int16_t) (per cell) 
+
+

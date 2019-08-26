@@ -102,3 +102,4 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+/drivetrain/controller/nbproject/private/
