@@ -1,5 +1,5 @@
 Element ["" "TLE2602" "" "" 0 0 0 0 0 100 ""] (
-Pin [-3.8100000000000005mm -1.27mm 2.0mm 0.2mm 2.2mm 1.0mm "Out1" "1" "square"]
+Pin [-3.8100000000000005mm -1.27mm 2.0mm 0.2mm 2.2mm 1.0mm "Out1" "1" ""]
 Pin [-1.2700000000000005mm -1.27mm 2.0mm 0.2mm 2.2mm 1.0mm "In1" "3" ""]
 Pin [1.2699999999999996mm -1.27mm 2.0mm 0.2mm 2.2mm 1.0mm "In2" "5" ""]
 Pin [3.8100000000000005mm -1.27mm 2.0mm 0.2mm 2.2mm 1.0mm "Out2" "7" ""]
@@ -10,5 +10,13 @@ ElementLine [-5.11mm 2.57mm 5.110000000000001mm 2.57mm 0.2mm]
 ElementLine [-5.11mm -2.57mm 5.110000000000001mm -2.57mm 0.2mm]
 ElementLine [-5.11mm 2.57mm -5.11mm -2.57mm 0.2mm]
 ElementLine [5.110000000000001mm 2.57mm 5.110000000000001mm -2.57mm 0.2mm]
+ElementLine [-11.0mm -2.77mm 11.0mm -2.77mm 0.2mm]
+ElementLine [-19.0mm -6.27mm 19.0mm -6.27mm 0.2mm]
+ElementLine [-19.0mm -6.27mm -19.0mm 13.73mm 0.2mm]
+ElementLine [19.0mm -6.27mm 19.0mm 13.73mm 0.2mm]
+ElementLine [-19.0mm 13.73mm -11.0mm 13.73mm 0.2mm]
+ElementLine [11.0mm 13.73mm 19.0mm 13.73mm 0.2mm]
+ElementLine [-11.0mm -2.77mm -11.0mm 13.73mm 0.2mm]
+ElementLine [11.0mm -2.77mm 11.0mm 13.73mm 0.2mm]
 )
 
