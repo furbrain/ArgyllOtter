@@ -22,12 +22,12 @@ pinwidthhorizontal	400
 # if you have a device with slots, you'll have to use slot= and slotdef=						
 # use comment= if there are special information you want to add						
 version	20190825 1					
-name	TLE2602			
-device	TLE2602				
+name	LM2596T			
+device	LM2596T				
 refdes	U?					
-footprint	TLE2602		
+footprint	TO220-7
 description	Motor controller
-documentation https://docs-emea.rs-online.com/webdocs/1478/0900766b81478063.pdf
+documentation	http://www.ti.com/general/docs/suppproductinfo.tsp?distId=26
 author	Phil Underwood					
 numslots	0					
 dist-license	GPL2					
@@ -55,10 +55,8 @@ use-license	GPL2
 #	"if you want to write a ""\"" use ""\\"" as escape sequence"					
 #						
 #pinnr	seq	type	style	posit.	net	label
-1		out	line	r		Out1
-2		out	line	l		EF
-3		in	line	l		In1
-4		pwr	line	b		Gnd
-5		in	line	l		In2
-6		pwr	line	t		Vs
-7		out	line	r		Out2
+1		pwr	line	l		Vin
+2		out	line	r		Vout
+3		pwr	line	b		Gnd
+4		pwr	line	r		Feedback
+5		in	line	l		On
