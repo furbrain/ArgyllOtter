@@ -46,29 +46,115 @@
 /*
                          Main application
  */
+#include <stdint.h>
+#include <string.h>
+#include "comms.h"
+#include "pid.h"
+int16_t *counts = (int16_t*)EEPROM_Buffer;
+volatile int32_t current_count = 0, last_count = 0, target=0;
+int8_t count_index = 0, print_count = -1;
+pid_t pid;
+
+void RR_sensor(void) {
+    if (RR_SENSE2_GetValue()) {
+        current_count++;
+    } else {
+        current_count--;
+    }
+}
+
+bool within(int32_t desired, int32_t actual, int32_t range) {
+    return (((desired + range) > actual) && ((desired - range) < actual));
+}
+
+void OneHundredHertz(void) {
+    float power;
+    
+    int32_t input;
+    int16_t duty;
+    if (print_count > 0) {
+        printf("Pos: %ld\n\r", current_count);
+        print_count--;
+    }
+    if (within(target, current_count, 10)) {
+        // turn off motors
+        if (print_count==-1) {
+            print_count=5;
+            printf("On target!\n\r");
+        }
+        RR_DIRECTION_SetLow();
+        PWM2_LoadDutyValue(0);
+    } else if (within(target, current_count, 300)){
+        if (current_count < target) {
+            pid_setPoint(&pid, 15);
+        } else {
+            pid_setPoint(&pid, -15);
+        }
+    } else {
+        if (current_count < target) {
+            pid_setPoint(&pid, 50);
+        } else {
+            pid_setPoint(&pid, -50);
+        }
+        
+    }
+    if (!(within(target, current_count, 10)) && (count_index >=5)) {
+        input = current_count-last_count;
+        last_count = current_count;
+        power = pid_compute(&pid, input);
+        duty = (int16_t)(power*0x3ff);
+        if (power < 0.0) {
+            RR_DIRECTION_SetHigh();
+            PWM2_LoadDutyValue(0x3ff - (uint16_t)(-duty));
+        } else {
+            RR_DIRECTION_SetLow();
+            PWM2_LoadDutyValue((uint16_t)duty);            
+        }
+        count_index=0;
+    }
+    count_index++;
+}
+
+void ADCResultReady(void) {
+    uint16_t result = ADCC_GetConversionResult();
+    printf("ADCC: %d\n\r", result);
+}
+
+
 void main(void)
 {
     // initialize the device
     SYSTEM_Initialize();
-
-    // When using interrupts, you need to set the Global and Peripheral Interrupt Enable bits
-    // Use the following macros to:
-
+    pid_tune(&pid, 0.03, 0.01, 0.01); //tuned for movement
+    //pid_tune(&pid, 0.05, 0.001, 0.6); //tuned for postion, pOnE
+    //pid_tune(&pid, 0.01, 0.001, 0.3); //tuned for postion, pOnM
+    pid.pOnE=true;
+    pid_init(&pid,0,0);
+    pid_setPoint(&pid, 0);
+    current_count = 0;
+    count_index = 5;
+    IOCBF5_SetInterruptHandler(RR_sensor);
+    TMR0_SetInterruptHandler(OneHundredHertz);
+    ADCC_SetADIInterruptHandler(ADCResultReady);
+    ADCC_StartConversion(RR_CURRENT);
     // Enable the Global Interrupts
-    //INTERRUPT_GlobalInterruptEnable();
-
-    // Enable the Peripheral Interrupts
-    //INTERRUPT_PeripheralInterruptEnable();
-
-    // Disable the Global Interrupts
-    //INTERRUPT_GlobalInterruptDisable();
-
-    // Disable the Peripheral Interrupts
-    //INTERRUPT_PeripheralInterruptDisable();
-
+    memset(counts, 0, 256);
+    INTERRUPT_GlobalInterruptEnable();
+    INTERRUPT_PeripheralInterruptEnable();
     while (1)
     {
-        // Add your application code
+        target = 1600;
+        print_count = -1;
+        __delay_ms(5000);
+        target = 0;
+        print_count = -1;
+        __delay_ms(5000);
+        target = -60;
+        print_count = -1;
+        __delay_ms(5000);
+        target = -600;
+        print_count = -1;
+        __delay_ms(5000);
     }
 }
 /**
