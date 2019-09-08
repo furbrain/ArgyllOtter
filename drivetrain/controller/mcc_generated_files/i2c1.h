@@ -52,8 +52,6 @@
 #include <stddef.h>
 #include <xc.h>
 
-#warning "This version of the I2C driver will be removed soon and the correct driver to use is the Foundation Services driver"
-
 #ifdef __cplusplus  // Provide C++ Compatibility
 
     extern "C" {
@@ -78,13 +76,6 @@
 
  */
 
-typedef enum
-{
-    I2C1_SLAVE_WRITE_REQUEST,
-    I2C1_SLAVE_READ_REQUEST,
-    I2C1_SLAVE_WRITE_COMPLETED,
-    I2C1_SLAVE_READ_COMPLETED,
-} I2C1_SLAVE_DRIVER_STATUS;
 
 #define I2C1_SLAVE_DEFAULT_ADDRESS          0x33
 

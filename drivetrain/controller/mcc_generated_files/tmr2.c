@@ -72,8 +72,8 @@ void TMR2_Initialize(void)
     // T2RSEL T2CKIPPS pin; 
     T2RST = 0x00;
 
-    // PR2 49; 
-    T2PR = 0x31;
+    // PR2 199; 
+    T2PR = 0xC7;
 
     // TMR2 0; 
     T2TMR = 0x00;
@@ -81,8 +81,8 @@ void TMR2_Initialize(void)
     // Clearing IF flag.
     PIR4bits.TMR2IF = 0;
 
-    // T2CKPS 1:16; T2OUTPS 1:1; TMR2ON on; 
-    T2CON = 0xC0;
+    // T2CKPS 1:4; T2OUTPS 1:1; TMR2ON on; 
+    T2CON = 0xA0;
 }
 
 void TMR2_ModeSet(TMR2_HLT_MODE mode)

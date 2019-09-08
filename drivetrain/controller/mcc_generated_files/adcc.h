@@ -85,6 +85,13 @@ typedef uint16_t adc_result_t;
 
 typedef enum
 {
+    FRONT_GROUND =  0x6,
+    RR_CURRENT =  0xA,
+    FL_CURRENT =  0x12,
+    BATT_VOLTAGE =  0x19,
+    RL_CURRENT =  0x1C,
+    REAR_GROUND =  0x1F,
+    FR_CURRENT =  0x21,
     channel_VSS =  0x3C,
     channel_Temp =  0x3D,
     channel_DAC1 =  0x3E,
@@ -824,7 +831,55 @@ uint8_t ADCC_GetConversionStageStatus(void);
 
 
 
+/**
+  @Summary
+    Implements ISR
 
+  @Description
+    This routine is used to set the callback for the ADI Interrupt.
+
+  @Returns
+    None
+
+  @Param
+    Callback Function to be called
+*/
+void ADCC_SetADIInterruptHandler(void (* InterruptHandler)(void));
+
+/**
+  @Summary
+    Implements ISR
+
+  @Description
+    This routine is used to implement the ISR for the interrupt-driven
+    implementations.
+
+  @Returns
+    None
+
+  @Param
+    None
+*/
+void ADCC_ISR(void);
+
+
+/**
+  @Summary
+    Default ADCC Interrupt Handler
+
+  @Description
+    This is the default Interrupt Handler function
+
+  @Preconditions
+    Initialize  the ADCC module with interrupt before calling this isr.
+
+  @Param
+    None
+
+  @Returns
+    None
+*/
+void ADCC_DefaultInterruptHandler(void);
 #ifdef __cplusplus  // Provide C++ Compatibility
 
     }

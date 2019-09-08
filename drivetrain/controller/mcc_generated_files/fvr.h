@@ -1,24 +1,24 @@
 /**
-  PWM1 Generated Driver File
+  FVR Generated Driver API Header File
 
   @Company
     Microchip Technology Inc.
 
   @File Name
-    pwm1.c
+    fvr.h
 
   @Summary
-    This is the generated driver implementation file for the PWM1 driver using PIC10 / PIC12 / PIC16 / PIC18 MCUs
+    This is the generated header file for the FVR driver using PIC10 / PIC12 / PIC16 / PIC18 MCUs
 
   @Description
-    This source file provides implementations for driver APIs for PWM1.
+    This header file provides APIs for driver for FVR.
     Generation Information :
         Product Revision  :  PIC10 / PIC12 / PIC16 / PIC18 MCUs - 1.77
         Device            :  PIC16F18877
         Driver Version    :  2.01
     The generated drivers are tested against the following:
         Compiler          :  XC8 2.05 and above
-         MPLAB 	          :  MPLAB X 5.20
+        MPLAB 	          :  MPLAB X 5.20
 */
 
 /*
@@ -44,64 +44,95 @@
     SOFTWARE.
 */
 
+#ifndef FVR_H
+#define FVR_H
+
 /**
   Section: Included Files
 */
 
-#include <xc.h>
-#include "pwm1.h"
+#include <stdbool.h>
+#include <stdint.h>
+
+#ifdef __cplusplus  // Provide C++ Compatibility
+
+    extern "C" {
+
+#endif
 
 /**
-  Section: Macro Declarations
+  Section: FVR APIs
 */
-
-#define PWM1_INITIALIZE_DUTY_VALUE    0
 
 /**
-  Section: PWM Module APIs
+  @Summary
+    Initializes the FVR
+
+  @Description
+    This routine initializes the FVR.
+    This routine must be called before any other FVR routine is called.
+    This routine should only be called once during system initialization.
+
+  @Preconditions
+    None
+
+  @Param
+    None
+
+  @Returns
+    None
+
+  @Comment
+    
+
+  @Example
+    <code>
+    FVR_Initialize();
+    </code>
 */
+ void FVR_Initialize(void);
 
-void PWM1_Initialize(void)
-{
-    // Set the PWM1 to the options selected in the User Interface
-	
-	// MODE PWM; EN enabled; CCP1FMT right_aligned; 
-	CCP1CON = 0x8F;    
-	
-	// RH 0; 
-	CCPR1H = 0x00;    
-	
-	// RL 0; 
-	CCPR1L = 0x00;    
+/**
+  @Summary
+    Gets the FVR output ready status.
 
-	// Selecting Timer 2
-	CCPTMRS0bits.C1TSEL = 0x1;
-    
-}
+  @Description
+    This routine gets the FVR output ready status.
 
-void PWM1_LoadDutyValue(uint16_t dutyValue)
-{
-    dutyValue &= 0x03FF;
-    
-    // Load duty cycle value
-    if(CCP1CONbits.CCP1FMT)
+  @Preconditions
+    The FVR_Initialize() routine should be called
+    prior to use this routine.
+
+  @Param
+    None
+
+  @Returns
+     true  - FVR module is ready for use.
+     false - FVR module is not ready for use.
+
+  @Example
+    <code>
+    FVR_Initialize();
+
+    if(FVR_IsOutputReady())
     {
-        dutyValue <<= 6;
-        CCPR1H = dutyValue >> 8;
-        CCPR1L = dutyValue;
+          //user code
     }
     else
     {
-        CCPR1H = dutyValue >> 8;
-        CCPR1L = dutyValue;
+          //user code
     }
-}
+    </code>
+*/
+bool FVR_IsOutputReady(void);
 
-bool PWM1_OutputStatusGet(void)
-{
-    // Returns the output status
-    return(CCP1CONbits.OUT);
-}
+#ifdef __cplusplus  // Provide C++ Compatibility
+
+    }
+
+#endif
+
+#endif // FVR_H
 /**
  End of File
 */

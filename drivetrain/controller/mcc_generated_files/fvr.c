@@ -1,24 +1,24 @@
 /**
-  PWM3 Generated Driver File
+  FVR Generated Driver File
 
   @Company
     Microchip Technology Inc.
 
   @File Name
-    pwm3.c
+    fvr.c
 
   @Summary
-    This is the generated driver implementation file for the PWM3 driver using PIC10 / PIC12 / PIC16 / PIC18 MCUs
+    This is the generated driver implementation file for the FVR driver using PIC10 / PIC12 / PIC16 / PIC18 MCUs
 
   @Description
-    This source file provides implementations for driver APIs for PWM3.
+    This source file provides APIs for FVR.
     Generation Information :
         Product Revision  :  PIC10 / PIC12 / PIC16 / PIC18 MCUs - 1.77
         Device            :  PIC16F18877
         Driver Version    :  2.01
     The generated drivers are tested against the following:
         Compiler          :  XC8 2.05 and above
-         MPLAB 	          :  MPLAB X 5.20
+        MPLAB             :  MPLAB X 5.20
 */
 
 /*
@@ -49,58 +49,21 @@
 */
 
 #include <xc.h>
-#include "pwm3.h"
+#include "fvr.h"
 
 /**
-  Section: Macro Declarations
+  Section: FVR APIs
 */
 
-#define PWM3_INITIALIZE_DUTY_VALUE    0
-
-/**
-  Section: PWM Module APIs
-*/
-
-void PWM3_Initialize(void)
+void FVR_Initialize(void)
 {
-    // Set the PWM3 to the options selected in the User Interface
-	
-	// MODE PWM; EN enabled; CCP3FMT right_aligned; 
-	CCP3CON = 0x8F;    
-	
-	// RH 0; 
-	CCPR3H = 0x00;    
-	
-	// RL 0; 
-	CCPR3L = 0x00;    
-
-	// Selecting Timer 2
-	CCPTMRS0bits.C3TSEL = 0x1;
-    
+    // CDAFVR off; FVREN enabled; TSRNG Lo_range; ADFVR 2x; TSEN disabled; 
+    FVRCON = 0x82;
 }
 
-void PWM3_LoadDutyValue(uint16_t dutyValue)
+bool FVR_IsOutputReady(void)
 {
-    dutyValue &= 0x03FF;
-    
-    // Load duty cycle value
-    if(CCP3CONbits.CCP3FMT)
-    {
-        dutyValue <<= 6;
-        CCPR3H = dutyValue >> 8;
-        CCPR3L = dutyValue;
-    }
-    else
-    {
-        CCPR3H = dutyValue >> 8;
-        CCPR3L = dutyValue;
-    }
-}
-
-bool PWM3_OutputStatusGet(void)
-{
-    // Returns the output status
-    return(CCP3CONbits.OUT);
+    return (FVRCONbits.FVRRDY);
 }
 /**
  End of File

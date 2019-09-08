@@ -55,6 +55,7 @@
 /**
   Section: ADCC Module Variables
 */
+void (*ADCC_ADI_InterruptHandler)(void);
 
 /**
   Section: ADCC Module APIs
@@ -89,17 +90,23 @@ void ADCC_Initialize(void)
     ADCON3 = 0x00;
     // ADAOV ACC or ADERR not Overflowed; 
     ADSTAT = 0x00;
-    // ADNREF VSS; ADPREF VDD; 
-    ADREF = 0x00;
-    // ADACT disabled; 
-    ADACT = 0x00;
-    // ADCCS FOSC/2; 
-    ADCLK = 0x00;
+    // ADNREF VSS; ADPREF FVR_buf1; 
+    ADREF = 0x03;
+    // ADACT TMR1; 
+    ADACT = 0x03;
+    // ADCCS FOSC/128; 
+    ADCLK = 0x3F;
     // ADGO stop; ADFM right; ADON enabled; ADCONT disabled; ADCS FOSC/ADCLK; 
     ADCON0 = 0x84;
     // ADACQ 0; 
     ADACQ = 0x00;
     
+    // Clear the ADC interrupt flag
+    PIR1bits.ADIF = 0;
+    // Enabling ADCC interrupt.
+    PIE1bits.ADIE = 1;
+
+    ADCC_SetADIInterruptHandler(ADCC_DefaultInterruptHandler);
 
 }
 
@@ -287,7 +294,23 @@ uint8_t ADCC_GetConversionStageStatus(void)
     return ADSTATbits.ADSTAT;
 }
 
+void ADCC_ISR(void)
+{
+    // Clear the ADCC interrupt flag
+    PIR1bits.ADIF = 0;
 
+    if (ADCC_ADI_InterruptHandler)
+            ADCC_ADI_InterruptHandler();
+}
+
+void ADCC_SetADIInterruptHandler(void (* InterruptHandler)(void)){
+    ADCC_ADI_InterruptHandler = InterruptHandler;
+}
+
+void ADCC_DefaultInterruptHandler(void){
+    // add your ADCC interrupt custom code
+    // or set custom function using ADCC_SetADIInterruptHandler() or ADCC_SetADTIInterruptHandler()
+}
 /**
  End of File
 */

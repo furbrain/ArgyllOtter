@@ -55,7 +55,7 @@
   Section: Macro Declarations
 */
 
-#define PWM2_INITIALIZE_DUTY_VALUE    0
+#define PWM2_INITIALIZE_DUTY_VALUE    399
 
 /**
   Section: PWM Module APIs
@@ -68,11 +68,11 @@ void PWM2_Initialize(void)
 	// MODE PWM; EN enabled; CCP2FMT right_aligned; 
 	CCP2CON = 0x8F;    
 	
-	// RH 0; 
-	CCPR2H = 0x00;    
+	// RH 1; 
+	CCPR2H = 0x01;    
 	
-	// RL 0; 
-	CCPR2L = 0x00;    
+	// RL 143; 
+	CCPR2L = 0x8F;    
 
 	// Selecting Timer 2
 	CCPTMRS0bits.C2TSEL = 0x1;
