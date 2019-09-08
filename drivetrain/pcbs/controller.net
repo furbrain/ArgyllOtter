@@ -1,0 +1,35 @@
++12V	U2-1 CONN5-1 U3-1 CONN6-1 BATT3-1 CONN4-1 R1-1 
+unnamed_net32	I1-2 U1-23 
+unnamed_net31	ENCODER3-3 U1-24 
+unnamed_net30	ENCODER3-2 U1-25 
+unnamed_net29	CONN1-14 U1-26 
+unnamed_net28	CONN1-13 U1-27 
+unnamed_net27	CONN1-12 CONN1-11 U1-28 
+unnamed_net26	CONN1-10 CONN1-9 U1-29 
+unnamed_net25	CONN1-8 CONN1-7 U1-30 
+unnamed_net24	CONN1-6 CONN1-5 U1-33 
+unnamed_net23	CONN1-4 CONN1-3 U1-34 
+unnamed_net22	CONN1-1 U1-35 
+unnamed_net21	CONN1-2 U1-36 
+unnamed_net20	ENCODER4-3 U1-37 
+unnamed_net19	ENCODER4-2 U1-38 
+unnamed_net18	CONN3-5 U1-39 
+unnamed_net17	CONN3-4 U1-40 
+unnamed_net16	R2-1 R1-2 U1-20 
+unnamed_net15	CONN2-2 U1-19 
+unnamed_net14	I1-3 U1-18 
+unnamed_net13	CONN2-1 U1-17 
+unnamed_net12	CONN2-4 CONN2-3 U1-16 
+unnamed_net11	CONN2-6 CONN2-5 U1-15 
+unnamed_net10	CONN2-8 CONN2-7 U1-14 
+unnamed_net9	CONN2-10 CONN2-9 U1-13 
+GND	U2-2 C3-2 U3-2 BATT3-3 BATT3-2 CONN6-2 CONN5-2 CONN4-2 C1-2 ENCODER2-4 ENCODER1-4 ENCODER3-1 R2-2 I1-4 CONN3-3 ENCODER4-1 C2-1 U1-31 U1-12 
++5V	U3-3 U2-3 C3-1 C1-1 I1-1 ENCODER2-1 ENCODER1-1 CONN3-2 ENCODER3-4 C2-2 U1-32 ENCODER4-4 U1-11 
+unnamed_net8	CONN2-12 CONN2-11 U1-10 
+unnamed_net7	CONN2-13 U1-9 
+unnamed_net6	CONN2-14 U1-8 
+unnamed_net5	ENCODER2-3 U1-6 
+unnamed_net4	ENCODER2-2 U1-5 
+unnamed_net3	ENCODER1-3 U1-4 
+unnamed_net2	ENCODER1-2 U1-3 
+unnamed_net1	CONN3-1 U1-1 
