@@ -53,15 +53,17 @@
 #include <stdbool.h>
 #include "interrupt_manager.h"
 #include "i2c1.h"
-#include "pwm6.h"
+#include "adcc.h"
+#include "fvr.h"
+#include "dac.h"
 #include "tmr1.h"
-#include "pwm7.h"
 #include "tmr2.h"
 #include "pwm4.h"
+#include "pwm5.h"
 #include "tmr0.h"
-#include "fvr.h"
 #include "pwm2.h"
-#include "adcc.h"
+#include "pwm1.h"
+#include "memory.h"
 #include "eusart.h"
 
 

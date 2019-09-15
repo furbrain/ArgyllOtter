@@ -47,114 +47,111 @@
                          Main application
  */
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include "comms.h"
 #include "pid.h"
-int16_t *counts = (int16_t*)EEPROM_Buffer;
-volatile int32_t current_count = 0, last_count = 0, target=0;
-int8_t count_index = 0, print_count = -1;
-pid_t pid;
+#include "wheels.h"
 
-void RR_sensor(void) {
-    if (RR_SENSE2_GetValue()) {
-        current_count++;
-    } else {
-        current_count--;
-    }
-}
+const uint8_t ADC_CHANNELS[] = {
+    FRONT_GROUND, 
+    FL_CURRENT, 
+    FR_CURRENT,
+    REAR_GROUND,
+    RL_CURRENT,
+    RR_CURRENT, 
+    BATT_VOLTAGE,
+    channel_DAC1
+};
 
-bool within(int32_t desired, int32_t actual, int32_t range) {
-    return (((desired + range) > actual) && ((desired - range) < actual));
-}
+volatile bool tick = false;
+volatile command_t cmd;
+
 
 void OneHundredHertz(void) {
-    float power;
-    
-    int32_t input;
-    int16_t duty;
-    if (print_count > 0) {
-        printf("Pos: %ld\n\r", current_count);
-        print_count--;
+    cmd = *command;
+    tick = true;
+}
+void Update(void) {
+    static uint8_t count = 0;
+    wheel_t* whl;
+    if (new_command) {
+        FOR_ALL_WHEELS(whl) {
+            whl->stopped=false;
+        }
+        switch (cmd.mode) {
+            case CMD_STOP:
+                FOR_ALL_WHEELS(whl) {
+                    wheel_stop(whl);
+                }
+                break;
+            case CMD_DRIVE:
+                wheel_set_speed(&wheels[FRONT_LEFT], cmd.left_speed);
+                wheel_set_speed(&wheels[REAR_LEFT], cmd.left_speed);
+                wheel_set_speed(&wheels[FRONT_RIGHT], cmd.right_speed);
+                wheel_set_speed(&wheels[REAR_RIGHT], cmd.right_speed);
+                break;
+            case CMD_INDIVIDUAL:
+                for(uint8_t i = 0; i< 4; i++) {
+                    if (cmd.motor_speed[i]>0) {
+                        wheels[i].set_direction(WHEEL_FORWARD);
+                    } else {
+                        wheels[i].set_direction(WHEEL_REVERSE);
+                    }
+                    wheels[i].set_pwm(cmd.motor_speed[i]);
+                }
+                break;
+               
+        }
+        new_command = false;
     }
-    if (within(target, current_count, 10)) {
-        // turn off motors
-        if (print_count==-1) {
-            print_count=5;
-            printf("On target!\n\r");
-        }
-        RR_DIRECTION_SetLow();
-        PWM2_LoadDutyValue(0);
-    } else if (within(target, current_count, 300)){
-        if (current_count < target) {
-            pid_setPoint(&pid, 15);
-        } else {
-            pid_setPoint(&pid, -15);
-        }
-    } else {
-        if (current_count < target) {
-            pid_setPoint(&pid, 50);
-        } else {
-            pid_setPoint(&pid, -50);
-        }
-        
+    if (cmd.mode == CMD_DISTANCE) {
+        /* left */
+        wheel_move_to(&wheels[FRONT_LEFT], cmd.left_distance, cmd.max_speed);
+        wheel_move_to(&wheels[REAR_LEFT], cmd.left_distance, cmd.max_speed);
+        wheel_move_to(&wheels[FRONT_RIGHT], cmd.right_distance, cmd.max_speed);
+        wheel_move_to(&wheels[REAR_RIGHT], cmd.right_distance, cmd.max_speed);
     }
-    if (!(within(target, current_count, 10)) && (count_index >=5)) {
-        input = current_count-last_count;
-        last_count = current_count;
-        power = pid_compute(&pid, input);
-        duty = (int16_t)(power*0x3ff);
-        if (power < 0.0) {
-            RR_DIRECTION_SetHigh();
-            PWM2_LoadDutyValue(0x3ff - (uint16_t)(-duty));
-        } else {
-            RR_DIRECTION_SetLow();
-            PWM2_LoadDutyValue((uint16_t)duty);            
+    if (count++ >= SAMPLE_SKIP) {
+        count = 0;
+        FOR_ALL_WHEELS(whl) {
+            wheel_update_velocity(whl);
+            wheel_update_power(whl);
         }
-        count_index=0;
     }
-    count_index++;
 }
 
 void ADCResultReady(void) {
+    static uint8_t channel_index = 0;
+    uint8_t channel = ADC_CHANNELS[channel_index];
     uint16_t result = ADCC_GetConversionResult();
-    printf("ADCC: %d\n\r", result);
+    // do something...
+    channel_index = (channel_index+1) % sizeof(ADC_CHANNELS);
 }
 
 
 void main(void)
 {
-    // initialize the device
+    wheel_t* whl;
     SYSTEM_Initialize();
-    pid_tune(&pid, 0.03, 0.01, 0.01); //tuned for movement
-    //pid_tune(&pid, 0.05, 0.001, 0.6); //tuned for postion, pOnE
-    //pid_tune(&pid, 0.01, 0.001, 0.3); //tuned for postion, pOnM
-    pid.pOnE=true;
-    pid_init(&pid,0,0);
-    pid_setPoint(&pid, 0);
-    current_count = 0;
-    count_index = 5;
-    IOCBF5_SetInterruptHandler(RR_sensor);
+    comms_init();
+    wheels_init();
+    FOR_ALL_WHEELS(whl) {
+        wheel_stop(whl);
+    }
     TMR0_SetInterruptHandler(OneHundredHertz);
-    ADCC_SetADIInterruptHandler(ADCResultReady);
-    ADCC_StartConversion(RR_CURRENT);
-    // Enable the Global Interrupts
-    memset(counts, 0, 256);
+    //ADCC_SetADIInterruptHandler(ADCResultReady);
+    //ADCC_StartConversion(RR_CURRENT);
+    // Enable the Interrupts
     INTERRUPT_GlobalInterruptEnable();
     INTERRUPT_PeripheralInterruptEnable();
     while (1)
     {
-        target = 1600;
-        print_count = -1;
-        __delay_ms(5000);
-        target = 0;
-        print_count = -1;
-        __delay_ms(5000);
-        target = -60;
-        print_count = -1;
-        __delay_ms(5000);
-        target = -600;
-        print_count = -1;
-        __delay_ms(5000);
+        while (!tick) {
+            NOP();
+        }
+        tick = false;
+        Update();
     }
 }
 /**

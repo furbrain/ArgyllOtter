@@ -31,7 +31,6 @@ float pid_compute(pid_t* ctx, float input)
  
 void pid_tune(pid_t *ctx, float Kp, float Ki, float Kd)
 {
-   float SampleTimeInSec = ((float)SAMPLE_TIME)/1000;
    ctx->kP = Kp;
    ctx->kI = Ki;
    ctx->kD = Kd;

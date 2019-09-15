@@ -12,15 +12,19 @@
 extern "C" {
 #endif
 #include <stdint.h>
+#include <stdbool.h>
 
-#define BUFFER_SIZE 128    
-    
-enum WHEEL {
-    FRONT_RIGHT = 0, 
-    FRONT_LEFT = 1, 
-    BACK_RIGHT = 2, 
-    BACK_LEFT = 3
-};
+#define BUFFER_SIZE 128
+#define WHEEL_DIAMETER 70
+
+typedef enum {
+    CMD_STOP = 0,
+    CMD_DRIVE = 1,
+    CMD_DISTANCE = 2,
+    CMD_ROTATE = 3,
+    CMD_INDIVIDUAL = 4,
+    CMD_CALIBRATE = 0xFF
+} cmd_enums;    
     
 typedef struct {
     uint8_t mode;
@@ -37,13 +41,31 @@ typedef struct {
         struct {
             int16_t angle;
         };
+        struct {
+            int16_t motor_speed[4];
+        };
     };
 } command_t;
 
+typedef struct {
+    float kP;
+    float kI;
+    float kD;
+    float mm_per_click;
+} constants_t;
+
+
 extern volatile uint8_t EEPROM_Buffer[BUFFER_SIZE];
 extern volatile uint8_t EEPROM_Shadow[BUFFER_SIZE];
-extern volatile int32_t* const position;
-extern volatile int16_t* const velocity;
+extern volatile int32_t* const position; // position for each wheel in encoder count
+extern volatile int16_t* const velocity; // velocity for each wheel in counts/0.05s
+extern volatile command_t* const command; //current command
+extern volatile constants_t* const constants; //kP, kI, kD, mm per click
+extern volatile int16_t* const current; // current for each motor in mA
+extern volatile int16_t* const batt_voltage; //voltage in mV
+extern volatile int16_t* const peripheral_voltage; //5V level in mV
+extern volatile bool new_command;
+
 
 typedef enum
 {
@@ -57,7 +79,7 @@ typedef enum
 
 void I2C1_StatusCallback(I2C1_SLAVE_DRIVER_STATUS i2c_bus_state);
 
-
+void comms_init(void);
 
 #ifdef	__cplusplus
 }

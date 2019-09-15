@@ -73,18 +73,18 @@ void PIN_MANAGER_Initialize(void)
     */
     TRISE = 0x03;
     TRISA = 0x7F;
-    TRISB = 0xFC;
+    TRISB = 0xBC;
     TRISC = 0xFC;
-    TRISD = 0x9F;
+    TRISD = 0x9B;
 
     /**
     ANSELx registers
     */
-    ANSELD = 0xDE;
-    ANSELC = 0x05;
-    ANSELB = 0xC7;
+    ANSELD = 0xDA;
+    ANSELC = 0x04;
+    ANSELB = 0x07;
     ANSELE = 0x06;
-    ANSELA = 0xE1;
+    ANSELA = 0x61;
 
     /**
     WPUx registers
@@ -100,9 +100,9 @@ void PIN_MANAGER_Initialize(void)
     */
     ODCONE = 0x00;
     ODCONA = 0x00;
-    ODCONB = 0x00;
+    ODCONB = 0x40;
     ODCONC = 0x00;
-    ODCOND = 0x00;
+    ODCOND = 0x04;
 
     /**
     SLRCONx registers
@@ -163,12 +163,13 @@ void PIN_MANAGER_Initialize(void)
     PIE0bits.IOCIE = 1; 
     
 	
-    RA7PPS = 0x0E;   //RA7->PWM6:PWM6OUT;    
-    RC0PPS = 0x10;   //RC0->EUSART:TX;    
+    RC0PPS = 0x09;   //RC0->CCP1:CCP1;    
+    RXPPS = 0x0F;   //RB7->EUSART:RX;    
     SSP1CLKPPS = 0x13;   //RC3->MSSP1:SCL1;    
     RB1PPS = 0x0A;   //RB1->CCP2:CCP2;    
+    RB6PPS = 0x10;   //RB6->EUSART:TX;    
     RC3PPS = 0x14;   //RC3->MSSP1:SCL1;    
-    RC1PPS = 0x0F;   //RC1->PWM7:PWM7OUT;    
+    RE2PPS = 0x0D;   //RE2->CCP5:CCP5;    
     RC4PPS = 0x15;   //RC4->MSSP1:SDA1;    
     RD6PPS = 0x0C;   //RD6->CCP4:CCP4;    
     SSP1DATPPS = 0x14;   //RC4->MSSP1:SDA1;    

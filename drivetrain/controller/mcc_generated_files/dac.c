@@ -1,24 +1,24 @@
 /**
-  PWM2 Generated Driver File
+  DAC Generated Driver File
 
   @Company
     Microchip Technology Inc.
 
   @File Name
-    pwm2.c
+    dac.c
 
   @Summary
-    This is the generated driver implementation file for the PWM2 driver using PIC10 / PIC12 / PIC16 / PIC18 MCUs
+    This is the generated driver implementation file for the DAC driver using PIC10 / PIC12 / PIC16 / PIC18 MCUs
 
   @Description
-    This source file provides implementations for driver APIs for PWM2.
+    This source file provides APIs for DAC.
     Generation Information :
         Product Revision  :  PIC10 / PIC12 / PIC16 / PIC18 MCUs - 1.77
         Device            :  PIC16F18877
-        Driver Version    :  2.01
+        Driver Version    :  2.10
     The generated drivers are tested against the following:
         Compiler          :  XC8 2.05 and above
-         MPLAB 	          :  MPLAB X 5.20
+        MPLAB 	          :  MPLAB X 5.20
 */
 
 /*
@@ -49,60 +49,29 @@
 */
 
 #include <xc.h>
-#include "pwm2.h"
+#include "dac.h"
 
 /**
-  Section: Macro Declarations
+  Section: DAC APIs
 */
 
-#define PWM2_INITIALIZE_DUTY_VALUE    0
-
-/**
-  Section: PWM Module APIs
-*/
-
-void PWM2_Initialize(void)
+void DAC_Initialize(void)
 {
-    // Set the PWM2 to the options selected in the User Interface
-	
-	// MODE PWM; EN enabled; CCP2FMT right_aligned; 
-	CCP2CON = 0x8F;    
-	
-	// RH 0; 
-	CCPR2H = 0x00;    
-	
-	// RL 0; 
-	CCPR2L = 0x00;    
-
-	// Selecting Timer 2
-	CCPTMRS0bits.C2TSEL = 0x1;
-    
+    // DAC1EN enabled; NSS VSS; PSS VDD; OE1 disabled; OE2 disabled; 
+    DAC1CON0 = 0x80;
+    // DAC1R 8; 
+    DAC1CON1 = 0x08;
 }
 
-void PWM2_LoadDutyValue(uint16_t dutyValue)
+void DAC_SetOutput(uint8_t inputData)
 {
-    dutyValue &= 0x03FF;
-    
-    // Load duty cycle value
-    if(CCP2CONbits.CCP2FMT)
-    {
-        dutyValue <<= 6;
-        CCPR2H = dutyValue >> 8;
-        CCPR2L = dutyValue;
-    }
-    else
-    {
-        CCPR2H = dutyValue >> 8;
-        CCPR2L = dutyValue;
-    }
+    DAC1CON1  = inputData;
 }
 
-bool PWM2_OutputStatusGet(void)
+uint8_t DAC_GetOutput(void)
 {
-    // Returns the output status
-    return(CCP2CONbits.OUT);
+    return DAC1CON1;
 }
 /**
  End of File
 */
-

@@ -1,17 +1,17 @@
 /**
-  PWM2 Generated Driver File
+  PWM5 Generated Driver File
 
   @Company
     Microchip Technology Inc.
 
   @File Name
-    pwm2.c
+    pwm5.c
 
   @Summary
-    This is the generated driver implementation file for the PWM2 driver using PIC10 / PIC12 / PIC16 / PIC18 MCUs
+    This is the generated driver implementation file for the PWM5 driver using PIC10 / PIC12 / PIC16 / PIC18 MCUs
 
   @Description
-    This source file provides implementations for driver APIs for PWM2.
+    This source file provides implementations for driver APIs for PWM5.
     Generation Information :
         Product Revision  :  PIC10 / PIC12 / PIC16 / PIC18 MCUs - 1.77
         Device            :  PIC16F18877
@@ -49,58 +49,58 @@
 */
 
 #include <xc.h>
-#include "pwm2.h"
+#include "pwm5.h"
 
 /**
   Section: Macro Declarations
 */
 
-#define PWM2_INITIALIZE_DUTY_VALUE    0
+#define PWM5_INITIALIZE_DUTY_VALUE    0
 
 /**
   Section: PWM Module APIs
 */
 
-void PWM2_Initialize(void)
+void PWM5_Initialize(void)
 {
-    // Set the PWM2 to the options selected in the User Interface
+    // Set the PWM5 to the options selected in the User Interface
 	
-	// MODE PWM; EN enabled; CCP2FMT right_aligned; 
-	CCP2CON = 0x8F;    
+	// MODE PWM; EN enabled; CCP5FMT right_aligned; 
+	CCP5CON = 0x8F;    
 	
 	// RH 0; 
-	CCPR2H = 0x00;    
+	CCPR5H = 0x00;    
 	
 	// RL 0; 
-	CCPR2L = 0x00;    
+	CCPR5L = 0x00;    
 
 	// Selecting Timer 2
-	CCPTMRS0bits.C2TSEL = 0x1;
+	CCPTMRS1bits.C5TSEL = 0x1;
     
 }
 
-void PWM2_LoadDutyValue(uint16_t dutyValue)
+void PWM5_LoadDutyValue(uint16_t dutyValue)
 {
     dutyValue &= 0x03FF;
     
     // Load duty cycle value
-    if(CCP2CONbits.CCP2FMT)
+    if(CCP5CONbits.CCP5FMT)
     {
         dutyValue <<= 6;
-        CCPR2H = dutyValue >> 8;
-        CCPR2L = dutyValue;
+        CCPR5H = dutyValue >> 8;
+        CCPR5L = dutyValue;
     }
     else
     {
-        CCPR2H = dutyValue >> 8;
-        CCPR2L = dutyValue;
+        CCPR5H = dutyValue >> 8;
+        CCPR5L = dutyValue;
     }
 }
 
-bool PWM2_OutputStatusGet(void)
+bool PWM5_OutputStatusGet(void)
 {
     // Returns the output status
-    return(CCP2CONbits.OUT);
+    return(CCP5CONbits.OUT);
 }
 /**
  End of File

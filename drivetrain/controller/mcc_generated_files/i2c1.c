@@ -73,14 +73,14 @@ volatile uint8_t    I2C1_slaveWriteData      = 0x55;
 void I2C1_Initialize(void)
 {
     // initialize the hardware
-    // SMP High Speed; CKE disabled; 
-    SSP1STAT = 0x00;
+    // SMP Standard Speed; CKE enabled; 
+    SSP1STAT = 0xC0;
     // SSPEN enabled; CKP disabled; SSPM 7 Bit Polling; 
     SSP1CON1 = 0x26;
-    // ACKEN disabled; GCEN disabled; PEN disabled; ACKDT acknowledge; RSEN disabled; RCEN disabled; SEN enabled; 
-    SSP1CON2 = 0x01;
-    // SBCDE disabled; BOEN disabled; SCIE disabled; PCIE enabled; DHEN disabled; SDAHT 100ns; AHEN disabled; 
-    SSP1CON3 = 0x40;
+    // ACKEN disabled; GCEN disabled; PEN disabled; ACKDT acknowledge; RSEN disabled; RCEN disabled; SEN disabled; 
+    SSP1CON2 = 0x00;
+    // SBCDE disabled; BOEN disabled; SCIE disabled; PCIE enabled; DHEN disabled; SDAHT 300ns; AHEN disabled; 
+    SSP1CON3 = 0x48;
     // SSPMSK 127; 
     SSP1MSK = (I2C1_SLAVE_MASK << 1);  // adjust UI mask for R/nW bit            
     // SSPADD 51; 
@@ -107,6 +107,7 @@ void I2C1_ISR ( void )
     {
         // this is a stop condition
         I2C1_StatusCallback(I2C1_SLAVE_STOP);
+        return;
     }
     else if(1 == SSP1STATbits.R_nW)
     {
@@ -139,26 +140,3 @@ void I2C1_ISR ( void )
     SSP1CON1bits.CKP    = 1;    // release SCL
 
 } // end I2C1_ISR()
-
-
-
-/**
-
-    Example implementation of the callback
-
-    This slave driver emulates an EEPROM Device.
-    Sequential reads from the EEPROM will return data at the next
-    EEPROM address.
-
-    Random access reads can be performed by writing a single byte
-    EEPROM address, followed by 1 or more reads.
-
-    Random access writes can be performed by writing a single byte
-    EEPROM address, followed by 1 or more writes.
-
-    Every read or write will increment the internal EEPROM address.
-
-    When the end of the EEPROM is reached, the EEPROM address will
-    continue from the start of the EEPROM.
-*/
-
