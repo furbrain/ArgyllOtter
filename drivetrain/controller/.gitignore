@@ -1,0 +1,6 @@
+html/
+MPLABXLog*
+build/
+debug/
+dist/
+disassembly/
