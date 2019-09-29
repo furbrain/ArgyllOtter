@@ -27,7 +27,7 @@ class DriveTrain:
         command = struct.pack("<Bhh",1, *args)        
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
         
-    def goto(self, left, right, max_speed):
+    def goto_absolute(self, left, right, max_speed):
         args = self.mm2c(left, right, max_speed)
         command = struct.pack("<Biih", 2, *args)
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
@@ -41,6 +41,12 @@ class DriveTrain:
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x10, 0x10)
         positions = struct.unpack("4i", bytes(data))
         return self.c2mm(*positions)
+        
+    def goto(self, distance, max_speed):
+        fr, fl, rr, rl = self.get_positions()
+        right = (fr + rr) / 2
+        left = (fl + rl) / 2
+        self.goto_absolute(right+distance, left+distance, max_speed)
         
     def get_velocities(self):
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x20, 0x08)
