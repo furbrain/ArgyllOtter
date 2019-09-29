@@ -3,6 +3,7 @@ from oled.device import sh1106, const
 from oled.render import canvas
 from PIL import ImageFont
 import time
+import copy
 
 class BackMenuItem():
     pass
@@ -20,6 +21,7 @@ class Menu():
         self.index = 0
         self.child = None
         self.parent = parent
+        self.offset = 0
         if self.parent is not None:
             self.menu_array.append(("Back", BackMenuItem()))
 
@@ -34,7 +36,7 @@ class Menu():
             text, item = self.menu_array[self.index]
             print("Item %s selected" % text)
             if isinstance(item, list):
-                self.child = Menu(item, self)
+                self.child = Menu(copy.deepcopy(item), self)
             elif isinstance(item, BackMenuItem):
                 self.parent.child_exit()
             else:
@@ -49,10 +51,12 @@ class Menu():
     def draw(self):
         if self.child is None:
             with canvas(self.display) as c:
-                c.rectangle(((0, self.index*16), (128, (self.index+1)*16)), fill=255)
+                self.offset = min(self.index, self.offset)
+                self.offset = max(self.index-3, self.offset)
+                c.rectangle(((0, (self.index-self.offset)*16), (128, (self.index-self.offset+1)*16)), fill=255)
                 for i, (text, action) in enumerate(self.menu_array):
                     fill = 0 if i==self.index else 255
-                    c.text((0,i*16), text, font=self.font, fill=fill)
+                    c.text((0,(i-self.offset)*16), text, font=self.font, fill=fill)
         else:
             self.child.draw()        
 
