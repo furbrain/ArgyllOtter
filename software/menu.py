@@ -63,6 +63,7 @@ class Menu():
 if __name__ == "__main__":
     from drivetrain import DriveTrain
     from encoder import Encoder
+    import os
     d = DriveTrain()
     test = [
         ("Move", [
@@ -70,7 +71,10 @@ if __name__ == "__main__":
             ("Backward 1m", lambda: d.goto(-1000, 800))]),
         ("Manual", d.stop),
         ("Challenge", None),
-        ("Debug", None)]
+        ("Debug", None),
+        ("Test2", None),
+        ("Shutdown", lambda: os.system("sudo shutdown -h now")),
+        ]
     m = Menu(test)
     m.draw()
     e = Encoder((19,13,26), m.item_changed, m.item_selected)
