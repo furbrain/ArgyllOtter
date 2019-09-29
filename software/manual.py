@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Code for Brian Corteil's Tiny 4WD robot, based on code from Brian as modified by Emma Norling.
 # Subsequently modified by Tom Oinn to add dummy functions when no explorer hat is available,
 # use any available joystick, use the new function in 1.0.6 of approxeng.input to get multiple

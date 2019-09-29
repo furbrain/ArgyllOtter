@@ -55,10 +55,10 @@ class DriveTrain:
     def get_currents(self):
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x40, 0x08)
         currents = struct.unpack("4h", bytes(data))
-        return currents
+        return [x/1000 for x in currents]
     
     def get_voltages(self):
-        data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x48, 0x08)
+        data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x50, 0x08)
         peripheral, _, main, _ = struct.unpack("4h", bytes(data))
         peripheral /= 1000.0
         main /= 1000.0
@@ -72,7 +72,10 @@ if __name__ == "__main__":
     time.sleep(0.01)
     driver.stop()
     time.sleep(1)
-    driver.goto(1000,1000,800)
-    time.sleep(5)
+    driver.goto(1000,1000,500)
+    time.sleep(6)
+    print(driver.get_positions())
+    driver.goto(000,000,500)
+    time.sleep(3)
     print(driver.get_positions())
     driver.stop()
