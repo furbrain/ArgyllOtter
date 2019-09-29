@@ -41,6 +41,10 @@ class DriveTrain:
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x10, 0x10)
         positions = struct.unpack("4i", bytes(data))
         return self.c2mm(*positions)
+
+    def reset_position(self):
+        data = struct.pack("<4i", 0, 0, 0, 0)
+        self.bus.write_i2c_block_data(I2C_ADDRESS, 0x10, list(data))
         
     def goto(self, distance, max_speed):
         fr, fl, rr, rl = self.get_positions()
@@ -75,13 +79,15 @@ if __name__ == "__main__":
     driver = DriveTrain()
     time.sleep(0.01)
     print(driver.get_positions())
+    driver.reset_position()
+    print(driver.get_positions())
     time.sleep(0.01)
     driver.stop()
     time.sleep(1)
-    driver.goto(1000,1000,500)
+    driver.goto(1000,500)
     time.sleep(6)
     print(driver.get_positions())
-    driver.goto(000,000,500)
+    driver.goto(-1000,500)
     time.sleep(3)
     print(driver.get_positions())
     driver.stop()
