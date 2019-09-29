@@ -102,7 +102,7 @@ void Update(void) {
                     } else {
                         wheels[i].set_direction(WHEEL_REVERSE);
                     }
-                    wheels[i].set_pwm(cmd.motor_speed[i]);
+                    wheels[i].set_pwm((uint16_t)cmd.motor_speed[i]);
                 }
                 break;
                
@@ -121,6 +121,9 @@ void Update(void) {
         FOR_ALL_WHEELS(whl) {
             wheel_update_velocity(whl);
             wheel_update_power(whl);
+        }
+        FOR_ALL_WHEELS(whl) {
+            wheel_check_current(whl);
         }
     }
 }

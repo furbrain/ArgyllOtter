@@ -14,8 +14,9 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
-#define BUFFER_SIZE 128
+#define BUFFER_SIZE 0x60
 #define WHEEL_DIAMETER 70
+#define ALERT_ADDRESS 0x5F
 
 typedef enum {
     CMD_STOP = 0,
@@ -62,8 +63,10 @@ extern volatile int16_t* const velocity; // velocity for each wheel in counts/0.
 extern volatile command_t* const command; //current command
 extern volatile constants_t* const constants; //kP, kI, kD, mm per click
 extern volatile int16_t* const current; // current for each motor in mA
+volatile int16_t* const current_limit; //current limit for each motor in mA
 extern volatile int16_t* const batt_voltage; //voltage in mV
 extern volatile int16_t* const peripheral_voltage; //5V level in mV
+extern volatile uint8_t* const alert_status;
 extern volatile bool new_command;
 
 
@@ -76,10 +79,20 @@ typedef enum
     I2C1_SLAVE_STOP
 } I2C1_SLAVE_DRIVER_STATUS;
 
+typedef enum 
+{
+    ALERT_NOALERT = 0,
+    ALERT_DESTINATION = 1,
+    ALERT_OVERCURRENT = 2, //go up in powers of two...
+    ALERT_UNSPECIFIED = 0xFF
+    
+} ALERT_STATUS;
 
 void I2C1_StatusCallback(I2C1_SLAVE_DRIVER_STATUS i2c_bus_state);
 
 void comms_init(void);
+
+void raise_alert(ALERT_STATUS status);
 
 #ifdef	__cplusplus
 }

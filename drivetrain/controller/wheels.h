@@ -37,10 +37,12 @@ typedef struct {
     volatile int32_t last_pos;
     volatile int32_t *pos;
     volatile int16_t *velocity;
+    volatile int16_t *current;
     pid_t   *pid;
     void (*set_direction)(uint8_t);
     void (*set_pwm)(uint16_t);
-            
+    uint8_t over_current_count;        
+    uint8_t bitmask;
 } wheel_t;
 
 extern wheel_t wheels[4];
@@ -51,7 +53,7 @@ void wheel_update_power(wheel_t *whl);
 void wheel_update_velocity(wheel_t* whl);
 void wheel_stop(wheel_t *whl);
 void wheel_move_to(wheel_t *whl, int32_t pos, int16_t max_speed);
-
+void wheel_check_current(wheel_t *whl);
 #ifdef	__cplusplus
 }
 #endif

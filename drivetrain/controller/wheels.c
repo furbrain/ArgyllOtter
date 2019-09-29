@@ -6,6 +6,7 @@
 #include "mcc_generated_files/pwm2.h"
 #include "mcc_generated_files/pwm4.h"
 #include "mcc_generated_files/pwm5.h"
+#include "mcc_generated_files/interrupt_manager.h"
 
 void FR_set_direction(uint8_t dir) {
     FR_DIRECTION_LAT = dir;
@@ -58,47 +59,26 @@ void RL_sensor(void) {
 
 pid_t pids[4] = {0};
 
-wheel_t wheels[4] = {
-    {
-        FR_CURRENT,
-        false,
-        0,
-        &position[FRONT_RIGHT],
-        &velocity[FRONT_RIGHT],
-        &pids[FRONT_RIGHT],
-        FR_set_direction,
-        PWM5_LoadDutyValue,
-    },
-    {
-        FL_CURRENT,
-        false,
-        0,
-        &position[FRONT_LEFT],
-        &velocity[FRONT_LEFT],
-        &pids[FRONT_LEFT],
-        FL_set_direction,
-        PWM1_LoadDutyValue,
-    },
-    {
-        RR_CURRENT,
-        false,
-        0,
-        &position[REAR_RIGHT],
-        &velocity[REAR_RIGHT],
-        &pids[REAR_RIGHT],
-        RR_set_direction,
-        PWM2_LoadDutyValue,
-    },
-    {
-        RL_CURRENT,
-        false,
-        0,
-        &position[REAR_LEFT],
-        &velocity[REAR_LEFT],
-        &pids[REAR_LEFT],
-        RL_set_direction,
-        PWM4_LoadDutyValue,
+#define WHEEL_DATA(initials, name, pwm) \
+    {\
+        initials##_CURRENT,\
+        false,\
+        0,\
+        &position[name],\
+        &velocity[name],\
+        &current[name],\
+        &pids[name],\
+        initials##_set_direction,\
+        pwm##_LoadDutyValue,\
+        0,\
+        1 << 4 + name\
     }
+
+wheel_t wheels[4] = {
+    WHEEL_DATA(FR, FRONT_RIGHT, PWM5),
+    WHEEL_DATA(FL, FRONT_LEFT, PWM1),
+    WHEEL_DATA(RR, REAR_RIGHT, PWM2),
+    WHEEL_DATA(RL, REAR_LEFT, PWM4),
 };
 
 bool within(int32_t desired, int32_t actual, int32_t range) {
@@ -157,6 +137,7 @@ void wheel_move_to(wheel_t *whl, int32_t pos, int16_t max_speed) {
     if (within(pos, *whl->pos, 10)) {
         // turn off motor
         wheel_stop(whl);
+        raise_alert(ALERT_DESTINATION | whl->bitmask);
     } else if (within(pos, *whl->pos, 300)){
         if (*whl->pos < pos) {
             wheel_set_speed(whl, 200);
@@ -169,5 +150,28 @@ void wheel_move_to(wheel_t *whl, int32_t pos, int16_t max_speed) {
         } else {
             wheel_set_speed(whl, -max_speed);
         }        
+    }
+}
+
+void wheel_check_current(wheel_t *whl) {
+    wheel_t *whl2;
+    volatile int16_t local_current;
+    volatile int16_t local_current_limit;
+    
+    INTERRUPT_GlobalInterruptDisable();
+    local_current = *whl->current;
+    local_current_limit = *current_limit;
+    INTERRUPT_GlobalInterruptEnable();
+    
+    if (local_current > local_current_limit) {
+        whl->over_current_count++;
+        if (whl->over_current_count > 10) {
+            FOR_ALL_WHEELS(whl2) {
+                wheel_stop(whl2);
+            }
+            raise_alert(ALERT_OVERCURRENT | whl->bitmask);
+        }
+    } else {
+        whl->over_current_count = 0;
     }
 }

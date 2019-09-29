@@ -4,6 +4,7 @@
 #include "comms.h"
 #include "mcc_generated_files/i2c1.h"
 #include "mcc_generated_files/memory.h"
+#include "mcc_generated_files/pin_manager.h"
 volatile uint8_t EEPROM_Buffer[BUFFER_SIZE] = {0};
 volatile uint8_t EEPROM_Shadow[BUFFER_SIZE] = {0};
 volatile command_t* const command = (command_t*)&EEPROM_Shadow[0x0];
@@ -11,8 +12,11 @@ volatile int32_t* const position = (int32_t*)&EEPROM_Shadow[0x10];
 volatile int16_t* const velocity = (int16_t*)&EEPROM_Shadow[0x20];
 volatile constants_t* const constants = (constants_t*)&EEPROM_Shadow[0x30];
 volatile int16_t* const current = (int16_t*)&EEPROM_Shadow[0x40];
-volatile int16_t* const batt_voltage = (int16_t*)&EEPROM_Shadow[0x48];
-volatile int16_t* const peripheral_voltage = (int16_t*)&EEPROM_Shadow[0x4C];
+volatile int16_t* const current_limit = (int16_t*)&EEPROM_Shadow[0x48];
+volatile int16_t* const batt_voltage = (int16_t*)&EEPROM_Shadow[0x50];
+volatile int16_t* const peripheral_voltage = (int16_t*)&EEPROM_Shadow[0x54];
+volatile uint8_t* const alert_status = &EEPROM_Shadow[ALERT_ADDRESS];
+
 
 __eeprom constants_t eeprom_constants = {0.0024, 0.0008, 0.0008, (WHEEL_DIAMETER*2*M_PI/374.0)};
 
@@ -41,6 +45,7 @@ void memcpy2ee(uint16_t dest, const uint8_t * src, uint8_t count) {
 
 void comms_init(void) {
     *constants = eeprom_constants;
+    *current_limit = 2000; 
 }
 
 void I2C1_StatusCallback(I2C1_SLAVE_DRIVER_STATUS i2c_bus_state)
@@ -91,6 +96,9 @@ void I2C1_StatusCallback(I2C1_SLAVE_DRIVER_STATUS i2c_bus_state)
             if (eepromAddress % 0x10==0) { //copy row from Shadow into Main Buffer
                 memcpyShadow2Buffer(eepromAddress, 0x10);
             }
+            if (eepromAddress == ALERT_ADDRESS) {
+                ALERT_SetLow();
+            }
             SSP1BUF = EEPROM_Buffer[eepromAddress++];
             if(sizeof(EEPROM_Buffer) <= eepromAddress)
             {
@@ -124,3 +132,12 @@ void I2C1_StatusCallback(I2C1_SLAVE_DRIVER_STATUS i2c_bus_state)
     } // end switch(i2c_bus_state)
 }
 
+void raise_alert(ALERT_STATUS status) {
+    if (status == ALERT_NOALERT) {
+        *alert_status = 0;
+        ALERT_SetLow();
+    } else {
+        *alert_status |= status;
+        ALERT_SetHigh();
+    }
+}
