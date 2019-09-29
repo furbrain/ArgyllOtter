@@ -24,13 +24,13 @@ class Menu():
             self.menu_array.append(("Back", BackMenuItem()))
 
     def item_changed(self, pos):
-        if child is None:
+        if self.child is None:
             self.index = pos % (len(self.menu_array))
         else:
             self.child.item_changed(pos)
                 
     def item_selected(self):
-        if child is None:
+        if self.child is None:
             text, item = self.menu_array[self.index]
             print("Item %s selected" % text)
             if isinstance(item, list):
