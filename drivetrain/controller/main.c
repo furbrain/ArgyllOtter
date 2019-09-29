@@ -67,6 +67,10 @@ const uint8_t ADC_CHANNELS[] = {
 volatile bool tick = false;
 volatile command_t cmd;
 
+inline void ADCC_SetChannel(uint8_t channel) {
+    ADPCH = channel;
+}
+
 
 void OneHundredHertz(void) {
     cmd = *command;
@@ -123,10 +127,38 @@ void Update(void) {
 
 void ADCResultReady(void) {
     static uint8_t channel_index = 0;
+    static uint16_t ground = 0;
     uint8_t channel = ADC_CHANNELS[channel_index];
     uint16_t result = ADCC_GetConversionResult();
-    // do something...
+    switch (channel) {
+        case FRONT_GROUND:
+        case REAR_GROUND:
+            ground = result;
+            break;            
+        case FL_CURRENT:
+            current[FRONT_LEFT] = (result - ground) * 50;
+            break;
+        case FR_CURRENT:
+            current[FRONT_RIGHT] = (result - ground) * 50;
+            break;
+        case RL_CURRENT:
+            current[REAR_LEFT] = (result - ground) * 50;
+            break;           
+        case RR_CURRENT:
+            current[REAR_RIGHT] = (result - ground) * 50;
+            break;
+        case BATT_VOLTAGE:
+            *batt_voltage = result * 11 * 2;
+            break;
+        case channel_DAC1:
+            *peripheral_voltage = result * 4 * 2;
+            break;
+        default:
+            break;
+    }
     channel_index = (channel_index+1) % sizeof(ADC_CHANNELS);
+    channel = ADC_CHANNELS[channel_index];
+    ADCC_SetChannel(channel);
 }
 
 
@@ -140,8 +172,8 @@ void main(void)
         wheel_stop(whl);
     }
     TMR0_SetInterruptHandler(OneHundredHertz);
-    //ADCC_SetADIInterruptHandler(ADCResultReady);
-    //ADCC_StartConversion(RR_CURRENT);
+    ADCC_SetADIInterruptHandler(ADCResultReady);
+    ADCC_SetChannel(FRONT_GROUND);
     // Enable the Interrupts
     INTERRUPT_GlobalInterruptEnable();
     INTERRUPT_PeripheralInterruptEnable();
