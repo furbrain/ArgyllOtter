@@ -92,14 +92,14 @@ void ADCC_Initialize(void)
     ADSTAT = 0x00;
     // ADNREF VSS; ADPREF FVR_buf1; 
     ADREF = 0x03;
-    // ADACT TMR1; 
-    ADACT = 0x03;
+    // ADACT TMR4; 
+    ADACT = 0x06;
     // ADCCS FOSC/128; 
     ADCLK = 0x3F;
-    // ADGO stop; ADFM right; ADON enabled; ADCONT disabled; ADCS FOSC/ADCLK; 
-    ADCON0 = 0x84;
-    // ADACQ 0; 
-    ADACQ = 0x00;
+    // ADGO stop; ADFM right; ADON enabled; ADCONT disabled; ADCS FRC; 
+    ADCON0 = 0x94;
+    // ADACQ 10; 
+    ADACQ = 0x0A;
     
     // Clear the ADC interrupt flag
     PIR1bits.ADIF = 0;
