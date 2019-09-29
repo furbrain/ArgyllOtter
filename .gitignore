@@ -2,10 +2,11 @@
 *~
 *.save
 *.bak
+*.FCStd1
+*.fcstd1
 
 #model outputs
 *.dxf
-*.stl
 *.pdf
 *.svg
 
