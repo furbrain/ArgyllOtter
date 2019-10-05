@@ -18,7 +18,7 @@ volatile int16_t* const peripheral_voltage = (int16_t*)&EEPROM_Shadow[0x54];
 volatile uint8_t* const alert_status = &EEPROM_Shadow[ALERT_ADDRESS];
 
 
-__eeprom constants_t eeprom_constants = {0.0024, 0.0008, 0.0008, (WHEEL_DIAMETER*2*M_PI/374.0)};
+const constants_t constants_default = {0.0015, 0.0005, 0.0005, (WHEEL_DIAMETER*2*M_PI/374.0)};
 
 volatile bool new_command = false;
 
@@ -42,9 +42,21 @@ void memcpy2ee(uint16_t dest, const uint8_t * src, uint8_t count) {
     }
 }
 
+void eecpy2mem(uint8_t *dest, const uint16_t src, uint8_t count) {
+    while (count--) {
+        *(dest++) = DATAEE_ReadByte(src++);
+    }
+}
+
 
 void comms_init(void) {
-    *constants = eeprom_constants;
+    if (DATAEE_ReadByte(0)==0xFF) {
+        //first run
+        *constants = constants_default;
+        memcpy2ee(0, (const char*)constants, sizeof(constants_t));
+    } else {
+        eecpy2mem(constants, 0, sizeof(constants_t));
+    }
     *current_limit = 2000; 
 }
 
@@ -122,7 +134,7 @@ void I2C1_StatusCallback(I2C1_SLAVE_DRIVER_STATUS i2c_bus_state)
                 }
                 if (writeStart==0x30) {
                     //constants written so update NVRAM
-                    memcpy2ee(0, (const char*)&EEPROM_Buffer[0x30], 0x10);
+                    memcpy2ee(0, (const char*)&EEPROM_Buffer[0x30], sizeof(constants_t));
                 }
                 dataToSave = false;
             }
