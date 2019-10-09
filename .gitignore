@@ -4,6 +4,8 @@
 *.bak
 *.FCStd1
 *.fcstd1
+*.net
+*.cmd
 
 #model outputs
 *.dxf
