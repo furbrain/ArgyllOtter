@@ -19,6 +19,7 @@ class BMP388:
         data = self.bus.read_i2c_block_data(self.address, 0x04, 0x03)
         result = data[0] + data[1]*0x100 + data[2]*0x10000
         result *= 0.016
+        return result
         
 if __name__ == "__main__":
     import time
