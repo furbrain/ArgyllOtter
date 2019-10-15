@@ -110,6 +110,16 @@ try:
                     joystick.check_presses()
                     # Print out any buttons that were pressed, if we had any
                     if joystick.has_presses:
+                        if "triangle" in joystick.presses:
+                            print("opening")
+                            with open('/dev/servoblaster','w') as f:
+                                f.write("0=100\n")
+                                f.close()
+                        if "cross" in joystick.presses:
+                            print("closing")
+                            with open('/dev/servoblaster','w') as f:
+                                f.write("0=180\n")
+                                f.close()
                         print(joystick.presses)
                     # If home was pressed, raise a RobotStopException to bail out of the loop
                     # Home is generally the PS button for playstation controllers, XBox for XBox etc
