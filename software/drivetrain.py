@@ -2,6 +2,9 @@
 import smbus
 import math
 import struct
+import orientation
+import numpy as np
+import time
 
 I2C_ADDRESS = 0x33
 
@@ -12,6 +15,12 @@ class DriveTrain:
         else:
             self.bus = bus
         self.clicks_per_mm = clicks_per_revolution/(math.pi*wheel_diameter)
+        self.orientation = orientation.MPU9250(bus=self.bus)
+        results = []
+        for i in range(20):
+            results += [self.orientation.get_rotation()]
+            time.sleep(0.02)
+        self.gyro_cal = np.mean(results, axis=0)
         
     def mm2c(self, *args):
         return [int(x * self.clicks_per_mm) for x in args]
@@ -77,6 +86,24 @@ class DriveTrain:
 if __name__ == "__main__":
     import time
     driver = DriveTrain()
+    driver.drive(400,-400)
+    last_time = time.time()
+    angle = 0
+    for i in range(5000):
+        this_time = time.time()
+        rotation = driver.orientation.get_rotation()-driver.gyro_cal
+        rotation = rotation[2]*(this_time-last_time)
+        angle += rotation
+        print(rotation, angle, this_time-last_time)
+        last_time = this_time
+        if angle >=65.0:
+            driver.drive(100,-100)
+        if angle >=90.0:
+            break;
+    driver.stop()
+    time.sleep(0.5)
+    driver.stop()
+    exit()
     time.sleep(0.01)
     print(driver.get_positions())
     driver.reset_position()
