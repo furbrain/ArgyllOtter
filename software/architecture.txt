@@ -1,0 +1,13 @@
+Software organisation options
+
+Have separate functions which are called for each mode
+    Pros: Simple
+    Cons: Changes in controller etc need to be duplicated - violates DRY
+    
+Have classes for each mode which are polled at frequent intervals
+    Pros: Can abstract out controller mechanism
+        : Allows manager code to abort if needed
+    
+    Cons: More complex
+          How de we handle the case where we are doing complex CV stuff and over-run
+          our time slot? Maybe do the complex stuff in separate slot and poll for completion?

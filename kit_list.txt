@@ -1,0 +1,58 @@
+Tools:
+    Precision screwdriver kit
+    Socket set
+    Multimeter
+    mosquito pliers
+    PIC programmer
+    serial connector
+    crimper
+    picoscope
+    Glue gun?
+    Drill?
+    Calipers?
+
+General parts:
+    M3:
+        40mm bolt
+        20mm bolt
+        nuts
+        washers
+        insets
+        2 x 3mm spacer
+        3 x 4mm bearing
+        4 x 10mm hex spacer
+         
+    M5:
+        bolt
+        nuts
+    jumper cables:
+        male-female
+        male-male
+        female-female
+
+    JST EH:
+        2,4,6-way housing
+        contacts
+        
+    Electrical tape
+    
+    Bungee cord
+    
+Controller
+    
+Drivetrain
+    2 x Rods
+    2 x springs
+    1 x motor
+    1 x cable
+    
+Grabber
+    1 each of each possible part (maybe use old wooden ones)
+    Servo horn adapter
+    
+Shooter
+    1 each of support bridges (maybe use old wooden ones)
+    
+    
+    
+    

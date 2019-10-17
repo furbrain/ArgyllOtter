@@ -17,9 +17,8 @@ Have suspension which can be enabled or disabled
 Use home made chassis
 
 Cannon - use miniature ping-pong balls, use pvc pipe for a barrel
-Use a servo to dispense balls into firing chamber
-Use a rod and piston to fire it. Power piston with elastic band.
-Use a worm drive to pull elastic band tight, possibly another servo to release the band...
+Use atomic power popper and a pump to fire it.
+Servo to change angle
 
 Maze - use computer vision to identify faces and orient correctly.
 	 - use laser range finder to get distance to them - then drive correct
@@ -28,6 +27,22 @@ Maze - use computer vision to identify faces and orient correctly.
 Similar approach for nebula...       
        
 Use bluetooth and games controller to communicate??
+
+
+JOBS:
+General:
+sort out headset wiring
+sort attachment for helmet
+Get software running to auto-start and allow manual control
+
+Shooter:
+Make pcb for angle and pressure sensor inside popper
+make pcb to control pump, laser and servos
+
+make insert for tube internal pcb
+adjust end cap to allow for wire
+make pivot mounts
+make mounting board and mounts
 
 
 
