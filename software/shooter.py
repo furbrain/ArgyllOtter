@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 import smbus
 import struct
+import simple_pid
+import servo
+import orientation
+import gpiozero
 
 BMP388_ADDRESS = 0x77
 
@@ -22,11 +26,59 @@ class Pressure:
         return result
         
 class Barrel:
-    def __init__(self):
+    def __init__(self, bus=None):
+        self.servo = servo.Servo()
+        self.position = -10
+        self.orientation = orientation.MPU9250(bus=bus, address=0x69)
+        self.pid = simple_pid.PID(0.3, 1.5, 0.0001,
+                                  output_limits = (70, 145) , 
+                                  sample_time=0.05)
+
+    def set_angle(self, angle):
+        self.pid.setpoint = angle
+
+    def update(self):
+        angle = self.orientation.get_angle()
+        output = 215 - self.pid(angle)
+        self.servo.set_pos(output)
+        return (angle, output)
+        
+def Pointer():
+    return gpiozero.LED(22)
+    
+def Pump():
+    return gpiozero.LED(27)
                         
 if __name__ == "__main__":
     import time
-    p = Pressure()
-    for x in range(100):
-         time.sleep(0.5)
-         print(p.get_pressure())
+    p = Pointer()
+    p.on()
+    b = Barrel()
+    print ("Going UP")
+    for i in reversed(range(70,150,5)):
+        b.servo.set_pos(i)
+        time.sleep(1)
+        print('{:3d},{:6.2f}'.format(i, b.orientation.get_angle()))
+    print("Going DOWN")
+    for i in range(70,150,5):        
+        b.servo.set_pos(i)
+        time.sleep(1)
+        print('{:3d},{:6.2f}'.format(i, b.orientation.get_angle()))
+    if 0:
+        b.set_angle(30)
+        for i in range(80):
+            time.sleep(0.05)
+            print(('{:6.2f} '*5).format(*b.update(),*b.pid.components))
+        b.set_angle(35)
+        print("Higher")
+        for i in range(80):
+            time.sleep(0.05)
+            print(('{:6.2f} '*5).format(*b.update(),*b.pid.components))
+        b.set_angle(20)
+        print("Higher")
+        for i in range(80):
+            time.sleep(0.05)
+            print(('{:6.2f} '*5).format(*b.update(),*b.pid.components))
+    b.servo.off()
+    p.off()
+    time.sleep(0.2)
