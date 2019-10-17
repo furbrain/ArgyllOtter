@@ -4,7 +4,7 @@ import struct
 
 BMP388_ADDRESS = 0x77
 
-class BMP388:
+class Pressure:
     def __init__(self, bus = None, address = BMP388_ADDRESS):
         if bus is None:
             self.bus = smbus.SMBus(1)
@@ -21,9 +21,12 @@ class BMP388:
         result *= 0.016
         return result
         
+class Barrel:
+    def __init__(self):
+                        
 if __name__ == "__main__":
     import time
-    p = BMP388()
+    p = Pressure()
     for x in range(100):
          time.sleep(0.5)
          print(p.get_pressure())
