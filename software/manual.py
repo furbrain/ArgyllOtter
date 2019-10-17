@@ -73,6 +73,11 @@ def mixer(yaw, throttle, max_power=1000):
     :return: 
         A pair of power_left, power_right integer values to send to the motor driver
     """
+    if max_power*throttle > 300:
+        yaw = max(-0.5, yaw)
+        yaw = min(0.5, yaw)
+    if throttle < -0.1:
+        yaw = -yaw
     left = throttle + yaw
     right = throttle - yaw
     scale = float(max_power) / max(1, abs(left), abs(right))
