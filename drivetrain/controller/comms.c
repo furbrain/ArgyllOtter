@@ -42,7 +42,7 @@ void memcpy2ee(uint16_t dest, const uint8_t * src, uint8_t count) {
     }
 }
 
-void eecpy2mem(uint8_t *dest, const uint16_t src, uint8_t count) {
+void eecpy2mem(uint8_t *dest, uint16_t src, uint8_t count) {
     while (count--) {
         *(dest++) = DATAEE_ReadByte(src++);
     }
@@ -50,13 +50,13 @@ void eecpy2mem(uint8_t *dest, const uint16_t src, uint8_t count) {
 
 
 void comms_init(void) {
-    if (DATAEE_ReadByte(0)==0xFF) {
-        //first run
-        *constants = constants_default;
-        memcpy2ee(0, (const char*)constants, sizeof(constants_t));
-    } else {
-        eecpy2mem(constants, 0, sizeof(constants_t));
-    }
+//    if (DATAEE_ReadByte(0)==0xFF) {
+//        //first run
+//        *constants = constants_default;
+//        memcpy2ee(0, (const char*)constants, sizeof(constants_t));
+//    } else {
+//        eecpy2mem(constants, 0, sizeof(constants_t));
+//    }
     *current_limit = 2000; 
 }
 

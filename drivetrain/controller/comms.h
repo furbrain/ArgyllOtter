@@ -63,7 +63,7 @@ extern volatile int16_t* const velocity; // velocity for each wheel in counts/0.
 extern volatile command_t* const command; //current command
 extern volatile constants_t* const constants; //kP, kI, kD, mm per click
 extern volatile int16_t* const current; // current for each motor in mA
-volatile int16_t* const current_limit; //current limit for each motor in mA
+extern volatile int16_t* const current_limit; //current limit for each motor in mA
 extern volatile int16_t* const batt_voltage; //voltage in mV
 extern volatile int16_t* const peripheral_voltage; //5V level in mV
 extern volatile uint8_t* const alert_status;
