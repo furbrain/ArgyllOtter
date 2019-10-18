@@ -17,13 +17,12 @@ extern "C" {
     
 #define PID_MIN -1.0
 #define PID_MAX 1.0 
-    
-#define SAMPLE_TIME 50
+#define RATE_LIMIT 0.2
     
 typedef struct {
     float kP, kI, kD;
     float setPoint, lastInput, ITerm;
-    float startInput;
+    float startInput, lastOutput;
     bool pOnE;
 } pid_t;
 
