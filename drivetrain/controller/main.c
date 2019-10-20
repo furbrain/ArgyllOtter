@@ -123,7 +123,7 @@ void Update(void) {
             wheel_update_power(whl);
         }
         FOR_ALL_WHEELS(whl) {
-            wheel_check_current(whl);
+            //wheel_check_current(whl);
         }
     }
 }
