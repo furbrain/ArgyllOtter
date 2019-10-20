@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 import smbus
-import struct
-import simple_pid
 import servo
 import orientation
 import gpiozero
@@ -36,9 +34,7 @@ class Barrel:
         self.servo = servo.Servo()
         self.position = -10
         self.orientation = orientation.MPU9250(bus=bus, address=0x69)
-        self.pid = simple_pid.PID(0.3, 1.5, 0.0001,
-                                  output_limits = (70, 145) , 
-                                  sample_time=0.05)
+        self.angle = self.orientation.get_angle()
         try:
             f = np.load(CAL_FILE)
         except IOError:
@@ -54,14 +50,26 @@ class Barrel:
                 self.cal_down = f['down']
 
     def set_angle(self, angle):
-        self.pid.setpoint = angle
-
-    def update(self):
-        angle = self.orientation.get_angle()
-        output = self.pid(angle)
-        self.servo.set_pos(output)
-        return (angle, output)
-        
+        cur_angle = self.orientation.get_angle()
+        if angle > cur_angle+5:
+            self.position = np.interp(angle, self.cal_range, self.cal_up)
+            self.servo.set_pos(self.position)
+            time.sleep(0.3)
+            cur_angle = self.orientation.get_angle()
+        elif angle < cur_angle-5:
+            self.position = np.interp(angle, self.cal_range, self.cal_down)
+            self.servo.set_pos(self.position)
+            time.sleep(0.3)
+            cur_angle = self.orientation.get_angle()
+        while (abs(angle-cur_angle)>2):
+            if angle<cur_angle:
+                self.position -= 1
+            else:
+                self.postion += 1
+            self.servo.set_pos(self.position)
+            time.sleep(0.1)
+            cur_angle = self.orientation.get_angle()
+            
     def calibrate(self):
         rng = np.arange(*CAL_RANGE)
         up = []
