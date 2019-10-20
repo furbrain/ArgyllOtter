@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from servo import Servo
+from .servo import Servo
 
 class Grabber:
     def __init__(self):

@@ -2,7 +2,7 @@
 import smbus
 import math
 import struct
-import orientation
+from . import orientation
 import numpy as np
 import time
 
@@ -15,7 +15,7 @@ class Drive:
         else:
             self.bus = bus
         self.clicks_per_mm = clicks_per_revolution/(math.pi*wheel_diameter)
-        self.orientation = orientation.MPU9250(bus=self.bus)
+        self.orientation = orientation.Orientation(bus=self.bus)
         results = []
         for i in range(20):
             results += [self.orientation.get_rotation()]

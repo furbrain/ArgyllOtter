@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import smbus
-import servo
-import orientation
+from . import servo
+from . import orientation
 import gpiozero
 import time
 import numpy as np
@@ -49,9 +49,6 @@ class Barrel:
                 self.cal_range = f['range']
                 self.cal_up = f['up']
                 self.cal_down = f['down']
-
-    def __del__(self):
-        self.servo.off()
 
     def set_angle(self, angle):
         cur_angle = self.orientation.get_angle()
@@ -119,15 +116,14 @@ if __name__ == "__main__":
         for i in range(1000):
             air = pressure.get_pressure()
             if  air is not None and air < 100000:
-                barrel.servo.set_pos(100)
+                barrel.servo.set_pos(40)
                 pointer.on()
             else:
-                barrel.servo.set_pos(147)
+                barrel.servo.set_pos(-10)
                 pointer.off()
             time.sleep(0.05)
     except KeyboardInterrupt:
         pass
     pump.off()
     pointer.off()
-    barrel.servo.off()
     time.sleep(0.5)
