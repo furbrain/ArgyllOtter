@@ -89,16 +89,18 @@ if __name__ == "__main__":
     driver.drive(400,-400)
     last_time = time.time()
     angle = 0
+    print("CAL:", driver.gyro_cal)
     for i in range(5000):
+        time.sleep(0.007)
         this_time = time.time()
         rotation = driver.orientation.get_rotation()-driver.gyro_cal
         rotation = rotation[2]*(this_time-last_time)
         angle += rotation
         print(rotation, angle, this_time-last_time)
         last_time = this_time
-        if angle >=65.0:
+        if angle >=320.0:
             driver.drive(100,-100)
-        if angle >=90.0:
+        if angle >=360.0:
             break;
     driver.stop()
     time.sleep(0.5)
