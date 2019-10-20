@@ -50,26 +50,35 @@ class Barrel:
                 self.cal_up = f['up']
                 self.cal_down = f['down']
 
+    def __del__(self):
+        self.servo.off()
+
     def set_angle(self, angle):
         cur_angle = self.orientation.get_angle()
+        print("Start: ", cur_angle)
         if angle > cur_angle+5:
-            self.position = np.interp(angle, self.cal_range, self.cal_up)
+            self.position = np.interp(angle, self.cal_up, self.cal_range)
+            print("Pos: ", self.position)
             self.servo.set_pos(self.position)
             time.sleep(0.3)
             cur_angle = self.orientation.get_angle()
         elif angle < cur_angle-5:
-            self.position = np.interp(angle, self.cal_range, self.cal_down)
+            self.position = np.interp(angle, self.cal_down, self.cal_range)
+            print("Pos: ", self.position)
             self.servo.set_pos(self.position)
             time.sleep(0.3)
             cur_angle = self.orientation.get_angle()
-        while (abs(angle-cur_angle)>2):
+        print("After first move: ", cur_angle)
+        while (abs(angle-cur_angle)>1):
             if angle<cur_angle:
                 self.position -= 1
             else:
-                self.postion += 1
+                self.position += 1
+            print("Pos: ", self.position)
             self.servo.set_pos(self.position)
             time.sleep(0.1)
             cur_angle = self.orientation.get_angle()
+            print("Incremental: ", cur_angle)
             
     def calibrate(self):
         rng = np.arange(*CAL_RANGE)

@@ -11,11 +11,11 @@ class Servo:
             f.flush()
         
     def set_pos(self, x):
-        """Set position to x where -50 < x < 250
+        """Set position to x where -100 < x < 100
            Note this may not correspond to the actual degree position..."""
         if self.inverted:
             x = -x
-        val = x - 150
+        val = 150 + x
         self.set_servo(val)
                 
     def off(self):
