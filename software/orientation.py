@@ -14,6 +14,7 @@ class MPU9250:
         self.address = address
         self.bus.write_byte_data(self.address,27,0x10) #gyro 1000dps full scale
         self.bus.write_byte_data(self.address,28,0x08) #accel 4g full scale
+        self.bus.write_byte_data(self.address,28,0x04) #accel 8ms low pass filter
         
     def get_accel(self):
         data = self.bus.read_i2c_block_data(self.address, 0x3B, 0x06)

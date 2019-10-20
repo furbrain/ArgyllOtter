@@ -69,13 +69,20 @@ class Barrel:
             time.sleep(0.3)
             cur_angle = self.orientation.get_angle()
         print("After first move: ", cur_angle)
-        while (abs(angle-cur_angle)>1):
-            if angle<cur_angle:
-                self.position -= 1
+        on_pos_count = 0
+        while True:
+            if (abs(angle-cur_angle)<0.5):
+                on_pos_count += 1
+                if on_pos_count >=2:
+                   break
             else:
-                self.position += 1
-            print("Pos: ", self.position)
-            self.servo.set_pos(self.position)
+                on_pos_count = 0
+                if angle<cur_angle:
+                   self.position -= 1
+                else:
+                    self.position += 1
+                print("Pos: ", self.position)
+                self.servo.set_pos(self.position)
             time.sleep(0.1)
             cur_angle = self.orientation.get_angle()
             print("Incremental: ", cur_angle)
