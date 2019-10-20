@@ -5,6 +5,9 @@ class Servo:
         self.pin  = pin
         self.inverted = inverted
         
+    def __del__(self):
+        self.off()
+        
     def set_servo(self, val):
         with open("/dev/servoblaster","w") as f:
             f.write(str(self.pin) + "=%f\n" % val)
