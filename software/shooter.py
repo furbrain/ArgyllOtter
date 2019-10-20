@@ -8,8 +8,7 @@ import gpiozero
 import numpy as np
 
 BMP388_ADDRESS = 0x77
-UP_CAL_FILE = "/home/pi/calibration_up.np"
-DOWN_CAL_FILE = "/home/pi/calibration_down.np"
+CAL_FILE = "/home/pi/shooter_calibration.npz"
 CAL_RANGE = (-30,70,5)
 
 class Pressure:
@@ -36,20 +35,23 @@ class Barrel:
     def __init__(self, bus=None):
         self.servo = servo.Servo()
         self.position = -10
-        #self.orientation = orientation.MPU9250(bus=bus, address=0x69)
+        self.orientation = orientation.MPU9250(bus=bus, address=0x69)
         self.pid = simple_pid.PID(0.3, 1.5, 0.0001,
                                   output_limits = (70, 145) , 
                                   sample_time=0.05)
         try:
-            f = open(UP_CAL_FILE)
+            f = np.load(CAL_FILE)
         except IOError:
             rng = range(*CAL_RANGE)
             rv = reversed(rng)
+            self.cal_range = np.arange(*CAL_RANGE)
             self.cal_up = np.stack(rng,rng).T
             self.cal_down = np.stack(rv,rv).T
         else:
             with f as f:
-                self.cal_up = np.load(f)
+                self.cal_range = f['range']
+                self.cal_up = f['up']
+                self.cal_down = f['down']
 
     def set_angle(self, angle):
         self.pid.setpoint = angle
@@ -61,17 +63,19 @@ class Barrel:
         return (angle, output)
         
     def calibrate(self):
-        with open("/home/pi/calibration_up.csv", "w") as f:
-            for i in range(-30, 70, 5):
-                self.serve.set_pos(i)
-                time.sleep(1)
-                f.write('{:3d},{:6.2f}'.format(i, self.orientation.get_angle()))
-        with open("/home/pi/calibration_down.csv", "w") as f:
-            for i in reversed(range(-30, 70, 5)):
-                self.serve.set_pos(i)
-                time.sleep(1)
-                f.write('{:3d},{:6.2f}'.format(i, self.orientation.get_angle()))
-                
+        rng = np.arange(*CAL_RANGE)
+        up = []
+        down = []
+        for i in rng:
+            self.servo.set_pos(i)
+            time.sleep(1)
+            up.append(self.orientation.get_angle())
+        for i in reversed(rng):
+            self.servo.set_pos(i)
+            time.sleep(1)
+            down.append(self.orientation.get_angle())
+        down = down[::-1]
+        np.savez(CAL_FILE, range=rng, up=up, down=down)             
         
 def Pointer():
     return gpiozero.LED(22)

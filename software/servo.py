@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 
 class Servo:
-    def __init__(self, pin="0"):
+    def __init__(self, pin="0", inverted=False):
         self.pin  = pin
+        self.inverted = inverted
+        
+    def set_servo(self, val):
+        with open("/dev/servoblaster","w") as f:
+            f.write(str(self.pin) + "=%f\n" % val)
+            f.flush()
         
     def set_pos(self, x):
-        """Set position to x where 50 < x < 250
+        """Set position to x where -50 < x < 250
            Note this may not correspond to the actual degree position..."""
-        with open("/dev/servoblaster","w") as f:
-            f.write(str(self.pin) + "=%f\n" % x)
-            f.flush()
-        
+        if self.inverted:
+            x = -x
+        val = x - 150
+        self.set_servo(val)
+                
     def off(self):
         """Turn servo off"""
-        with open("/dev/servoblaster","w") as f:
-            f.write(str(self.pin) + "=0\n")
-            f.flush()
+        self.set_servo(0)
     
