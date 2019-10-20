@@ -45,7 +45,7 @@ class Barrel:
             self.cal_up = self.cal_range[:]
             self.cal_down = self.cal_range[:]
         else:
-            with f as f:
+            with f:
                 self.cal_range = f['range']
                 self.cal_up = f['up']
                 self.cal_down = f['down']
