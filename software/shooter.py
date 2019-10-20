@@ -5,11 +5,12 @@ import simple_pid
 import servo
 import orientation
 import gpiozero
+import time
 import numpy as np
 
 BMP388_ADDRESS = 0x77
 CAL_FILE = "/home/pi/shooter_calibration.npz"
-CAL_RANGE = (-30,70,5)
+CAL_RANGE = (-10,70,5)
 
 class Pressure:
     def __init__(self, bus = None, address = BMP388_ADDRESS):
@@ -33,7 +34,7 @@ class Pressure:
         
 class Barrel:
     def __init__(self, bus=None):
-        self.servo = servo.Servo()
+        self.servo = servo.Servo(inverted=True)
         self.position = -10
         self.orientation = orientation.MPU9250(bus=bus, address=0x69)
         self.pid = simple_pid.PID(0.3, 1.5, 0.0001,
@@ -45,8 +46,8 @@ class Barrel:
             rng = range(*CAL_RANGE)
             rv = reversed(rng)
             self.cal_range = np.arange(*CAL_RANGE)
-            self.cal_up = np.stack(rng,rng).T
-            self.cal_down = np.stack(rv,rv).T
+            self.cal_up = self.cal_range[:]
+            self.cal_down = self.cal_range[:]
         else:
             with f as f:
                 self.cal_range = f['range']
