@@ -5,7 +5,7 @@ import math
 
 MPU9250_ADDRESS = 0x68
 
-class MPU9250:
+class Orientation:
     def __init__(self, bus = None, address = MPU9250_ADDRESS):
         if bus is None:
             self.bus = smbus.SMBus(1)

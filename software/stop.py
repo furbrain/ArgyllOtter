@@ -1,4 +1,4 @@
 #!/usr/bin/env python3
-import drivetrain
-d = drivetrain.DriveTrain()
+from hardware import Drive
+d = Drive()
 d.stop()

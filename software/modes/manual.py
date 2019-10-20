@@ -6,9 +6,9 @@
 # an exception to break out of the control loop on pressing HOME etc.
 
 from time import sleep
+import hardware
 try:
-    import drivetrain
-    driver = drivetrain.DriveTrain()
+    driver = hardware.Drive()
     def set_speeds(power_left, power_right):
         """
         As we have an motor hat, we can use the motors

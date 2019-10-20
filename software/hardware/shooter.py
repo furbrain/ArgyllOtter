@@ -34,7 +34,7 @@ class Barrel:
     def __init__(self, bus=None):
         self.servo = servo.Servo(inverted=True)
         self.position = -10
-        self.orientation = orientation.MPU9250(bus=bus, address=0x69)
+        self.orientation = orientation.Orientation(bus=bus, address=0x69)
         self.angle = self.orientation.get_angle()
         try:
             f = np.load(CAL_FILE)

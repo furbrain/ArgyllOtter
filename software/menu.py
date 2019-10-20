@@ -61,10 +61,9 @@ class Menu():
             self.child.draw()        
 
 if __name__ == "__main__":
-    from drivetrain import DriveTrain
-    from encoder import Encoder
+    from hardware import Drive, Encoder
     import os
-    d = DriveTrain()
+    d = Drive()
     test = [
         ("Move", [
             ("Forward 1m", lambda : d.goto(1000, 800)),

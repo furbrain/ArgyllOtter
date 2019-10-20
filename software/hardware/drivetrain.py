@@ -8,7 +8,7 @@ import time
 
 I2C_ADDRESS = 0x33
 
-class DriveTrain:
+class Drive:
     def __init__(self, bus=None, wheel_diameter=70.0, clicks_per_revolution=374):
         if bus is None:
             self.bus = smbus.SMBus(1)
@@ -85,7 +85,7 @@ class DriveTrain:
     
 if __name__ == "__main__":
     import time
-    driver = DriveTrain()
+    driver = Drive()
     driver.drive(400,-400)
     last_time = time.time()
     angle = 0
