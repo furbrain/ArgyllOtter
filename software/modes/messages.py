@@ -14,17 +14,12 @@ class EncoderChangeMessage(EncoderMessage):
         
 class ControllerMessage(Message):
     pass
-    
-class ControllerAxisMessage(ControllerMessage):
-    def __init__(self, side, x, y):
-        self.side = side
-        self.x = x
-        self.y = y
-        
+            
 class ControllerButtonMessage(ControllerMessage):
     def __init__(self, button):
         self.button = button
         
 class ControllerConnectedMessage(ControllerMessage):
-    def __init__(self, connected):
+    def __init__(self, connected, joystick=None):
         self.connected = connected
+        self.joystick = joystick

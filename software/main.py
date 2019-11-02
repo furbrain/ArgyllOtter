@@ -20,7 +20,7 @@ class DiscardingQueue(collections.deque):
 
 class Main:
     def __init__(self):
-        self.queue = DiscardingQueue(20)
+        self.events = DiscardingQueue(20)
         #set up controller if present
 
     async def run(self):
@@ -28,14 +28,17 @@ class Main:
         loop = asyncio.get_event_loop()
         #encoder = hardware.Encoder((19,13,26), self.handle_encoder_change, self.handle_encoder_press)
         loop.create_task(self.controller_monitor())
-        loop.create_task(self.handle_events())
+        loop.create_task(self.poll_events())
         await asyncio.sleep(10)
 
     def handle_encoder_change(self, pos):
-        self.queue.put(messages.EncoderChangeMessage(pos))
+        self.events.put(messages.EncoderChangeMessage(pos))
         
     def handle_encoder_press(self):
-        self.queue.put(messages.EncoderPressMessage())
+        self.events.put(messages.EncoderPressMessage())
+    
+    def button_handler(self, button):
+        self.events.put(messages.ControllerButtonMessage(button.sname))
 
     async def controller_monitor(self, poll_time=0.1):
         while True:
@@ -46,20 +49,23 @@ class Main:
                 await asyncio.sleep(1.0)
             else:
                 with controller as joystick:
-                    self.queue.put(messages.ControllerConnectedMessage(True))
+                    self.joystick = joystick
+                    joystick.buttons.register_button_handler(self.button_handler,
+                        list(joystick.buttons.buttons.keys()))
+                        
+                    self.events.put(messages.ControllerConnectedMessage(True, joystick))
                     while joystick.connected:
-                        self.queue.put(messages.ControllerAxisMessage('left', *joystick['lx', 'ly']))
-                        self.queue.put(messages.ControllerAxisMessage('right', *joystick['rx', 'ry']))
-                        joystick.check_presses()
-                        for press in joystick.presses:
-                            self.queue.put(messages.ControllerButtonMessage(press))
                         await asyncio.sleep(poll_time)
-                queue.put(messages.ControllerConnectedMessage(False))
+                self.events.put(messages.ControllerConnectedMessage(False))
+                self.joystick = None
                 
-    async def handle_events(self):
+    def handle_event(self, event):
+        if 
+                
+    async def poll_events(self):
         while True:
-            if len(self.queue):
-                print(self.queue.get())
+            if len(self.events):
+                print(self.events.get())
             await asyncio.sleep(0.01)
 
 #get up and running...
