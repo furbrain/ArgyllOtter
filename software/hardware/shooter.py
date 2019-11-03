@@ -56,23 +56,23 @@ class Barrel:
     def set_pos(self, pos):
         self.position = pos
         self.servo.set_pos(pos)
+        
+    def get_pos(self):
+        return self.position
+        
+    def set_angle_quick(self, angle):
+        cur_angle = self.orientation.get_angle()
+        if angle > cur_angle+5:
+            self.position = np.interp(angle, self.cal_up, self.cal_range)
+            self.servo.set_pos(self.position)
+        elif angle < cur_angle-5:
+            self.position = np.interp(angle, self.cal_down, self.cal_range)
+            self.servo.set_pos(self.position)
 
     async def set_angle(self, angle):
         cur_angle = self.orientation.get_angle()
-        print("Start: ", cur_angle)
-        if angle > cur_angle+5:
-            self.position = np.interp(angle, self.cal_up, self.cal_range)
-            print("Pos: ", self.position)
-            self.servo.set_pos(self.position)
-            await asyncio.sleep(0.3)
-            cur_angle = self.orientation.get_angle()
-        elif angle < cur_angle-5:
-            self.position = np.interp(angle, self.cal_down, self.cal_range)
-            print("Pos: ", self.position)
-            self.servo.set_pos(self.position)
-            await asyncio.sleep(0.3)
-            cur_angle = self.orientation.get_angle()
-        print("After first move: ", cur_angle)
+        self.set_angle_quick(angle)
+        await asyncio.sleep(0.3)
         on_pos_count = 0
         while True:
             if (abs(angle-cur_angle)<0.5):
@@ -85,11 +85,10 @@ class Barrel:
                    self.position -= 1
                 else:
                     self.position += 1
-                print("Pos: ", self.position)
                 self.servo.set_pos(self.position)
             await asyncio.sleep(0.1)
             cur_angle = self.orientation.get_angle()
-            print("Incremental: ", cur_angle)
+        print("set_angle finished")
             
     async def calibrate(self):
         rng = np.arange(*CAL_RANGE)
