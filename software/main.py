@@ -21,6 +21,9 @@ class DiscardingQueue(collections.deque):
 class Main:
     def __init__(self):
         self.events = DiscardingQueue(20)
+        self.mode = None
+        self.mode_task = None
+        self.finished = False
         #set up controller if present
 
     async def run(self):
@@ -29,7 +32,14 @@ class Main:
         #encoder = hardware.Encoder((19,13,26), self.handle_encoder_change, self.handle_encoder_press)
         loop.create_task(self.controller_monitor())
         loop.create_task(self.poll_events())
-        await asyncio.sleep(10)
+        while not self.finished:
+            await asyncio.sleep(0.1)
+       
+    def enter_mode(self, mode):
+        if self.mode_task:
+            self.mode_task.cancel()
+        self.mode = mode(self.joystick)
+        self.mode_task = asyncio.ensure_future(self.mode.run())
 
     def handle_encoder_change(self, pos):
         self.events.put(messages.EncoderChangeMessage(pos))
@@ -60,15 +70,27 @@ class Main:
                 self.joystick = None
                 
     def handle_event(self, event):
-        if 
+        print("Handling event: ", event)
+        if isinstance(event, messages.ControllerButtonMessage):
+            if event.button =="home":
+                self.finished = True
+                if self.mode_task:
+                    self.mode_task.cancel()
+                return True
+        return False
                 
     async def poll_events(self):
         while True:
             if len(self.events):
-                print(self.events.get())
+                event = self.events.get()
+                if self.handle_event(event):
+                    pass
+                elif self.mode is not None:
+                    self.mode.handle_event(event)
             await asyncio.sleep(0.01)
 
 #get up and running...
-m = Main()
-loop = asyncio.get_event_loop()
-loop.run_until_complete(m.run())
+if __name__=="__main__":
+    m = Main()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(m.run())

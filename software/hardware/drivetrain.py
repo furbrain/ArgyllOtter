@@ -15,12 +15,12 @@ class Drive:
         else:
             self.bus = bus
         self.clicks_per_mm = clicks_per_revolution/(math.pi*wheel_diameter)
-        self.orientation = orientation.Orientation(bus=self.bus)
-        results = []
-        for i in range(20):
-            results += [self.orientation.get_rotation()]
-            time.sleep(0.02)
-        self.gyro_cal = np.mean(results, axis=0)
+        #self.orientation = orientation.Orientation(bus=self.bus)
+        #results = []
+        #for i in range(20):
+        #    results += [self.orientation.get_rotation()]
+        #    time.sleep(0.02)
+        #self.gyro_cal = np.mean(results, axis=0)
         
     def mm2c(self, *args):
         return [int(x * self.clicks_per_mm) for x in args]

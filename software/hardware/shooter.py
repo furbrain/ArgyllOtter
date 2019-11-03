@@ -3,8 +3,8 @@ import smbus
 from . import servo
 from . import orientation
 import gpiozero
-import time
 import numpy as np
+import asyncio
 
 BMP388_ADDRESS = 0x77
 CAL_FILE = "/home/pi/shooter_calibration.npz"
@@ -49,21 +49,28 @@ class Barrel:
                 self.cal_range = f['range']
                 self.cal_up = f['up']
                 self.cal_down = f['down']
+                
+    def getAngle(self):
+        return self.orientation.get_angle()    
 
-    def set_angle(self, angle):
+    def set_pos(self, pos):
+        self.position = pos
+        self.servo.set_pos(pos)
+
+    async def set_angle(self, angle):
         cur_angle = self.orientation.get_angle()
         print("Start: ", cur_angle)
         if angle > cur_angle+5:
             self.position = np.interp(angle, self.cal_up, self.cal_range)
             print("Pos: ", self.position)
             self.servo.set_pos(self.position)
-            time.sleep(0.3)
+            await asyncio.sleep(0.3)
             cur_angle = self.orientation.get_angle()
         elif angle < cur_angle-5:
             self.position = np.interp(angle, self.cal_down, self.cal_range)
             print("Pos: ", self.position)
             self.servo.set_pos(self.position)
-            time.sleep(0.3)
+            await asyncio.sleep(0.3)
             cur_angle = self.orientation.get_angle()
         print("After first move: ", cur_angle)
         on_pos_count = 0
@@ -80,21 +87,21 @@ class Barrel:
                     self.position += 1
                 print("Pos: ", self.position)
                 self.servo.set_pos(self.position)
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
             cur_angle = self.orientation.get_angle()
             print("Incremental: ", cur_angle)
             
-    def calibrate(self):
+    async def calibrate(self):
         rng = np.arange(*CAL_RANGE)
         up = []
         down = []
         for i in rng:
             self.servo.set_pos(i)
-            time.sleep(1)
+            await asyncio.sleep(1)
             up.append(self.orientation.get_angle())
         for i in reversed(rng):
             self.servo.set_pos(i)
-            time.sleep(1)
+            await asyncio.sleep(1)
             down.append(self.orientation.get_angle())
         down = down[::-1]
         np.savez(CAL_FILE, range=rng, up=up, down=down)             
@@ -105,25 +112,26 @@ def Pointer():
 def Pump():
     return gpiozero.LED(27)
                         
-if __name__ == "__main__":
-    import time
+async def test():
     barrel = Barrel()
     pressure = Pressure()
     pump = Pump()
     pump.on()
     pointer = Pointer()
-    try:
-        for i in range(1000):
-            air = pressure.get_pressure()
-            if  air is not None and air < 100000:
-                barrel.servo.set_pos(40)
-                pointer.on()
-            else:
-                barrel.servo.set_pos(-10)
-                pointer.off()
-            time.sleep(0.05)
-    except KeyboardInterrupt:
-        pass
+    for i in range(1000):
+        air = pressure.get_pressure()
+        if  air is not None and air < 100000:
+            barrel.servo.set_pos(40)
+            pointer.on()
+        else:
+            barrel.servo.set_pos(-10)
+            pointer.off()
+        await asyncio.sleep(0.05)
+
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(test())
     pump.off()
     pointer.off()
-    time.sleep(0.5)
+    loop.run_until_complete(asyncio.sleep(0.5))
+
