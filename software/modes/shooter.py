@@ -35,10 +35,10 @@ class Shooter(manual.Manual):
                 self.set_state(self.Reload)
             if self.aimable:
                 if event.button == "dup":
-                    self.angle += 1
+                    self.angle += 2
                     self.barrel.set_pos(self.angle)                    
                 elif event.button == "ddown":
-                    self.angle -= 1
+                    self.angle -= 2
                     self.barrel.set_pos(self.angle)                    
                 elif event.button == "cross":
                     self.set_state(self.Fire)
@@ -121,7 +121,7 @@ class Shooter(manual.Manual):
                 if self.aimable:
                     y = self.joystick['ry']
                     if y != 0.0:
-                        self.angle += y*2.0
+                        self.angle += y*20.0
                         print("Angle = ", self.angle)
                         self.barrel.set_pos(self.angle)                    
             await asyncio.sleep(0.1)    

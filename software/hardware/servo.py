@@ -10,15 +10,15 @@ class Servo:
         
     def set_servo(self, val):
         with open("/dev/servoblaster","w") as f:
-            f.write(str(self.pin) + "=%f\n" % val)
+            f.write(str(self.pin) + "=%dus\n" % int(val))
             f.flush()
         
     def set_pos(self, x):
-        """Set position to x where -100 < x < 100
+        """Set position to x where -1000 < x < 1000
            Note this may not correspond to the actual degree position..."""
         if self.inverted:
             x = -x
-        val = 150 + x
+        val = 1500 + x
         self.set_servo(val)
                 
     def off(self):

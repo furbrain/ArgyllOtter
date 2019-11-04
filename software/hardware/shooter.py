@@ -8,7 +8,7 @@ import asyncio
 
 BMP388_ADDRESS = 0x77
 CAL_FILE = "/home/pi/shooter_calibration.npz"
-CAL_RANGE = (-10,70,5)
+CAL_RANGE = (-100,900,50)
 
 class Pressure:
     def __init__(self, bus = None, address = BMP388_ADDRESS):
@@ -82,11 +82,11 @@ class Barrel:
             else:
                 on_pos_count = 0
                 if angle<cur_angle:
-                   self.position -= 1
+                   self.position -= 2
                 else:
-                    self.position += 1
+                    self.position += 2
                 self.servo.set_pos(self.position)
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.04)
             cur_angle = self.orientation.get_angle()
         print("set_angle finished")
             
@@ -129,8 +129,6 @@ async def test():
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(test())
-    pump.off()
-    pointer.off()
-    loop.run_until_complete(asyncio.sleep(0.5))
+    b = Barrel()
+    loop.run_until_complete(b.calibrate())
 
