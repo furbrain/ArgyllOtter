@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-from . import mode, messages
+from . import manual, messages
 import hardware
 import asyncio
 import time
 
-class Shooter(mode.Mode):
+class Shooter(manual.Manual):
     def __init__(self, joystick):
         super().__init__(joystick)
         self.barrel = hardware.Barrel()
@@ -69,7 +69,7 @@ class Shooter(mode.Mode):
         self.pointer.on()
         while True:
             await asyncio.sleep(0.1)
-            if (self.pressure.get_pressure() > 102000):
+            if (self.pressure.get_pressure() > 105000):
                 self.pump.on()
             else:
                 self.pump.off()
@@ -85,7 +85,7 @@ class Shooter(mode.Mode):
         self.pointer.off()
         while True:
             await asyncio.sleep(0.1)
-            if (self.pressure.get_pressure() > 105000):
+            if (self.pressure.get_pressure() > 108000):
                 asyncio.ensure_future(self.Load())
                 break
     
@@ -102,6 +102,7 @@ class Shooter(mode.Mode):
         self.barrel.set_angle_quick(60)
         
     async def run(self):
+        asyncio.ensure_future(super().run())
         self.set_state(self.Off)
         while True:
             if self.joystick and self.joystick.connected:

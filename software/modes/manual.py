@@ -4,8 +4,8 @@ from . import messages
 
 import hardware
 class Manual(mode.Mode):
-    def __init__(self, events, joystick, normal=200, boost=1000):
-        super().__init__(events, joystick)
+    def __init__(self, joystick, normal=200, boost=1000):
+        super().__init__(joystick)
         self.normal_speed = normal
         self.boost_speed = boost
         self.driver = hardware.Drive()
@@ -40,7 +40,7 @@ class Manual(mode.Mode):
 
     async def run(self):
         while True:
-            if joystick and joystick.connected:
+            if self.joystick and self.joystick.connected:
                 x_axis, y_axis = self.joystick['lx', 'ly']
                 if x_axis == y_axis == 0.0:
                     self.driver.stop()
@@ -51,9 +51,9 @@ class Manual(mode.Mode):
                     else:
                         max_power=self.normal_speed
                     # Get power from mixer function
-                    power_left, power_right = mixer(yaw=x_axis, throttle=y_axis, max_power=max_power)
+                    power_left, power_right = self.mixer(yaw=x_axis, throttle=y_axis, max_power=max_power)
                     # Set motor speeds
-                    self.driver.set_speed(power_left, power_right)
+                    self.driver.drive(power_left, power_right)
             else:
                 self.driver.stop()
 
