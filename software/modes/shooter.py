@@ -27,15 +27,21 @@ class Shooter(manual.Manual):
         
     def handle_event(self, event):
         if isinstance(event, messages.ControllerButtonMessage):
-            if event.button == "cross":
-                if self.aimable:
-                    self.set_state(self.Fire)
-            elif event.button == "triangle":
+            if event.button == "triangle":
                 self.set_state(self.Load)
             elif event.button == "circle":
                 self.set_state(self.Off)
             elif event.button == "square":
                 self.set_state(self.Reload)
+            if self.aimable:
+                if event.button == "dup":
+                    self.angle += 1
+                    self.barrel.set_pos(self.angle)                    
+                elif event.button == "ddown":
+                    self.angle -= 1
+                    self.barrel.set_pos(self.angle)                    
+                elif event.button == "cross":
+                    self.set_state(self.Fire)
 
     async def EngageBall(self):
         self.pump.on()
@@ -65,8 +71,9 @@ class Shooter(manual.Manual):
             self.set_state(self.Aim)
         
     async def Aim(self):
-        angle_task = asyncio.ensure_future(self.barrel.set_angle(self.angle))
-        self.pointer.on()
+        angle_task = asyncio.ensure_future(
+                         asyncio.wait_for(
+                             self.barrel.set_angle(self.angle),2.0))
         while True:
             await asyncio.sleep(0.1)
             if (self.pressure.get_pressure() > 105000):
@@ -74,6 +81,11 @@ class Shooter(manual.Manual):
             else:
                 self.pump.off()
             if angle_task and angle_task.done():
+                try:
+                    angle_task.result()
+                except asyncio.TimeoutError:
+                    pass
+                self.pointer.on()
                 self.aimable=True
                 self.angle = self.barrel.get_pos()
                 angle_task = None

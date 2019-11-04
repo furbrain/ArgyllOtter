@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from . import mode
 from . import messages
+import asyncio
 
 import hardware
 class Manual(mode.Mode):
