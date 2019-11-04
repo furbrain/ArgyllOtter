@@ -40,6 +40,7 @@ class Manual(mode.Mode):
 
     async def run(self):
         while True:
+            await asyncio.sleep(0.1)
             if joystick and joystick.connected:
                 x_axis, y_axis = self.joystick['lx', 'ly']
                 if x_axis == y_axis == 0.0:
