@@ -11,3 +11,9 @@ Have classes for each mode which are polled at frequent intervals
     Cons: More complex
           How de we handle the case where we are doing complex CV stuff and over-run
           our time slot? Maybe do the complex stuff in separate slot and poll for completion?
+          
+Solution:
+    Total asynchronous scheme
+         use asyncio
+         means "main function" can keep an eye on voltage, check for home signals etc
+         really quite complex

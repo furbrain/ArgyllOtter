@@ -1,8 +1,15 @@
 from . import messages
 
 class Mode:
-    def __init__(self, joystick):
+    def __init__(self, joystick, drive, pixels):
         self.joystick = joystick
+        self.driver = drive
+        self.pixels = pixels
+        self.on_start()
+
+    def on_start(self):
+        """this contains anything else that needs to be initialised"""
+        pass
         
     def handle_event(self, event):
     #returns true if event handled, otherwise returns false

@@ -5,8 +5,8 @@ import asyncio
 import time
 
 class Shooter(manual.Manual):
-    def __init__(self, joystick):
-        super().__init__(joystick)
+    def on_start(self):
+        super().on_start()
         self.barrel = hardware.Barrel()
         self.pressure = hardware.Pressure()
         self.pump = hardware.Pump()

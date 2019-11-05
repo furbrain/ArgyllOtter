@@ -7,6 +7,7 @@ import collections
 from functools import partial
 from modes import messages
 from approxeng.input.selectbinder import ControllerResource
+from hardware import Drive
 
 class DiscardingQueue(collections.deque):
     def __init__(self, maxlen):
@@ -24,6 +25,8 @@ class Main:
         self.mode = None
         self.mode_task = None
         self.finished = False
+        self.joystick = None
+        self.driver = Drive()
         #set up controller if present
 
     async def run(self):
@@ -38,7 +41,7 @@ class Main:
     def enter_mode(self, mode):
         if self.mode_task:
             self.mode_task.cancel()
-        self.mode = mode(self.joystick)
+        self.mode = mode(self.joystick, self.driver)
         self.mode_task = asyncio.ensure_future(self.mode.run())
 
     def handle_encoder_change(self, pos):

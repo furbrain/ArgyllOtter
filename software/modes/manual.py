@@ -5,11 +5,9 @@ import asyncio
 
 import hardware
 class Manual(mode.Mode):
-    def __init__(self, joystick, normal=200, boost=1000):
-        super().__init__(joystick)
-        self.normal_speed = normal
-        self.boost_speed = boost
-        self.driver = hardware.Drive()
+    def on_start(self):
+        self.normal_speed = 200
+        self.boost_speed = 1000
         
     def mixer(self, yaw, throttle, max_power):
         """
@@ -42,6 +40,7 @@ class Manual(mode.Mode):
     async def run(self):
         while True:
             await asyncio.sleep(0.1)
+
             if self.joystick and self.joystick.connected:
                 x_axis, y_axis = self.joystick['lx', 'ly']
                 if x_axis == y_axis == 0.0:
