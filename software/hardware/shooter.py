@@ -5,6 +5,9 @@ from . import orientation
 import gpiozero
 import numpy as np
 import asyncio
+import logging
+from util import logged
+
 
 BMP388_ADDRESS = 0x77
 CAL_FILE = "/home/pi/shooter_calibration.npz"
@@ -21,6 +24,7 @@ class Pressure:
         self.bus.write_byte_data(self.address,0x1c,0x00)
         self.bus.write_byte_data(self.address,0x1d,0x01)
         
+    @logged
     def get_pressure(self):
         try:
             data = self.bus.read_i2c_block_data(self.address, 0x04, 0x03)
@@ -50,16 +54,20 @@ class Barrel:
                 self.cal_up = f['up']
                 self.cal_down = f['down']
                 
+    @logged
     def getAngle(self):
         return self.orientation.get_angle()    
 
+    @logged
     def set_pos(self, pos):
         self.position = pos
         self.servo.set_pos(pos)
         
+    @logged
     def get_pos(self):
         return self.position
         
+    @logged
     def set_angle_quick(self, angle):
         cur_angle = self.orientation.get_angle()
         if angle > cur_angle+5:
@@ -69,6 +77,7 @@ class Barrel:
             self.position = np.interp(angle, self.cal_down, self.cal_range)
             self.servo.set_pos(self.position)
 
+    @logged
     async def set_angle(self, angle):
         cur_angle = self.orientation.get_angle()
         self.set_angle_quick(angle)
@@ -90,6 +99,7 @@ class Barrel:
             cur_angle = self.orientation.get_angle()
         print("set_angle finished")
             
+    @logged
     async def calibrate(self):
         rng = np.arange(*CAL_RANGE)
         up = []

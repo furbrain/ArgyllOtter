@@ -2,6 +2,8 @@
 import smbus
 import struct
 import math
+import logging
+from util import logged
 
 MPU9250_ADDRESS = 0x68
 
@@ -15,12 +17,15 @@ class Orientation:
         self.bus.write_byte_data(self.address,27,0x10) #gyro 1000dps full scale
         self.bus.write_byte_data(self.address,28,0x08) #accel 4g full scale
         self.bus.write_byte_data(self.address,28,0x04) #accel 8ms low pass filter
+    
         
+    @logged
     def get_accel(self):
         data = self.bus.read_i2c_block_data(self.address, 0x3B, 0x06)
         accels = struct.unpack(">3h", bytes(data))
         return [(x*4.0/0x8000) for x in accels]
         
+    @logged
     def get_angle(self, axis=2):
         accels = self.get_accel()
         distance = math.sqrt(sum(x*x for x in accels) - accels[axis]*accels[axis])
@@ -28,6 +33,7 @@ class Orientation:
         angle  *= 180.0/math.pi 
         return angle
         
+    @logged
     def get_rotation(self):
         data = self.bus.read_i2c_block_data(self.address, 0x43, 0x06)
         rots = struct.unpack(">3h", bytes(data))

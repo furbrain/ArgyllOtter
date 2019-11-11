@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 from gpiozero import Button
+import logging
+from util import logged
 
 
 class Encoder():
@@ -14,6 +16,7 @@ class Encoder():
         self.clock.when_pressed = self.movement
         self.switch.when_pressed = self.pressed    
 
+    @logged
     def movement(self):
         if self.data.is_pressed:
             self.pos +=1
@@ -21,6 +24,7 @@ class Encoder():
             self.pos -=1
         self.on_changed(self.pos)
 
+    @logged
     def pressed(self):
         self.on_pressed()
         

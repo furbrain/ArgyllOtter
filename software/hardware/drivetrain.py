@@ -67,17 +67,20 @@ class Drive:
         self.reset_alert()
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
 
+    @logged
     def individual(self, fr, fl, rr, rl):
         args = self.mm2c(fr, fl, rr, rl)
         command = struct.pack("<Bhhhh",4, *args)       
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
                     
+    @logged
     def get_positions(self):
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x10, 0x10)
         positions = struct.unpack("4i", bytes(data))
         print ("pos: ", self.c2mm(*positions))
         return self.c2mm(*positions)
 
+    @logged
     def reset_position(self):
         data = struct.pack("<4i", 0, 0, 0, 0)
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x10, list(data))
