@@ -35,9 +35,10 @@ typedef struct {
     uint8_t adc_channel;
     bool stopped;
     volatile int32_t last_pos;
-    volatile int32_t *pos;
-    volatile int16_t *velocity;
-    volatile int16_t *current;
+    volatile int32_t * const pos;
+    volatile int32_t target_pos;
+    volatile int16_t * const velocity;
+    volatile int16_t * const current;
     pid_t   *pid;
     void (*set_direction)(uint8_t);
     void (*set_pwm)(uint16_t);
@@ -47,12 +48,14 @@ typedef struct {
 
 extern wheel_t wheels[4];
 void wheels_init(void);
+void wheels_reset_position(void);
 void wheel_set_power(wheel_t *whl, float power);
 void wheel_set_speed(wheel_t *whl, float speed);
+void wheel_set_target_pos(wheel_t *whl, int32_t target);
 void wheel_update_power(wheel_t *whl);
 void wheel_update_velocity(wheel_t* whl);
 void wheel_stop(wheel_t *whl);
-void wheel_move_to(wheel_t *whl, int32_t pos, int16_t max_speed);
+void wheel_move_to(wheel_t *whl, int16_t max_speed);
 void wheel_check_current(wheel_t *whl);
 #ifdef	__cplusplus
 }

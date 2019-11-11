@@ -8,6 +8,7 @@
 #include "mcc_generated_files/pwm5.h"
 #include "mcc_generated_files/interrupt_manager.h"
 
+
 void FR_set_direction(uint8_t dir) {
     FR_DIRECTION_LAT = dir;
 }
@@ -65,6 +66,7 @@ pid_t pids[4] = {0};
         false,\
         0,\
         &position[name],\
+        0,\
         &velocity[name],\
         &current[name],\
         &pids[name],\
@@ -81,9 +83,6 @@ wheel_t wheels[4] = {
     WHEEL_DATA(RL, REAR_LEFT, PWM4),
 };
 
-bool within(int32_t desired, int32_t actual, int32_t range) {
-    return (((desired + range) > actual) && ((desired - range) < actual));
-}
 
 
 void wheels_init(void) {
@@ -100,6 +99,14 @@ void wheels_init(void) {
     }
 }
 
+void wheels_reset_position(void) {
+    wheel_t *whl;
+    FOR_ALL_WHEELS(whl) {
+        *whl->pos = 0;
+    }
+    
+}
+
 void wheel_set_power(wheel_t *whl, float power) {
     int16_t duty = (int16_t)(power*0x3ff);
     if (power < 0.0) {
@@ -112,6 +119,10 @@ void wheel_set_power(wheel_t *whl, float power) {
 
 void wheel_set_speed(wheel_t *whl, float speed) {
     pid_setPoint(whl->pid, speed);
+}    
+
+void wheel_set_target_pos(wheel_t *whl, int32_t target) {
+    whl->target_pos = target;
 }    
 
 void wheel_update_power(wheel_t *whl) {
@@ -129,30 +140,17 @@ void wheel_update_velocity(wheel_t *whl) {
 void wheel_stop(wheel_t *whl) {
     whl->set_direction(0);
     whl->set_pwm(0);
-    whl->stopped = true;    
+    whl->stopped = true;
+    pid_init(whl->pid, 0, 0);
 }
 
-void wheel_move_to(wheel_t *whl, int32_t pos, int16_t max_speed) {
-    if (whl->stopped) return;
-    if (within(pos, *whl->pos, 10)) {
-        // turn off motor
-        wheel_stop(whl);
-        raise_alert(ALERT_DESTINATION | whl->bitmask);
-    } else if (within(pos, *whl->pos, 300)){
-        if (*whl->pos < pos) {
-            wheel_set_speed(whl, 200);
-        } else {
-            wheel_set_speed(whl, -200);
-        }
+void wheel_move_to(wheel_t *whl, int16_t max_speed) {
+    if (*whl->pos < whl->target_pos) {
+        wheel_set_speed(whl, max_speed);
     } else {
-        if (*whl->pos < pos) {
-            wheel_set_speed(whl, max_speed);
-        } else {
-            wheel_set_speed(whl, -max_speed);
-        }        
+        wheel_set_speed(whl, -max_speed);
     }
 }
-
 void wheel_check_current(wheel_t *whl) {
     wheel_t *whl2;
     volatile int16_t local_current;

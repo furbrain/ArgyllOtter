@@ -49,6 +49,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 #include "comms.h"
 #include "pid.h"
 #include "wheels.h"
@@ -76,6 +77,9 @@ void OneHundredHertz(void) {
     cmd = *command;
     tick = true;
 }
+
+#define within(a, b, delta) (abs(a-b) < delta)
+
 void Update(void) {
     static uint8_t count = 0;
     wheel_t* whl;
@@ -105,16 +109,46 @@ void Update(void) {
                     wheels[i].set_pwm((uint16_t)cmd.motor_speed[i]);
                 }
                 break;
-               
+            case CMD_DISTANCE:
+                wheels_reset_position();
+                wheel_set_target_pos(&wheels[FRONT_LEFT], cmd.left_distance);
+                wheel_set_target_pos(&wheels[REAR_LEFT], cmd.left_distance);
+                wheel_set_target_pos(&wheels[FRONT_RIGHT], cmd.right_distance);
+                wheel_set_target_pos(&wheels[REAR_RIGHT], cmd.right_distance);
+                break;
         }
         new_command = false;
     }
     if (cmd.mode == CMD_DISTANCE) {
         /* left */
-        wheel_move_to(&wheels[FRONT_LEFT], cmd.left_distance, cmd.max_speed);
-        wheel_move_to(&wheels[REAR_LEFT], cmd.left_distance, cmd.max_speed);
-        wheel_move_to(&wheels[FRONT_RIGHT], cmd.right_distance, cmd.max_speed);
-        wheel_move_to(&wheels[REAR_RIGHT], cmd.right_distance, cmd.max_speed);
+        int32_t max_distance = max(abs(cmd.left_distance), abs(cmd.right_distance));
+        int32_t left_speed = abs((cmd.left_distance * cmd.max_speed) / max_distance);
+        int32_t right_speed = abs((cmd.right_distance * cmd.max_speed) / max_distance);
+        bool nearby = false;
+        bool stopped = false;
+        FOR_ALL_WHEELS(whl) {
+            if (whl->stopped) stopped = true;
+            if (within(whl->target_pos, *whl->pos, 10)) {
+                raise_alert(ALERT_DESTINATION);
+                stopped = true;
+            } else if (within(whl->target_pos, *whl->pos, 300)){
+                nearby = true;
+            }
+        }
+        if (nearby) {
+            left_speed /= 4;
+            right_speed /=4;
+        }
+        if (stopped) {
+            FOR_ALL_WHEELS(whl) {
+                wheel_stop(whl);
+            }
+        } else {
+            wheel_move_to(&wheels[FRONT_LEFT], left_speed);
+            wheel_move_to(&wheels[REAR_LEFT], left_speed);
+            wheel_move_to(&wheels[FRONT_RIGHT], right_speed);
+            wheel_move_to(&wheels[REAR_RIGHT], right_speed);
+        }
     }
     if (count++ >= SAMPLE_SKIP) {
         count = 0;
