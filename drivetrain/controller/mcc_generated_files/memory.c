@@ -49,6 +49,7 @@
 */
 
 #include <xc.h>
+#include <stdint.h>
 #include "memory.h"
 
 /**
@@ -180,7 +181,7 @@ void FLASH_EraseBlock(uint16_t startAddr)
 void DATAEE_WriteByte(uint16_t bAdd, uint8_t bData)
 {
     uint8_t GIEBitValue = INTCONbits.GIE;
-    bAdd += 0xF000h;
+    bAdd += 0xF000;
     NVMADRH = ((bAdd >> 8) & 0xFF);
     NVMADRL = (bAdd & 0xFF);
     NVMDATL = bData;    
@@ -201,7 +202,7 @@ void DATAEE_WriteByte(uint16_t bAdd, uint8_t bData)
 
 uint8_t DATAEE_ReadByte(uint16_t bAdd)
 {
-    return *((*uint8_t)bAdd+0x7000);
+    return *((uint8_t*)bAdd+0x7000);
 }
 
 

@@ -48,6 +48,7 @@ void pid_setPoint(pid_t *ctx, float point) {
 void pid_init(pid_t *ctx, float input, float current_output)
 {
    ctx->lastInput = input;
+   ctx->lastOutput = 0;
    ctx->startInput = input;
    ctx->ITerm = current_output;
    if(ctx->ITerm > PID_MAX) ctx->ITerm= PID_MAX;
