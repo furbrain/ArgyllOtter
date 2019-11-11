@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 import smbus
+import gpiozero
 import math
 import struct
 from . import orientation
 import numpy as np
 import time
+import asyncio
+
 
 I2C_ADDRESS = 0x33
+ALERT_REGISTER = 0x5F
 
 class Drive:
     def __init__(self, bus=None, wheel_diameter=70.0, clicks_per_revolution=374):
@@ -15,12 +19,24 @@ class Drive:
         else:
             self.bus = bus
         self.clicks_per_mm = clicks_per_revolution/(math.pi*wheel_diameter)
-        #self.orientation = orientation.Orientation(bus=self.bus)
-        #results = []
-        #for i in range(20):
-        #    results += [self.orientation.get_rotation()]
-        #    time.sleep(0.02)
-        #self.gyro_cal = np.mean(results, axis=0)
+        self.orientation = orientation.Orientation(bus=self.bus)
+        self.alert = gpiozero.Button(4)
+        results = []
+        for i in range(20):
+            results += [self.orientation.get_rotation()]
+            time.sleep(0.02)
+        self.gyro_cal = np.mean(results, axis=0)
+        self.reset_position()
+        self.reset_alert()
+        self.get_alert()
+        
+    def reset_alert(self):
+        self.get_alert()
+        self.bus.write_i2c_block_data(I2C_ADDRESS, ALERT_REGISTER, [0])
+        
+    def get_alert(self):
+        return self.bus.read_i2c_block_data(I2C_ADDRESS, ALERT_REGISTER, 1)[0]
+        
         
     def mm2c(self, *args):
         return [int(x * self.clicks_per_mm) for x in args]
@@ -36,9 +52,12 @@ class Drive:
         command = struct.pack("<Bhh",1, *args)        
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
         
-    def goto_absolute(self, left, right, max_speed):
+    def goto(self, max_speed, right, left=None):
+        if left is None:
+            left = right
         args = self.mm2c(left, right, max_speed)
         command = struct.pack("<Biih", 2, *args)
+        self.reset_alert()
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
 
     def individual(self, fr, fl, rr, rl):
@@ -49,18 +68,24 @@ class Drive:
     def get_positions(self):
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x10, 0x10)
         positions = struct.unpack("4i", bytes(data))
+        print ("pos: ", self.c2mm(*positions))
         return self.c2mm(*positions)
 
     def reset_position(self):
         data = struct.pack("<4i", 0, 0, 0, 0)
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x10, list(data))
         
-    def goto(self, distance, max_speed):
-        fr, fl, rr, rl = self.get_positions()
-        right = (fr + rr) / 2
-        left = (fl + rl) / 2
-        self.goto_absolute(right+distance, left+distance, max_speed)
-        
+    async def a_goto(self, max_speed, right, left=None):
+        self.goto(max_speed, right, left)
+        while True:
+            asyncio.sleep(0.05)
+            if not self.alert.is_pressed:
+                asyncio.sleep(0.05)
+                result = self.get_alert()
+                print("ALERT: ", result)
+                self.reset_alert()
+                return
+                            
     def get_velocities(self):
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x20, 0x08)
         velocities = struct.unpack("4h", bytes(data))
@@ -82,7 +107,35 @@ class Drive:
         peripheral /= 1000.0
         main /= 1000.0
         return (peripheral, main)
-    
+        
+    async def spin(self, angle, max_speed):
+        current_angle = 0
+        last_time  = time.time()
+        slow_speed = min(max_speed,100)
+        slowed = False
+        if angle > 0:
+            self.drive(max_speed, -max_speed)
+        else:
+            self.drive(-max_speed, max_speed)
+        while True:
+            await asyncio.sleep(0.007)
+            this_time = time.time()
+            rotation = self.orientation.get_rotation()-self.gyro_cal
+            rotation = rotation[2]*(this_time-last_time)
+            current_angle += rotation
+            last_time = this_time
+            if not slowed:
+                if abs(current_angle - angle) < 30:
+                    if angle > 0:
+                        self.drive(slow_speed, -slow_speed)
+                    else:
+                        self.drive(-slow_speed, slow_speed)
+                    slowed = True
+            if abs(current_angle) > abs(angle):
+                break;
+        self.stop()
+            
+            
 if __name__ == "__main__":
     import time
     driver = Drive()
