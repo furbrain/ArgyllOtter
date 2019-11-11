@@ -7,7 +7,8 @@ from . import orientation
 import numpy as np
 import time
 import asyncio
-
+import logging
+from util import logged
 
 I2C_ADDRESS = 0x33
 ALERT_REGISTER = 0x5F
@@ -30,6 +31,9 @@ class Drive:
         self.reset_alert()
         self.get_alert()
         
+    def __str__(self):
+        return "Drive instance"
+        
     def reset_alert(self):
         self.get_alert()
         self.bus.write_i2c_block_data(I2C_ADDRESS, ALERT_REGISTER, [0])
@@ -43,15 +47,18 @@ class Drive:
     
     def c2mm(self, *args):
         return [int(x / self.clicks_per_mm) for x in args]
-                
+    
+    @logged            
     def stop(self):
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, [0])
-            
+    
+    @logged        
     def drive(self, left, right):
         args = self.mm2c(left, right)
         command = struct.pack("<Bhh",1, *args)        
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
-        
+    
+    @logged    
     def goto(self, max_speed, right, left=None):
         if left is None:
             left = right
@@ -74,7 +81,8 @@ class Drive:
     def reset_position(self):
         data = struct.pack("<4i", 0, 0, 0, 0)
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x10, list(data))
-        
+    
+    @logged    
     async def a_goto(self, max_speed, right, left=None):
         self.goto(max_speed, right, left)
         while True:
@@ -85,30 +93,36 @@ class Drive:
                 print("ALERT: ", result)
                 self.reset_alert()
                 return
-                            
+    
+    @logged                        
     def get_velocities(self):
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x20, 0x08)
         velocities = struct.unpack("4h", bytes(data))
         return self.c2mm(*velocities)
-
+        
+    @logged
     def get_constants(self):
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x30, 0x10)
         p,i,d,ratio = struct.unpack("4f", bytes(data))
         return {'kP':p, 'kI':i, 'kD':d, 'ratio':ratio}
 
+    @logged
     def get_currents(self):
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x40, 0x08)
         currents = struct.unpack("4h", bytes(data))
         return [x/1000 for x in currents]
     
+    @logged
     def get_voltages(self):
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x50, 0x08)
         peripheral, _, main, _ = struct.unpack("4h", bytes(data))
         peripheral /= 1000.0
         main /= 1000.0
         return (peripheral, main)
-        
+    
+    @logged    
     async def spin(self, angle, max_speed):
+        logging.info("start spin")
         current_angle = 0
         last_time  = time.time()
         slow_speed = min(max_speed,100)
@@ -122,17 +136,22 @@ class Drive:
             this_time = time.time()
             rotation = self.orientation.get_rotation()-self.gyro_cal
             rotation = rotation[2]*(this_time-last_time)
+            logging.info("Rotation: %6f + %6f (%f s)" % (current_angle, rotation, this_time-last_time))
             current_angle += rotation
             last_time = this_time
             if not slowed:
                 if abs(current_angle - angle) < 30:
+                    logging.info("Current angle %f: slowed" % current_angle)
                     if angle > 0:
                         self.drive(slow_speed, -slow_speed)
                     else:
                         self.drive(-slow_speed, slow_speed)
                     slowed = True
             if abs(current_angle) > abs(angle):
+                logging.info("Current angle %f: stopped" % current_angle)
                 break;
+        self.stop() #this sometimes is not received, so repeat after a short interval
+        time.sleep(0.01)
         self.stop()
             
             

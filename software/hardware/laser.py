@@ -3,6 +3,7 @@ import serial
 import asyncio
 import time
 import re
+from util import logged
 
 BAUD_RATE = 19200
 FAST = b'F'
@@ -23,12 +24,18 @@ class Laser:
     def __del__(self):
         self.port.close()
 
+    def __str__(self):
+        return "Laser instance"
+
+    @logged
     def laser_on(self):
         self.port.write(b'O')
-        
+
+    @logged        
     def laser_off(self):
         self.port.write(b'C')
-        
+
+    @logged        
     async def get_distance(self, speed=FAST):
         """Get laser range distance in mm"""
         start_time = time.time()
