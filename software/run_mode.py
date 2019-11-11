@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from modes import shooter
+from modes import shooter, escape
 from main import Main
 import asyncio
 
@@ -9,7 +9,7 @@ async def go(loop):
     print("going...")
     main_task = loop.create_task(m.run())
     await asyncio.sleep(1)
-    m.enter_mode(shooter.Shooter)
+    m.enter_mode(escape.Learn)
     await main_task
     print("Main has finished")
     
