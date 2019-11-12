@@ -3,7 +3,7 @@ from . import messages
 class Mode:
     def __init__(self, joystick, drive, pixels):
         self.joystick = joystick
-        self.driver = drive
+        self.drive = drive
         self.pixels = pixels
         self.on_start()
 

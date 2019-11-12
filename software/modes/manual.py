@@ -44,7 +44,7 @@ class Manual(mode.Mode):
             if self.joystick and self.joystick.connected:
                 x_axis, y_axis = self.joystick['lx', 'ly']
                 if x_axis == y_axis == 0.0:
-                    self.driver.stop()
+                    self.drive.stop()
                 else:
                     boost = self.joystick['r1']
                     if boost:
@@ -54,7 +54,7 @@ class Manual(mode.Mode):
                     # Get power from mixer function
                     power_left, power_right = self.mixer(yaw=x_axis, throttle=y_axis, max_power=max_power)
                     # Set motor speeds
-                    self.driver.drive(power_left, power_right)
+                    self.drive.drive(power_left, power_right)
             else:
-                self.driver.stop()
+                self.drive.stop()
 

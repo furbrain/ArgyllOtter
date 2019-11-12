@@ -37,12 +37,21 @@ class Main:
         loop.create_task(self.poll_events())
         while not self.finished:
             await asyncio.sleep(0.1)
+            
+    def manage_mode_finished(self, task):
+        try:
+            task.result()
+        except Exception as e:
+            print("Mode raised exception!")
+            self.driver.stop()
+            raise e
        
     def enter_mode(self, mode):
         if self.mode_task:
-            self.mode_task.cancel()
-        self.mode = mode(self.joystick, self.driver)
+            self.mode_task.cancel()        
+        self.mode = mode(self.joystick, self.driver, None) #FIXME replace None with neopixel instance
         self.mode_task = asyncio.ensure_future(self.mode.run())
+        self.mode_task.add_done_callback(self.manage_mode_finished)
 
     def handle_encoder_change(self, pos):
         self.events.put(messages.EncoderChangeMessage(pos))
