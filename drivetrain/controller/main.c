@@ -101,12 +101,7 @@ void Update(void) {
                 break;
             case CMD_INDIVIDUAL:
                 for(uint8_t i = 0; i< 4; i++) {
-                    if (cmd.motor_speed[i]>0) {
-                        wheels[i].set_direction(WHEEL_FORWARD);
-                    } else {
-                        wheels[i].set_direction(WHEEL_REVERSE);
-                    }
-                    wheels[i].set_pwm((uint16_t)cmd.motor_speed[i]);
+                    wheel_set_power(&wheels[i], cmd.motor_speed[i]);
                 }
                 break;
             case CMD_DISTANCE:

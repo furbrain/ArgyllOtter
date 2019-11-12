@@ -8,6 +8,13 @@
 #include "mcc_generated_files/pwm5.h"
 #include "mcc_generated_files/interrupt_manager.h"
 
+int16_t power2duty(float power) {
+    return (int16_t)(power*0x3ff);
+}
+
+float duty2power(int16_t duty) {
+    return (float)(duty / 1023.0);
+}
 
 void FR_set_direction(uint8_t dir) {
     FR_DIRECTION_LAT = dir;
@@ -104,13 +111,11 @@ void wheels_reset_position(void) {
     wheel_t *whl;
     FOR_ALL_WHEELS(whl) {
         *whl->pos = 0;
-    }
-    
+    }  
 }
 
-void wheel_set_power(wheel_t *whl, float power) {
-    int16_t duty = (int16_t)(power*0x3ff);
-    if (power < 0.0) {
+void wheel_set_power(wheel_t *whl, int16_t duty) {
+    if (duty < 0) {
         whl->set_direction(WHEEL_REVERSE);
     } else {
         whl->set_direction(WHEEL_FORWARD);
@@ -128,10 +133,12 @@ void wheel_set_target_pos(wheel_t *whl, int32_t target) {
 }    
 
 void wheel_update_power(wheel_t *whl) {
-    float power;
+    float output;
+    int16_t duty;
     if (whl->stopped) return;
-    power = pid_compute(whl->pid, (float)*(whl->velocity));
-    wheel_set_power(whl, power);
+    output = pid_compute(whl->pid, (float)*(whl->velocity));
+    duty = power2duty(output);
+    wheel_set_power(whl, duty);
 }
 
 void wheel_update_velocity(wheel_t *whl) {

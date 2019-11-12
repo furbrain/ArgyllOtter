@@ -50,7 +50,7 @@ typedef struct {
 extern wheel_t wheels[4];
 void wheels_init(void);
 void wheels_reset_position(void);
-void wheel_set_power(wheel_t *whl, float power);
+void wheel_set_power(wheel_t *whl, int16_t duty);
 void wheel_set_speed(wheel_t *whl, float speed);
 void wheel_set_target_pos(wheel_t *whl, int32_t target);
 void wheel_update_power(wheel_t *whl);
