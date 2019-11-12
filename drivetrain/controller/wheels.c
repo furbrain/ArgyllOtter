@@ -68,6 +68,7 @@ pid_t pids[4] = {0};
         &position[name],\
         0,\
         &velocity[name],\
+        &power[name],\
         &current[name],\
         &pids[name],\
         initials##_set_direction,\
@@ -115,6 +116,7 @@ void wheel_set_power(wheel_t *whl, float power) {
         whl->set_direction(WHEEL_FORWARD);
     }    
     whl->set_pwm((uint16_t)duty);
+    *whl->power = duty
 }
 
 void wheel_set_speed(wheel_t *whl, float speed) {

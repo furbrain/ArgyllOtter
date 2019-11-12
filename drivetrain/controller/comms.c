@@ -10,6 +10,7 @@ volatile uint8_t EEPROM_Shadow[BUFFER_SIZE] = {0};
 volatile command_t* const command = (command_t*)&EEPROM_Shadow[0x0];
 volatile int32_t* const position = (int32_t*)&EEPROM_Shadow[0x10];
 volatile int16_t* const velocity = (int16_t*)&EEPROM_Shadow[0x20];
+volatile int16_t* const power = (int16_t*)&EEPROM_Shadow[0x28];
 volatile constants_t* const constants = (constants_t*)&EEPROM_Shadow[0x30];
 volatile int16_t* const current = (int16_t*)&EEPROM_Shadow[0x40];
 volatile int16_t* const current_limit = (int16_t*)&EEPROM_Shadow[0x48];

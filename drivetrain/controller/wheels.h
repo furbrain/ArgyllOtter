@@ -38,6 +38,7 @@ typedef struct {
     volatile int32_t * const pos;
     volatile int32_t target_pos;
     volatile int16_t * const velocity;
+    volatile int16_t * const power;
     volatile int16_t * const current;
     pid_t   *pid;
     void (*set_direction)(uint8_t);
