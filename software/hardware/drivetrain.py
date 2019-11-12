@@ -156,13 +156,13 @@ class Drive:
         self.stop()
             
     @logged    
-    async def fast_spin(self, angle, max_speed):
+    async def fast_spin(self, angle, max_speed, differential = 0.333):
         current_angle = 0
         last_time  = time.time()
         if angle > 0:
-            self.drive(max_speed, max_speed/3)
+            self.drive(max_speed, max_speed * differential)
         else:
-            self.drive(max_speed/3, max_speed)
+            self.drive(max_speed * differential, max_speed)
         while True:
             await asyncio.sleep(0.007)
             this_time = time.time()
