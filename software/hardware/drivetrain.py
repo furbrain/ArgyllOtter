@@ -77,7 +77,6 @@ class Drive:
     def get_positions(self):
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x10, 0x10)
         positions = struct.unpack("4i", bytes(data))
-        print ("pos: ", self.c2mm(*positions))
         return self.c2mm(*positions)
 
     @logged
@@ -89,11 +88,11 @@ class Drive:
     async def a_goto(self, max_speed, right, left=None):
         self.goto(max_speed, right, left)
         while True:
-            asyncio.sleep(0.05)
+            await asyncio.sleep(0.05)
             if not self.alert.is_pressed:
-                asyncio.sleep(0.05)
+                await asyncio.sleep(0.05)
                 result = self.get_alert()
-                print("ALERT: ", result)
+                logging.info("a_goto finished")
                 self.reset_alert()
                 return
     
@@ -125,7 +124,6 @@ class Drive:
     
     @logged    
     async def spin(self, angle, max_speed):
-        logging.info("start spin")
         current_angle = 0
         last_time  = time.time()
         slow_speed = min(max_speed,100)
@@ -139,25 +137,68 @@ class Drive:
             this_time = time.time()
             rotation = self.orientation.get_rotation()-self.gyro_cal
             rotation = rotation[2]*(this_time-last_time)
-            logging.info("Rotation: %6f + %6f (%f s)" % (current_angle, rotation, this_time-last_time))
+            logging.debug("Spin: Rotation: %6f + %6f (%f s)" % (current_angle, rotation, this_time-last_time))
             current_angle += rotation
             last_time = this_time
             if not slowed:
                 if abs(current_angle - angle) < 30:
-                    logging.info("Current angle %f: slowed" % current_angle)
+                    logging.debug("Spin: Current angle %f: slowed" % current_angle)
                     if angle > 0:
                         self.drive(slow_speed, -slow_speed)
                     else:
                         self.drive(-slow_speed, slow_speed)
                     slowed = True
             if abs(current_angle) > abs(angle):
-                logging.info("Current angle %f: stopped" % current_angle)
+                logging.debug("Spin: Current angle %f: stopped" % current_angle)
                 break;
         self.stop() #this sometimes is not received, so repeat after a short interval
         time.sleep(0.01)
         self.stop()
             
-            
+    @logged    
+    async def fast_spin(self, angle, max_speed):
+        current_angle = 0
+        last_time  = time.time()
+        if angle > 0:
+            self.drive(max_speed, max_speed/3)
+        else:
+            self.drive(max_speed/3, max_speed)
+        while True:
+            await asyncio.sleep(0.007)
+            this_time = time.time()
+            rotation = self.orientation.get_rotation()-self.gyro_cal
+            rotation = rotation[2]*(this_time-last_time)
+            logging.debug("Fast_spin: Rotation: %6f + %6f (%f s)" % (current_angle, rotation, this_time-last_time))
+            current_angle += rotation
+            last_time = this_time
+            if abs(current_angle) > abs(angle):
+                logging.info("Fast_spin: Current angle %f: finished" % current_angle)
+                break;
+
+    @logged
+    async def fast_goto(self, speed, distance):
+        self.reset_position()
+        await asyncio.sleep(0.03)
+        self.drive(speed, speed)
+        
+        if distance > 0:
+            while True:
+                await asyncio.sleep(0.05)
+                pos = self.get_positions()
+                if any(x > 10000 for x in pos):
+                    logging.debug("fast_goto: bad position")
+                    continue
+                if any(x > distance for x in pos):
+                    return
+        else:
+            while True:
+                await asyncio.sleep(0.05)
+                pos = self.get_positions()
+                if any(x < -10000 for x in pos):
+                    continue
+                if any(x < distance for x in pos):
+                    return
+                    
 if __name__ == "__main__":
     import time
     driver = Drive()
