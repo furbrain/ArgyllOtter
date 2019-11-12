@@ -121,7 +121,7 @@ void wheel_set_power(wheel_t *whl, int16_t duty) {
         whl->set_direction(WHEEL_FORWARD);
     }    
     whl->set_pwm((uint16_t)duty);
-    *whl->power = duty
+    *whl->power = duty;
 }
 
 void wheel_set_speed(wheel_t *whl, float speed) {
