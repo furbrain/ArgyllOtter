@@ -74,14 +74,13 @@ pid_t pids[4] = {0};
         0,\
         &position[name],\
         0,\
-        &velocity[name],\
-        &power[name],\
         &current[name],\
         &pids[name],\
         initials##_set_direction,\
         pwm##_LoadDutyValue,\
         0,\
-        1 << 4 + name\
+        1 << 4 + name,\
+        name\
     }
 
 wheel_t wheels[4] = {
@@ -121,7 +120,7 @@ void wheel_set_power(wheel_t *whl, int16_t duty) {
         whl->set_direction(WHEEL_FORWARD);
     }    
     whl->set_pwm((uint16_t)duty);
-    *whl->power = duty;
+    power[whl->index] = duty;
 }
 
 void wheel_set_speed(wheel_t *whl, float speed) {
@@ -146,7 +145,7 @@ void wheel_update_power(wheel_t *whl) {
 }
 
 void wheel_update_velocity(wheel_t *whl) {
-    *whl->velocity = (*whl->pos - whl->last_pos) * SAMPLE_FREQUENCY/SAMPLE_SKIP;
+    velocity[whl->index] = (*whl->pos - whl->last_pos) * SAMPLE_FREQUENCY/SAMPLE_SKIP;
     whl->last_pos = *whl->pos;
 }
 
