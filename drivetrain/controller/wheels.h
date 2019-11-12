@@ -55,6 +55,7 @@ void wheel_set_speed(wheel_t *whl, float speed);
 void wheel_set_target_pos(wheel_t *whl, int32_t target);
 void wheel_update_power(wheel_t *whl);
 void wheel_update_velocity(wheel_t* whl);
+void wheel_soft_start(wheel_t *whl);
 void wheel_stop(wheel_t *whl);
 void wheel_move_to(wheel_t *whl, int16_t max_speed);
 void wheel_check_current(wheel_t *whl);

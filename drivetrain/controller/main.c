@@ -94,10 +94,15 @@ void Update(void) {
                 }
                 break;
             case CMD_DRIVE:
+                if (cmd.soft_start) {
+                    FOR_ALL_WHEELS(whl) {
+                        wheel_soft_start(whl);
+                    }
+                }
                 wheel_set_speed(&wheels[FRONT_LEFT], cmd.left_speed);
                 wheel_set_speed(&wheels[REAR_LEFT], cmd.left_speed);
                 wheel_set_speed(&wheels[FRONT_RIGHT], cmd.right_speed);
-                wheel_set_speed(&wheels[REAR_RIGHT], cmd.right_speed);
+                wheel_set_speed(&wheels[REAR_RIGHT], cmd.right_speed);                
                 break;
             case CMD_INDIVIDUAL:
                 for(uint8_t i = 0; i< 4; i++) {

@@ -33,6 +33,7 @@ typedef struct {
         struct {
             int16_t left_speed;
             int16_t right_speed;
+            uint8_t soft_start;
         };
         struct {
             int32_t left_distance;

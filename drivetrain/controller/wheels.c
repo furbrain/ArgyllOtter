@@ -132,6 +132,10 @@ void wheel_set_target_pos(wheel_t *whl, int32_t target) {
     whl->target_pos = target;
 }    
 
+void wheel_soft_start(wheel_t *whl) {
+    pid_init(whl->pid, (float)*(whl->velocity), duty2power(*(whl->power)));
+}
+
 void wheel_update_power(wheel_t *whl) {
     float output;
     int16_t duty;
