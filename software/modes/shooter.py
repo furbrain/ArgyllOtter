@@ -95,6 +95,7 @@ class Shooter(manual.Manual):
         self.aimable = False
         self.pump.on()
         self.pointer.off()
+        #FIXME create firing solution here and implement it
         while True:
             await asyncio.sleep(0.1)
             if (self.pressure.get_pressure() > 108000):
