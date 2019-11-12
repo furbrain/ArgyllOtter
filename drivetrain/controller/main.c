@@ -80,6 +80,16 @@ void OneHundredHertz(void) {
 
 #define within(a, b, delta) (abs(a-b) < delta)
 
+void set_wheel_differentials(int32_t left, int32_t right, int16_t speed) {
+        int32_t max_distance = max(abs(left), abs(right));
+        int32_t left_speed = abs((left * speed) / max_distance);
+        int32_t right_speed = abs((right * speed) / max_distance);
+        wheel_move_to(&wheels[FRONT_LEFT], left_speed);
+        wheel_move_to(&wheels[REAR_LEFT], left_speed);
+        wheel_move_to(&wheels[FRONT_RIGHT], right_speed);
+        wheel_move_to(&wheels[REAR_RIGHT], right_speed);    
+}
+
 void Update(void) {
     static uint8_t count = 0;
     wheel_t* whl;
@@ -116,16 +126,22 @@ void Update(void) {
                 wheel_set_target_pos(&wheels[FRONT_RIGHT], cmd.right_distance);
                 wheel_set_target_pos(&wheels[REAR_RIGHT], cmd.right_distance);
                 break;
+            case CMD_FAST_DISTANCE:
+                wheels_reset_position();
+                wheel_set_target_pos(&wheels[FRONT_LEFT], cmd.left_distance);
+                wheel_set_target_pos(&wheels[REAR_LEFT], cmd.left_distance);
+                wheel_set_target_pos(&wheels[FRONT_RIGHT], cmd.right_distance);
+                wheel_set_target_pos(&wheels[REAR_RIGHT], cmd.right_distance);
+                set_wheel_differentials(cmd.left_distance, cmd.right_distance, cmd.max_speed);
+                break;
         }
         new_command = false;
     }
     if (cmd.mode == CMD_DISTANCE) {
         /* left */
-        int32_t max_distance = max(abs(cmd.left_distance), abs(cmd.right_distance));
-        int32_t left_speed = abs((cmd.left_distance * cmd.max_speed) / max_distance);
-        int32_t right_speed = abs((cmd.right_distance * cmd.max_speed) / max_distance);
         bool nearby = false;
         bool stopped = false;
+        
         FOR_ALL_WHEELS(whl) {
             if (whl->stopped) stopped = true;
             if (within(whl->target_pos, *whl->pos, 10)) {
@@ -135,26 +151,23 @@ void Update(void) {
                 nearby = true;
             }
         }
-        if (nearby) {
-            left_speed /= 4;
-            right_speed /=4;
-        }
         if (stopped) {
             FOR_ALL_WHEELS(whl) {
                 wheel_stop(whl);
             }
+        } else if (nearby) {
+            set_wheel_differentials(cmd.left_distance, cmd.right_distance, cmd.max_speed/4);
         } else {
-            wheel_move_to(&wheels[FRONT_LEFT], left_speed);
-            wheel_move_to(&wheels[REAR_LEFT], left_speed);
-            wheel_move_to(&wheels[FRONT_RIGHT], right_speed);
-            wheel_move_to(&wheels[REAR_RIGHT], right_speed);
+            set_wheel_differentials(cmd.left_distance, cmd.right_distance, cmd.max_speed);
         }
     }
     if (count++ >= SAMPLE_SKIP) {
         count = 0;
         FOR_ALL_WHEELS(whl) {
             wheel_update_velocity(whl);
-            wheel_update_power(whl);
+            if (cmd.mode != CMD_INDIVIDUAL) {
+                wheel_update_power(whl);
+            }
         }
         FOR_ALL_WHEELS(whl) {
             //wheel_check_current(whl);

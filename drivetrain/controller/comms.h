@@ -24,6 +24,7 @@ typedef enum {
     CMD_DISTANCE = 2,
     CMD_ROTATE = 3,
     CMD_INDIVIDUAL = 4,
+    CMD_FAST_DISTANCE = 5,
     CMD_CALIBRATE = 0xFF
 } cmd_enums;    
     
