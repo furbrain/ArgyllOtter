@@ -12,6 +12,8 @@ from util import logged
 
 I2C_ADDRESS = 0x33
 ALERT_REGISTER = 0x5F
+RESET_POSITION = 0x01
+SOFT_START = 0x02
 
 class Drive:
     def __init__(self, bus=None, wheel_diameter=70.0, clicks_per_revolution=374):
@@ -34,6 +36,14 @@ class Drive:
     def __str__(self):
         return "Drive instance"
         
+    def get_flags(self, soft_start, reset_position):
+        flags = 0
+        if soft_start:
+            flags |= SOFT_START
+        if reset_position:
+            flags |= RESET_POSITION
+        return flags
+        
     def reset_alert(self):
         self.get_alert()
         self.bus.write_i2c_block_data(I2C_ADDRESS, ALERT_REGISTER, [0])
@@ -49,17 +59,20 @@ class Drive:
         return [int(x / self.clicks_per_mm) for x in args]
     
     @logged            
-    def stop(self):
-        self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, [0])
+    def stop(self, reset_position=False):
+        flags = self.get_flags(soft_start=False, reset_position=reset_position)
+        self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, [0, flags])
     
     @logged        
-    def drive(self, left, right, soft_start=False):
+    def drive(self, left, right, soft_start=False, reset_position=True):
+        flags = self.get_flags(soft_start, reset_position)
         args = self.mm2c(left, right) + [soft_start]
-        command = struct.pack("<BhhB",1, *args)        
+        command = struct.pack("<BBhhB", 1, flags, *args)        
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
     
     @logged    
-    def goto(self, max_speed, right, left=None, fast=False):
+    def goto(self, max_speed, right, left=None, fast=False, soft_start=False, reset_position=True):
+        flags = self.get_flags(soft_start, reset_position)
         if fast:
             cmd = 5
         else:
@@ -67,14 +80,16 @@ class Drive:
         if left is None:
             left = right
         args = self.mm2c(left, right, max_speed)
-        command = struct.pack("<Biih", cmd, *args)
+        command = struct.pack("<BBiih", cmd, flags, *args)
         self.reset_alert()
+        time.sleep(0.01)
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
 
     @logged
-    def set_powers(self, fr, fl, rr, rl):
+    def set_powers(self, fr, fl, rr, rl, soft_start=False, reset_position=False):
         args = fr, fl, rr, rl
-        command = struct.pack("<Bhhhh",4, *args)       
+        flags = self.get_flags(soft_start, reset_position)
+        command = struct.pack("<BBhhhh",4, flags, *args)       
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
                     
     @logged
@@ -89,14 +104,13 @@ class Drive:
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x10, list(data))
     
     @logged    
-    async def a_goto(self, max_speed, right, left=None, fast=False):
-        self.goto(max_speed, right, left, fast)
+    async def a_goto(self, max_speed, right, left=None, fast=False, soft_start = False, reset_position=True):
+        self.goto(max_speed, right, left, fast, soft_start=soft_start, reset_position=reset_position)
         while True:
             await asyncio.sleep(0.05)
             if not self.alert.is_pressed:
                 await asyncio.sleep(0.05)
                 result = self.get_alert()
-                logging.info("a_goto finished")
                 self.reset_alert()
                 return
     
@@ -133,15 +147,15 @@ class Drive:
         return (peripheral, main)
     
     @logged    
-    async def spin(self, angle, max_speed):
+    async def spin(self, angle, max_speed, soft_start = False, reset_position=True):
         current_angle = 0
         last_time  = time.time()
         slow_speed = min(max_speed,100)
         slowed = False
         if angle > 0:
-            self.drive(max_speed, -max_speed)
+            self.drive(max_speed, -max_speed, soft_start=soft_start, reset_position=reset_position)
         else:
-            self.drive(-max_speed, max_speed)
+            self.drive(-max_speed, max_speed, soft_start=soft_start, reset_position=reset_position)
         while True:
             await asyncio.sleep(0.007)
             this_time = time.time()
@@ -154,9 +168,9 @@ class Drive:
                 if abs(current_angle - angle) < 30:
                     logging.debug("Spin: Current angle %f: slowed" % current_angle)
                     if angle > 0:
-                        self.drive(slow_speed, -slow_speed)
+                        self.drive(slow_speed, -slow_speed, soft_start=False, reset_position=False)
                     else:
-                        self.drive(-slow_speed, slow_speed)
+                        self.drive(-slow_speed, slow_speed, soft_start=False, reset_position=False)
                     slowed = True
             if abs(current_angle) > abs(angle):
                 logging.debug("Spin: Current angle %f: stopped" % current_angle)
@@ -166,83 +180,47 @@ class Drive:
         self.stop()
             
     @logged    
-    async def fast_spin(self, angle, max_speed, differential = 0.333):
+    async def fast_turn(self, angle, max_speed, differential = 0.333, soft_start = False, reset_position=True):
         current_angle = 0
         last_time  = time.time()
         if angle > 0:
-            self.drive(max_speed, max_speed * differential)
+            self.drive(max_speed, max_speed * differential, soft_start=soft_start, reset_position=reset_position)
         else:
-            self.drive(max_speed * differential, max_speed)
+            self.drive(max_speed * differential, max_speed, soft_start=soft_start, reset_position=reset_position)
         while True:
             await asyncio.sleep(0.007)
             this_time = time.time()
             rotation = self.orientation.get_rotation()-self.gyro_cal
             rotation = rotation[2]*(this_time-last_time)
-            logging.debug("Fast_spin: Rotation: %6f + %6f (%f s)" % (current_angle, rotation, this_time-last_time))
+            logging.debug("Fast_turn: Rotation: %6f + %6f (%f s)" % (current_angle, rotation, this_time-last_time))
             current_angle += rotation
             last_time = this_time
             if abs(current_angle) > abs(angle):
-                logging.info("Fast_spin: Current angle %f: finished" % current_angle)
+                logging.info("Fast_turn: Current angle %f: finished" % current_angle)
                 break;
-
-    @logged
-    async def fast_goto(self, speed, distance):
-        self.reset_position()
-        await asyncio.sleep(0.03)
-        self.drive(speed, speed)
-        
-        if distance > 0:
-            while True:
-                await asyncio.sleep(0.05)
-                pos = self.get_positions()
-                if any(x > 10000 for x in pos):
-                    logging.debug("fast_goto: bad position")
-                    continue
-                if any(x > distance for x in pos):
-                    return
-        else:
-            while True:
-                await asyncio.sleep(0.05)
-                pos = self.get_positions()
-                if any(x < -10000 for x in pos):
-                    continue
-                if any(x < distance for x in pos):
-                    return
                     
 if __name__ == "__main__":
-    import time
-    driver = Drive()
-    driver.drive(400,-400)
-    last_time = time.time()
-    angle = 0
-    print("CAL:", driver.gyro_cal)
-    for i in range(5000):
-        time.sleep(0.007)
-        this_time = time.time()
-        rotation = driver.orientation.get_rotation()-driver.gyro_cal
-        rotation = rotation[2]*(this_time-last_time)
-        angle += rotation
-        print(rotation, angle, this_time-last_time)
-        last_time = this_time
-        if angle >=320.0:
-            driver.drive(100,-100)
-        if angle >=360.0:
-            break;
-    driver.stop()
-    time.sleep(0.5)
-    driver.stop()
-    exit()
-    time.sleep(0.01)
-    print(driver.get_positions())
-    driver.reset_position()
-    print(driver.get_positions())
-    time.sleep(0.01)
-    driver.stop()
-    time.sleep(1)
-    driver.goto(1000,500)
-    time.sleep(6)
-    print(driver.get_positions())
-    driver.goto(-1000,500)
-    time.sleep(3)
-    print(driver.get_positions())
-    driver.stop()
+    async def go():
+        d = Drive()
+        await d.a_goto(400, 500, reset_position=True)
+        await d.a_goto(400, 0, reset_position=False) #should go back here
+        await d.a_goto(400, 500, reset_position=True)
+        await d.a_goto(400, 500, reset_position=True) #should move forward here
+        await d.a_goto(400, -1000, reset_position=True) #and go back 1m (to starting position)
+        await d.spin(360, 200) #spin 360 degrees
+        # now do some fast functions...
+        await d.a_goto(400, 500, fast=True)
+        powers = d.get_powers()
+        print(powers)
+        print("Positions: ", d.get_positions())
+        print("Currents: ", d.get_currents())
+        print("Velocities: ", d.get_velocities())
+        await d.fast_turn(90,400)
+        d.set_powers(*powers, reset_position=True)
+        await asyncio.sleep(0.2)
+        await d.a_goto(400, 800, soft_start=True, reset_position=False)
+        await asyncio.sleep(1)
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(go())
+
