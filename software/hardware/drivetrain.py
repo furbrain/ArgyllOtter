@@ -53,23 +53,27 @@ class Drive:
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, [0])
     
     @logged        
-    def drive(self, left, right):
-        args = self.mm2c(left, right)
-        command = struct.pack("<Bhh",1, *args)        
+    def drive(self, left, right, soft_start=False):
+        args = self.mm2c(left, right) + [soft_start]
+        command = struct.pack("<BhhB",1, *args)        
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
     
     @logged    
-    def goto(self, max_speed, right, left=None):
+    def goto(self, max_speed, right, left=None, fast=False):
+        if fast:
+            cmd = 5
+        else:
+            cmd = 2
         if left is None:
             left = right
         args = self.mm2c(left, right, max_speed)
-        command = struct.pack("<Biih", 2, *args)
+        command = struct.pack("<Biih", cmd, *args)
         self.reset_alert()
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
 
     @logged
-    def individual(self, fr, fl, rr, rl):
-        args = self.mm2c(fr, fl, rr, rl)
+    def set_powers(self, fr, fl, rr, rl):
+        args = fr, fl, rr, rl
         command = struct.pack("<Bhhhh",4, *args)       
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
                     
@@ -85,8 +89,8 @@ class Drive:
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x10, list(data))
     
     @logged    
-    async def a_goto(self, max_speed, right, left=None):
-        self.goto(max_speed, right, left)
+    async def a_goto(self, max_speed, right, left=None, fast=False):
+        self.goto(max_speed, right, left, fast)
         while True:
             await asyncio.sleep(0.05)
             if not self.alert.is_pressed:
@@ -107,6 +111,12 @@ class Drive:
         data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x30, 0x10)
         p,i,d,ratio = struct.unpack("4f", bytes(data))
         return {'kP':p, 'kI':i, 'kD':d, 'ratio':ratio}
+        
+    @logged
+    def get_powers(self):
+        data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x20, 0x10)
+        powers = struct.unpack("<8h", bytes(data))[4:]
+        return powers
 
     @logged
     def get_currents(self):
