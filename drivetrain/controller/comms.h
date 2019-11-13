@@ -27,14 +27,20 @@ typedef enum {
     CMD_FAST_DISTANCE = 5,
     CMD_CALIBRATE = 0xFF
 } cmd_enums;    
-    
+
+typedef enum {
+    FLAG_NONE=0,
+    FLAG_RESET_POS=1,
+    FLAG_SOFT_START=2
+};
+
 typedef struct {
     uint8_t mode;
+    uint8_t flags;
     union {
         struct {
             int16_t left_speed;
             int16_t right_speed;
-            uint8_t soft_start;
         };
         struct {
             int32_t left_distance;

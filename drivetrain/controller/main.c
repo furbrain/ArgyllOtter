@@ -81,13 +81,18 @@ void OneHundredHertz(void) {
 #define within(a, b, delta) (abs(a-b) < delta)
 
 void set_wheel_differentials(int32_t left, int32_t right, int16_t speed) {
+    int32_t left_speed, right_speed;
+    if (left == right) {
+        left_speed = right_speed = speed;
+    } else {
         int32_t max_distance = max(abs(left), abs(right));
-        int32_t left_speed = abs((left * speed) / max_distance);
-        int32_t right_speed = abs((right * speed) / max_distance);
-        wheel_move_to(&wheels[FRONT_LEFT], left_speed);
-        wheel_move_to(&wheels[REAR_LEFT], left_speed);
-        wheel_move_to(&wheels[FRONT_RIGHT], right_speed);
-        wheel_move_to(&wheels[REAR_RIGHT], right_speed);    
+        left_speed = abs((left * speed) / max_distance);
+        right_speed = abs((right * speed) / max_distance);
+    }
+    wheel_move_to(&wheels[FRONT_LEFT], left_speed);
+    wheel_move_to(&wheels[REAR_LEFT], left_speed);
+    wheel_move_to(&wheels[FRONT_RIGHT], right_speed);
+    wheel_move_to(&wheels[REAR_RIGHT], right_speed);    
 }
 
 void Update(void) {
@@ -97,6 +102,14 @@ void Update(void) {
         FOR_ALL_WHEELS(whl) {
             whl->stopped=false;
         }
+        if (cmd.flags & FLAG_RESET_POS) {
+                wheels_reset_position();            
+        }
+        if (cmd.flags & FLAG_SOFT_START) {
+            FOR_ALL_WHEELS(whl) {
+                wheel_soft_start(whl);
+            }
+        }
         switch (cmd.mode) {
             case CMD_STOP:
                 FOR_ALL_WHEELS(whl) {
@@ -104,11 +117,6 @@ void Update(void) {
                 }
                 break;
             case CMD_DRIVE:
-                if (cmd.soft_start) {
-                    FOR_ALL_WHEELS(whl) {
-                        wheel_soft_start(whl);
-                    }
-                }
                 wheel_set_speed(&wheels[FRONT_LEFT], cmd.left_speed);
                 wheel_set_speed(&wheels[REAR_LEFT], cmd.left_speed);
                 wheel_set_speed(&wheels[FRONT_RIGHT], cmd.right_speed);
@@ -119,15 +127,8 @@ void Update(void) {
                     wheel_set_power(&wheels[i], cmd.motor_speed[i]);
                 }
                 break;
-            case CMD_DISTANCE:
-                wheels_reset_position();
-                wheel_set_target_pos(&wheels[FRONT_LEFT], cmd.left_distance);
-                wheel_set_target_pos(&wheels[REAR_LEFT], cmd.left_distance);
-                wheel_set_target_pos(&wheels[FRONT_RIGHT], cmd.right_distance);
-                wheel_set_target_pos(&wheels[REAR_RIGHT], cmd.right_distance);
-                break;
             case CMD_FAST_DISTANCE:
-                wheels_reset_position();
+            case CMD_DISTANCE:
                 wheel_set_target_pos(&wheels[FRONT_LEFT], cmd.left_distance);
                 wheel_set_target_pos(&wheels[REAR_LEFT], cmd.left_distance);
                 wheel_set_target_pos(&wheels[FRONT_RIGHT], cmd.right_distance);
@@ -143,10 +144,14 @@ void Update(void) {
         bool stopped = false;
         
         FOR_ALL_WHEELS(whl) {
-            if (whl->stopped) stopped = true;
+            if (whl->stopped) {
+                stopped = true;
+                break;
+            }
             if (within(whl->target_pos, *whl->pos, 10)) {
                 raise_alert(ALERT_DESTINATION);
                 stopped = true;
+                break;
             } else if (within(whl->target_pos, *whl->pos, 300)){
                 nearby = true;
             }
@@ -154,6 +159,7 @@ void Update(void) {
         if (stopped) {
             FOR_ALL_WHEELS(whl) {
                 wheel_stop(whl);
+                cmd.mode = CMD_STOP;
             }
         } else if (nearby) {
             set_wheel_differentials(cmd.left_distance, cmd.right_distance, cmd.max_speed/4);
