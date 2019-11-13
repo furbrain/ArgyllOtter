@@ -132,14 +132,14 @@ void wheel_set_target_pos(wheel_t *whl, int32_t target) {
 }    
 
 void wheel_soft_start(wheel_t *whl) {
-    pid_init(whl->pid, (float)*(whl->velocity), duty2power(*(whl->power)));
+    pid_init(whl->pid, (float)velocity[whl->index], duty2power(power[whl->index]));
 }
 
 void wheel_update_power(wheel_t *whl) {
     float output;
     int16_t duty;
     if (whl->stopped) return;
-    output = pid_compute(whl->pid, (float)*(whl->velocity));
+    output = pid_compute(whl->pid, (float)velocity[whl->index]);
     duty = power2duty(output);
     wheel_set_power(whl, duty);
 }

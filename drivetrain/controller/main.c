@@ -160,6 +160,15 @@ void Update(void) {
         } else {
             set_wheel_differentials(cmd.left_distance, cmd.right_distance, cmd.max_speed);
         }
+    } else if (cmd.mode == CMD_FAST_DISTANCE) {
+        FOR_ALL_WHEELS(whl) {
+            if (!*alert_status) {
+                if (abs(*whl->pos) > abs(whl->target_pos)) {
+                    raise_alert(ALERT_DESTINATION);
+                    break;
+                } 
+            }
+        }
     }
     if (count++ >= SAMPLE_SKIP) {
         count = 0;
