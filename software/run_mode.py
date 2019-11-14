@@ -5,12 +5,11 @@ import sys
 from modes import shooter, escape
 from main import Main
 import logging
-logging.basicConfig(filename='run_mode.log',level=logging.DEBUG)
+from hardware import Drive
+logging.basicConfig(filename='run_mode.log',level=logging.INFO)
 
 
-async def go(loop, mode):
-    m = Main()
-    main_task = loop.create_task(m.run())
+async def go(main, main_task, mode):
     await asyncio.sleep(1)
     m.enter_mode(mode)
     await main_task
@@ -23,4 +22,10 @@ else:
     mode = default
 loop = asyncio.get_event_loop()
 loop.set_debug(False)
-loop.run_until_complete(go(loop, mode))
+m = Main()
+main_task = loop.create_task(m.run())
+try:
+    loop.run_until_complete(go(m, main_task, mode))
+finally:
+    m.driver.stop()
+    

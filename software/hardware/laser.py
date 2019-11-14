@@ -3,6 +3,7 @@ import serial
 import asyncio
 import time
 import re
+import logging
 from util import logged
 
 BAUD_RATE = 19200
@@ -48,6 +49,7 @@ class Laser:
             await asyncio.sleep(0.1)
             if time.time() > start_time+self.timeout:
                 raise LaserTimeoutError()
+        logging.info("Laser return is %s", str(buffer))
         dist = re.search(r"(\d*\.\d*)m",str(buffer))
         if dist is None:
             raise LaserBadReadingError()

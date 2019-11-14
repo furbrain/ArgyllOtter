@@ -43,6 +43,7 @@ class Main:
             task.result()
         except Exception as e:
             print("Mode raised exception!")
+            print(type(e), e)
             self.driver.stop()
             raise e
        

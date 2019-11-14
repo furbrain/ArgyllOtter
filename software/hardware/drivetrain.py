@@ -67,7 +67,9 @@ class Drive:
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, [0, flags])
     
     @logged        
-    def drive(self, left, right, soft_start=False, reset_position=True):
+    def drive(self, left, right = None, soft_start=False, reset_position=True):
+        if right is None:
+            right = left
         flags = self.get_flags(soft_start, reset_position)
         args = self.mm2c(left, right) + [soft_start]
         command = struct.pack("<BBhhB", 1, flags, *args)        
@@ -84,8 +86,6 @@ class Drive:
             left = right
         args = self.mm2c(left, right, max_speed)
         command = struct.pack("<BBiih", cmd, flags, *args)
-        self.reset_alert()
-        time.sleep(0.01)
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
 
     @logged

@@ -33,7 +33,6 @@ class Orientation:
         angle  *= 180.0/math.pi 
         return angle
         
-    @logged
     def get_rotation(self):
         data = self.bus.read_i2c_block_data(self.address, 0x43, 0x06)
         rots = struct.unpack(">3h", bytes(data))
