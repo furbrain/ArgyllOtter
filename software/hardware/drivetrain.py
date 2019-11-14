@@ -15,6 +15,9 @@ ALERT_REGISTER = 0x5F
 RESET_POSITION = 0x01
 SOFT_START = 0x02
 
+class DriveError(Exception):
+    pass
+
 class Drive:
     def __init__(self, bus=None, wheel_diameter=70.0, clicks_per_revolution=374):
         if bus is None:
@@ -94,9 +97,14 @@ class Drive:
                     
     @logged
     def get_positions(self):
-        data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x10, 0x10)
-        positions = struct.unpack("4i", bytes(data))
-        return self.c2mm(*positions)
+        for i in range(5):
+            data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x10, 0x10)
+            positions = struct.unpack("4i", bytes(data))
+            if any(abs(x)>10000 for x in positions):
+                time.sleep(0.01)
+                continue
+            return self.c2mm(*positions)
+        raise DriveError("Couldn't get reasonable positions, latest readings are" + ', '.join(str(x) for x in positions))
 
     @logged
     def reset_position(self):
@@ -105,14 +113,15 @@ class Drive:
     
     @logged    
     async def a_goto(self, max_speed, right, left=None, fast=False, soft_start = False, reset_position=True):
-        self.goto(max_speed, right, left, fast, soft_start=soft_start, reset_position=reset_position)
+        self.goto(max_speed, right, left, fast, soft_start, reset_position)
         while True:
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(0.01)
             if not self.alert.is_pressed:
-                await asyncio.sleep(0.05)
+                await asyncio.sleep(0.01)
                 result = self.get_alert()
+                await asyncio.sleep(0.01)
                 self.reset_alert()
-                return
+                return self.get_positions()
     
     @logged                        
     def get_velocities(self):
@@ -128,9 +137,14 @@ class Drive:
         
     @logged
     def get_powers(self):
-        data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x20, 0x10)
-        powers = struct.unpack("<8h", bytes(data))[4:]
-        return powers
+        for i in range(5):
+            data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x20, 0x10)
+            powers = struct.unpack("<8h", bytes(data))[4:]
+            if any(abs(x)>16383 for x in powers):
+                time.sleep(0.01)
+                continue
+            return powers
+        raise DriveError("Couldn't get reasonable powers, latest readings are" + ', '.join(str(x) for x in positions))
 
     @logged
     def get_currents(self):
