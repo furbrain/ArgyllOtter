@@ -74,7 +74,6 @@ inline void ADCC_SetChannel(uint8_t channel) {
 
 
 void OneHundredHertz(void) {
-    cmd = *command;
     tick = true;
 }
 
@@ -99,6 +98,8 @@ void Update(void) {
     static uint8_t count = 0;
     wheel_t* whl;
     if (new_command) {
+        cmd = *command;
+        raise_alert(ALERT_NOALERT);
         FOR_ALL_WHEELS(whl) {
             whl->stopped=false;
         }

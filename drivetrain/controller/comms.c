@@ -111,8 +111,11 @@ void I2C1_StatusCallback(I2C1_SLAVE_DRIVER_STATUS i2c_bus_state)
             }
             if (eepromAddress == ALERT_ADDRESS) {
                 ALERT_SetLow();
+                SSP1BUF = alert_status;
+                eepromAddress++;
+            } else {
+                SSP1BUF = EEPROM_Buffer[eepromAddress++];
             }
-            SSP1BUF = EEPROM_Buffer[eepromAddress++];
             if(sizeof(EEPROM_Buffer) <= eepromAddress)
             {
                 eepromAddress = 0;    // wrap to start of eeprom page
