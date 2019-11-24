@@ -17,7 +17,7 @@ extern "C" {
     
 #define PID_MIN -1.0
 #define PID_MAX 1.0 
-#define RATE_LIMIT 0.1
+#define RATE_LIMIT 0.15 //1.0 = disabled
     
 typedef struct {
     float kP, kI, kD;
