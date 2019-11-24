@@ -33,8 +33,6 @@ class Drive:
             time.sleep(0.02)
         self.gyro_cal = np.mean(results, axis=0)
         self.reset_position()
-        self.reset_alert()
-        self.get_alert()
         
     def __str__(self):
         return "Drive instance"
@@ -118,9 +116,6 @@ class Drive:
             await asyncio.sleep(0.01)
             if not self.alert.is_pressed:
                 await asyncio.sleep(0.01)
-                result = self.get_alert()
-                await asyncio.sleep(0.01)
-                self.reset_alert()
                 return self.get_positions()
     
     @logged                        
@@ -140,7 +135,7 @@ class Drive:
         for i in range(5):
             data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x20, 0x10)
             powers = struct.unpack("<8h", bytes(data))[4:]
-            if any(abs(x)>16383 for x in powers):
+            if any(abs(x)>1024 for x in powers):
                 time.sleep(0.01)
                 continue
             return powers
@@ -229,6 +224,7 @@ if __name__ == "__main__":
         print("Positions: ", d.get_positions())
         print("Currents: ", d.get_currents())
         print("Velocities: ", d.get_velocities())
+        print("Powers: ", d.get_powers())
         await d.fast_turn(90,400)
         d.set_powers(*powers, reset_position=True)
         await asyncio.sleep(0.2)
