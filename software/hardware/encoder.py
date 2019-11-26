@@ -4,14 +4,13 @@ from gpiozero import Button
 import logging
 import time
 from util import logged
-
+from modes import messages
 
 class Encoder():
-    def __init__(self, on_changed, on_pressed, pins=None):
+    def __init__(self, event_queue, pins=None):
         if pins is None:
             pins = (26, 6, 19)
-        self.on_changed = on_changed
-        self.on_pressed = on_pressed
+        self.event_queue = event_queue
         self.clock = Button(pins[0])
         self.data = Button(pins[1])
         self.switch = Button(pins[2])
@@ -19,18 +18,21 @@ class Encoder():
         self.switch.when_pressed = self.pressed    
         self.last_press = time.time()
 
+    def add_event(self, msg):
+        self.event_queue.put(msg)
+
     @logged
     def movement(self):
         if self.data.is_pressed:
-            self.on_changed(True)
+            self.add_event(messages.EncoderChangeMessage(True))
         else:
-            self.on_changed(False)
+            self.add_event(messages.EncoderChangeMessage(False))
 
     @logged
     def pressed(self):
         now = time.time()
         if now > (self.last_press+0.5):
-            self.on_pressed()
+            self.add_event(messages.EncoderPressMessage())
             self.last_press = now
         
 

@@ -30,7 +30,7 @@ class Main:
         self.joystick = None
         self.display = Display()
         self.driver = Drive()
-        self.encoder = Encoder(self.handle_encoder_change, self.handle_encoder_press)
+        self.encoder = Encoder(self.events)
         self.controller = Controller(self.events)
         self.menu_items = [
             ("Manual", manual.Manual),
@@ -73,7 +73,6 @@ class Main:
             self.driver.stop()
             raise e
         self.menu.draw()    
-            
        
     def enter_mode(self, mode):
         if self.mode_task:
@@ -82,12 +81,6 @@ class Main:
         self.mode = mode(self.joystick, self.driver, None) #FIXME replace None with neopixel instance
         self.mode_task = asyncio.ensure_future(self.mode.run())
         self.mode_task.add_done_callback(self.manage_mode_finished)
-
-    def handle_encoder_change(self, pos):
-        self.events.put(messages.EncoderChangeMessage(pos))
-        
-    def handle_encoder_press(self):
-        self.events.put(messages.EncoderPressMessage())
 
     def handle_menu_select_item(self, item):
         if item is None: return
