@@ -100,17 +100,20 @@ class Main:
         if self.mode:
             self.mode.cancel()
             self.mode = None
+            
+    def event_is_exit(self, event):
+        if isinstance(event, messages.ControllerButtonMessage) and event.button =="home":
+            return True
+        if isinstance(event, messages.EncoderPressMessage):
+            return True
+        return False    
                     
     def handle_event(self, event):
         if isinstance(event, messages.ControllerConnectedMessage):
             self.joystick = event.joystick
             return False #continue processing this event...
-        if isinstance(event, messages.ControllerButtonMessage):
-            if event.button =="home":
-                self.exit_mode()
-                return True
         if self.mode is not None:
-            if isinstance(event, messages.EncoderPressMessage):
+            if self.event_is_exit(event):
                 self.exit_mode()
                 return True
         return False
