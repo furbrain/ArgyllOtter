@@ -8,3 +8,8 @@ class Display:
 
     def canvas(self):
         return canvas(self.oled)
+        
+    def clear(self):
+        with self.canvas() as c:
+            c.rectangle(((0,0),(128,64)),0,0)    
+
