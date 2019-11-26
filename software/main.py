@@ -7,8 +7,7 @@ from functools import partial
 
 import menu
 from modes import messages, shooter, escape, manual, mode
-from approxeng.input.selectbinder import ControllerResource
-from hardware import Drive, Encoder, Display
+from hardware import Drive, Encoder, Display, Controller
 
 
 
@@ -32,6 +31,7 @@ class Main:
         self.display = Display()
         self.driver = Drive()
         self.encoder = Encoder(self.handle_encoder_change, self.handle_encoder_press)
+        self.controller = Controller(self.events)
         self.menu_items = [
             ("Manual", manual.Manual),
             ("Challenges", [
@@ -58,7 +58,6 @@ class Main:
 
     async def run(self):
         loop = asyncio.get_event_loop()
-        loop.create_task(self.controller_monitor())
         loop.create_task(self.poll_events())
         while not self.finished:
             await asyncio.sleep(0.1)
@@ -96,28 +95,6 @@ class Main:
             self.enter_mode(item)
         else:
             item()
-    
-    def button_handler(self, button):
-        self.events.put(messages.ControllerButtonMessage(button.sname))
-
-    async def controller_monitor(self, poll_time=0.1):
-        while True:
-            try:
-                controller = ControllerResource(dead_zone=0.1, hot_zone=0.2)
-            except IOError:
-                #no joystick found, wait a bit and try again
-                await asyncio.sleep(1.0)
-            else:
-                with controller as joystick:
-                    self.joystick = joystick
-                    joystick.buttons.register_button_handler(self.button_handler,
-                        list(joystick.buttons.buttons.keys()))
-                        
-                    self.events.put(messages.ControllerConnectedMessage(True, joystick))
-                    while joystick.connected:
-                        await asyncio.sleep(poll_time)
-                self.events.put(messages.ControllerConnectedMessage(False))
-                self.joystick = None
 
     def exit_mode(self):
         self.driver.stop()
@@ -128,6 +105,9 @@ class Main:
         self.menu.draw()
                     
     def handle_event(self, event):
+        if isinstance(event, messages.ControllerConnectedMessage):
+            self.joystick = event.joystick
+            return False #continue processing this event...
         if isinstance(event, messages.ControllerButtonMessage):
             if event.button =="home":
                 self.exit_mode()
