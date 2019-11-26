@@ -74,7 +74,8 @@ class Menu():
             self.child.item_selected()
         
     def child_exit(self):
-        self.child = None    
+        self.child = None  
+        self.draw()  
         
     def draw(self):
         if self.child is None:
