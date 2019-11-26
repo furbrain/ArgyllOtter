@@ -3,7 +3,9 @@
 import asyncio
 import collections
 import os
+import traceback
 from functools import partial
+from PIL import ImageFont
 
 import menu
 from modes import messages, shooter, escape, manual, mode
@@ -25,7 +27,6 @@ class Main:
     def __init__(self):
         self.events = DiscardingQueue(20)
         self.mode = None
-        self.mode_task = None
         self.finished = False
         self.joystick = None
         self.display = Display()
@@ -61,41 +62,44 @@ class Main:
         loop.create_task(self.poll_events())
         while not self.finished:
             await asyncio.sleep(0.1)
-            
-    def manage_mode_finished(self, task):
+                   
+    async def enter_mode(self, mode):
+        if self.mode:
+            self.mode.cancel()
+        self.display.clear()
+        with self.display.canvas() as c:
+            text = mode.__name__
+            font = ImageFont.truetype("DejaVuSans.ttf",32)
+            size = c.textsize(text, font=font)
+            h_offset = max(0, (128-size[0]) // 2)
+            v_offset = max(0, (64-size[1]) // 2)
+            c.text((h_offset,v_offset), text, font=font, fill=255)
         try:
-            task.result()
+            self.mode = mode(self.joystick, self.driver, None) #FIXME replace None with neopixel instance
+            await self.mode.task
         except asyncio.CancelledError:
             pass
-        except Exception as e:
-            print("Mode raised exception!")
-            print(type(e), e)
+        except:
+            print("%s raised exception!" % mode.__name__)
+            traceback.print_exc()
+        finally:
             self.driver.stop()
-            raise e
-        self.menu.draw()    
-       
-    def enter_mode(self, mode):
-        if self.mode_task:
-            self.mode_task.cancel()
-        self.display.clear()
-        self.mode = mode(self.joystick, self.driver, None) #FIXME replace None with neopixel instance
-        self.mode_task = asyncio.ensure_future(self.mode.run())
-        self.mode_task.add_done_callback(self.manage_mode_finished)
+        self.menu.draw()
+
+            
 
     def handle_menu_select_item(self, item):
         if item is None: return
         if isinstance(item,type) and issubclass(item, mode.Mode):
-            self.enter_mode(item)
+            asyncio.ensure_future(self.enter_mode(item))
         else:
             item()
 
     def exit_mode(self):
         self.driver.stop()
-        if self.mode_task:
-            self.mode_task.cancel()
-            self.mode_task = None
+        if self.mode:
+            self.mode.cancel()
             self.mode = None
-        self.menu.draw()
                     
     def handle_event(self, event):
         if isinstance(event, messages.ControllerConnectedMessage):
