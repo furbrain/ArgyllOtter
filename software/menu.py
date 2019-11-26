@@ -4,6 +4,7 @@ import time
 import copy
 
 from hardware import Display
+from modes import messages
 
 class BackMenuItem():
     pass
@@ -29,6 +30,25 @@ class Menu():
             self.menu_array.append(("Back", BackMenuItem()))
         self.draw()
         
+    def handle_event(self, event):
+        if isinstance(event, messages.ControllerButtonMessage):
+            if event.button == "dup":
+                self.item_changed(False)
+                return True
+            elif event.button == "ddown":
+                self.item_changed(True)
+                return True
+            elif event.button == "start":
+                self.item_selected()
+                return True
+        elif isinstance(event, messages.EncoderChangeMessage):
+            self.item_changed(event.pos)
+            return True
+        elif isinstance(event, messages.EncoderPressMessage):
+            self.item_selected()
+            return True
+        return False        
+
     def item_changed(self, pos):
         if self.child is None:
             if pos:

@@ -105,26 +105,9 @@ class Main:
             if event.button =="home":
                 self.exit_mode()
                 return True
-        if self.mode is None:
-            if isinstance(event, messages.ControllerButtonMessage):
-                if event.button == "dup":
-                    self.menu.item_changed(False)
-                    return True
-                elif event.button == "ddown":
-                    self.menu.item_changed(True)
-                    return True
-                elif event.button == "start":
-                    self.menu.item_selected()
-                    return True
-            elif isinstance(event, messages.EncoderChangeMessage):
-                if self.mode is None:
-                    self.menu.item_changed(event.pos)
-                    return True
-            elif isinstance(event, messages.EncoderPressMessage):
-                if self.mode is None:
-                    self.menu.item_selected()
-                else:
-                    self.exit_mode()
+        if self.mode is not None:
+            if isinstance(event, messages.EncoderPressMessage):
+                self.exit_mode()
                 return True
         return False
                 
@@ -134,7 +117,9 @@ class Main:
                 event = self.events.get()
                 if self.handle_event(event):
                     pass
-                elif self.mode is not None:
+                elif self.mode is None:
+                    self.menu.handle_event(event)
+                else:
                     self.mode.handle_event(event)
             await asyncio.sleep(0.01)
 
