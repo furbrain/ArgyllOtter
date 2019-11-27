@@ -1,5 +1,7 @@
 System set up notes:
-Currently needs controller tech as per lorraine's blog
-Need to install servoblaster
-Need to install jgarffs neopixel python lib - which needs fettling on ?stretch as does not have funcs for detecting Pi3A
-Install simple-pid python thingy - needs to be installed from github as not on raspbian currently
+Needs approxeng.input as per lorraine's blog
+Need to install servoblaster, this needs to be set as PCM to avoid interfering
+with neopixels.
+Set to 1us output resolution, set output 0 only
+Need to install jgarffs neopixel python lib - which needs to be installed from source as seems to be using an old version of main lib
+Install simple-pid python thingy - needs to be installed from github as not on raspbian currently (not currently used...)
