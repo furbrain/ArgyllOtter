@@ -7,3 +7,4 @@ from .encoder import Encoder
 from .laser import Laser
 from .display import Display
 from .controller import Controller
+from .pixels import Pixels

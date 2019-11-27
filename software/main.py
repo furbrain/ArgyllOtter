@@ -9,7 +9,7 @@ from PIL import ImageFont
 
 import menu
 from modes import messages, shooter, escape, manual, mode
-from hardware import Drive, Encoder, Display, Controller
+from hardware import Drive, Encoder, Display, Controller, Pixels
 
 
 
@@ -33,6 +33,7 @@ class Main:
         self.driver = Drive()
         self.encoder = Encoder(self.events)
         self.controller = Controller(self.events)
+        self.pixels = Pixels()
         self.menu_items = [
             ("Manual", manual.Manual),
             ("Challenges", [
@@ -55,7 +56,10 @@ class Main:
                 ("Confirm",partial(os.system, "sudo shutdown -h now")),
             ]),
         ]
-        self.menu = menu.Menu(self.menu_items, self.handle_menu_select_item, display=self.display)
+        self.menu = menu.Menu(self.menu_items, 
+                              self.pixels, 
+                              self.handle_menu_select_item, 
+                              display=self.display)
 
     async def run(self):
         loop = asyncio.get_event_loop()
@@ -75,7 +79,7 @@ class Main:
             v_offset = max(0, (64-size[1]) // 2)
             c.text((h_offset,v_offset), text, font=font, fill=255)
         try:
-            self.mode = mode(self.joystick, self.driver, None) #FIXME replace None with neopixel instance
+            self.mode = mode(self.joystick, self.driver, self.pixels)
             await self.mode.task
         except asyncio.CancelledError:
             pass
@@ -132,6 +136,9 @@ class Main:
 
     def exit(self):
         self.display.clear()
+        for i in range(self.pixels.numPixels()):
+            self.pixels.setPixelColorRGB(i,0,0,0)
+        self.pixels.show()
         self.finished = True
         
 #get up and running...
