@@ -53,7 +53,7 @@ class Main:
                 ("Debug?", self.exit),
                 ]),
             ("Shutdown", [
-                ("Confirm",partial(os.system, "sudo shutdown -h now")),
+                ("Confirm", self.shutdown),
             ]),
         ]
         self.menu = menu.Menu(self.menu_items, 
@@ -140,6 +140,14 @@ class Main:
             self.pixels.setPixelColorRGB(i,0,0,0)
         self.pixels.show()
         self.finished = True
+        
+    def shutdown(self):
+        self.display.clear()
+        for i in range(self.pixels.numPixels()):
+            self.pixels.setPixelColorRGB(i,0,0,0)
+        self.pixels.show()
+        self.finished = True
+        os.system("sudo shutdown -h now")
         
 #get up and running...
 if __name__=="__main__":
