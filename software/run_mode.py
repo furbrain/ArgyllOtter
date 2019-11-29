@@ -3,6 +3,7 @@ import asyncio
 import sys
 
 from modes import shooter, escape
+import calibrate
 from main import Main
 import logging
 from hardware import Drive
@@ -11,7 +12,8 @@ logging.basicConfig(filename='run_mode.log',level=logging.INFO)
 
 async def go(main, main_task, mode):
     await asyncio.sleep(1)
-    m.enter_mode(mode)
+    await m.enter_mode(mode)
+    m.exit()
     await main_task
     print("Main has finished")
     
