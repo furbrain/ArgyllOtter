@@ -136,16 +136,12 @@ class Main:
 
     def exit(self):
         self.display.clear()
-        for i in range(self.pixels.numPixels()):
-            self.pixels.setPixelColorRGB(i,0,0,0)
-        self.pixels.show()
+        self.pixels.clear()
         self.finished = True
         
     def shutdown(self):
         self.display.clear()
-        for i in range(self.pixels.numPixels()):
-            self.pixels.setPixelColorRGB(i,0,0,0)
-        self.pixels.show()
+        self.pixels.clear()
         self.finished = True
         os.system("sudo shutdown -h now")
         
