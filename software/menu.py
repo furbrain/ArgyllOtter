@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from PIL import ImageFont
 import time
 import copy
 
@@ -27,7 +26,6 @@ class Menu():
         else:
             self.display = display
         self.depth = depth
-        self.font = ImageFont.truetype("DejaVuSans.ttf",16)
         self.index = 0
         self.child = None
         self.parent = parent
@@ -98,9 +96,7 @@ class Menu():
                 c.rectangle(((0, (self.index-self.offset)*16), (128, (self.index-self.offset+1)*16)), fill=255)
                 for i, (text, action) in enumerate(self.menu_array):
                     fill = 0 if i==self.index else 255
-                    size = c.textsize(text, font=self.font)
-                    h_offset = max(0, (128-size[0]) // 2)
-                    c.text((h_offset,(i-self.offset)*16), text, font=self.font, fill=fill)
+                    self.display.draw_text_on_canvas(text, c, x=None, y=(i-self.offset)*16, fill=fill, big=False)
         else:
             self.child.draw()        
 

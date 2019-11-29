@@ -11,8 +11,6 @@ import menu
 from modes import messages, shooter, escape, manual, mode
 from hardware import Drive, Encoder, Display, Controller, Pixels
 
-
-
 class DiscardingQueue(collections.deque):
     def __init__(self, maxlen):
         super().__init__(maxlen=maxlen)
@@ -70,14 +68,8 @@ class Main:
     async def enter_mode(self, mode):
         if self.mode:
             self.mode.cancel()
-        self.display.clear()
-        with self.display.canvas() as c:
-            text = mode.__name__
-            font = ImageFont.truetype("DejaVuSans.ttf",32)
-            size = c.textsize(text, font=font)
-            h_offset = max(0, (128-size[0]) // 2)
-            v_offset = max(0, (64-size[1]) // 2)
-            c.text((h_offset,v_offset), text, font=font, fill=255)
+        self.pixels.clear()
+        self.display.draw_text(mode.__name__)
         try:
             self.mode = mode(self.joystick, self.driver, self.pixels)
             await self.mode.task
