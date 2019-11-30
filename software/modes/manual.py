@@ -1,14 +1,37 @@
 #!/usr/bin/env python3
 from . import mode
 from . import messages
+from util import start_task
 import asyncio
 
 import hardware
 class Manual(mode.Mode):
     def on_start(self):
+        self.slow_speed = 40
         self.normal_speed = 200
         self.boost_speed = 1000
-        
+        self.speed = self.normal_speed
+        self.turning = False
+
+    async def turn(self, degrees):
+        self.turning = True
+        print("starting turn")
+        await self.drive.spin(degrees, self.speed)
+        print("turn finished")
+        self.turning = False
+
+    def handle_event(self, event):
+        if super().handle_event(event):
+            return True
+        if isinstance(event, messages.ControllerButtonMessage):
+            if event.button=="l2":
+                start_task(self.turn(-90))
+                return True
+            elif event.button=="r2":
+                start_task(self.turn(90))
+                return True
+        return False
+
     def mixer(self, yaw, throttle, max_power):
         """
         Mix a pair of joystick axes, returning a pair of wheel speeds. This is where the mapping from
@@ -43,18 +66,20 @@ class Manual(mode.Mode):
 
             if self.joystick and self.joystick.connected:
                 x_axis, y_axis = self.joystick['lx', 'ly']
-                if x_axis == y_axis == 0.0:
-                    self.drive.stop()
-                else:
-                    boost = self.joystick['r1']
-                    if boost:
-                        max_power=self.boost_speed
+                if not self.turning:
+                    if x_axis == y_axis == 0.0:
+                        self.drive.stop()
                     else:
-                        max_power=self.normal_speed
-                    # Get power from mixer function
-                    power_left, power_right = self.mixer(yaw=x_axis, throttle=y_axis, max_power=max_power)
-                    # Set motor speeds
-                    self.drive.drive(power_left, power_right)
+                        if self.joystick['r1']:
+                            self.speed=self.boost_speed
+                        elif self.joystick['l1']:
+                            self.speed=self.slow_speed
+                        else:
+                            self.speed=self.normal_speed
+                        # Get power from mixer function
+                        power_left, power_right = self.mixer(yaw=x_axis, throttle=y_axis, max_power=self.speed)
+                        # Set motor speeds
+                        self.drive.drive(power_left, power_right)
             else:
                 self.drive.stop()
 

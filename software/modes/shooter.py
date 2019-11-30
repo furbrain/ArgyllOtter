@@ -27,6 +27,8 @@ class Shooter(manual.Manual):
         self.state_task = start_task(state())
         
     def handle_event(self, event):
+        if super().handle_event(event):
+            return True
         if isinstance(event, messages.ControllerButtonMessage):
             if event.button == "triangle":
                 self.set_state(self.Load)
