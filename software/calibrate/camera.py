@@ -2,11 +2,14 @@ import numpy as np
 import asyncio
 import cv2
 import imutils
+import math
 
 from hardware import Camera, Display, Laser
-from modes import mode
+from modes import mode, messages
 
-class WhiteBalance(mode.Mode):
+OBJECT_WIDTH = 68.00 #mm
+
+class WhiteBalance(mode.Interactive):
     def on_start(self):
         self.camera = Camera()
         self.display = Display()
@@ -19,7 +22,8 @@ class WhiteBalance(mode.Mode):
         print(shutter, awb)
         await asyncio.sleep(1)
         self.display.draw_text("Paper!")
-        await asyncio.sleep(1)
+        await self.wait_for_button()
+        await asyncio.sleep(0.5)
         self.display.clear()
         image = self.camera.get_image()
         cv2.imwrite("before.jpg", image)
@@ -35,12 +39,21 @@ class WhiteBalance(mode.Mode):
         cv2.imwrite("after.jpg", image)
         
 
-class CameraPosition(mode.Mode):
+class CameraPosition(mode.Interactive):
     def on_start(self):
         self.camera = Camera()
         self.display = Display()
+        self.laser = Laser()
+        self.button_pressed = False
 
     async def run(self):
+        self.display.draw_text("Place Object", big=False)
+        self.laser.on()
+        await self.wait_for_button()
+        self.display.clear()
+        await asyncio.sleep(1)
+        self.laser.off()
+        
         # define the list of boundaries
         boundary = ([5, 0, 58], [45, 39, 98])
         hsv_boundary = ([30,80,30],[50,255,255])
@@ -52,11 +65,9 @@ class CameraPosition(mode.Mode):
         await asyncio.sleep(2)
         image = self.camera.get_image()
         hvs = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        print(hvs[87,321])
+        #monkeying about to bring red into middle of colour space
         hvs += np.array([40,0,0], dtype = "uint8")
-        print(hvs[87,321])
         hvs[:,:,0] = np.mod(hvs[:,:,0], 180)
-        print(hvs[87,321])
         mask = cv2.inRange(hvs, lower, upper)
         
         #get rid of blobs	
@@ -67,33 +78,25 @@ class CameraPosition(mode.Mode):
         
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
-        center = None
         
         if len(cnts) > 0:
         
 	        # find the largest contour in the mask, then use
 	        # it to compute the minimum enclosing circle and
 	        # centroid
-	        c = max(cnts, key=cv2.contourArea)	
-	        ((x, y), radius) = cv2.minEnclosingCircle(c)
-	        M = cv2.moments(c)
-	        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))	
-	        
-	        if radius > 10:
-		        #cv2.circle(output, (int(x), int(y)), int(radius),(0, 255, 255), 2)
-		        #cv2.circle(output, center, 5, (0, 0, 255), -1)
-		        self.display.draw_text("Found")
-	        else:
-		        self.display.draw_text("Tiny")
+	        c = max(cnts, key=cv2.contourArea)
+	        x_min = min(c[:,:,0])[0]
+	        x_max = max(c[:,:,0])[0]
+	        y_max = max(c[:,:,1])[0]
+	        dist = await self.laser.get_distance(Laser.MEDIUM)
+	        cal = self.camera.calibration
+	        degrees_subtended = math.atan2(OBJECT_WIDTH,dist)*180/math.pi
+	        cal.degrees_per_pixel = degrees_subtended/(x_max-x_min)
+	        cal.zero_degree_pixel = (x_min+x_max)/2
+	        cal.calibrated = True
         else:
             self.display.draw_text("Nuffin")
-        #disp.write_text("I want nutsssssss",2,4)
-        #show image side by side
         cv2.imwrite("in.jpg", np.hstack([image, output]))
-        cv2.imwrite("red.jpg", output)
-        #cv2.waitKey(0)
-
-
 
 class Lens(mode.Mode):
     def on_start(self):

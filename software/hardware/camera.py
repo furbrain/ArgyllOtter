@@ -7,25 +7,25 @@ import numpy as np
 import asyncio
 import time
 
-class Camera():
-    def __init__(self, resolution = (640,480), iso=800):
-        self.resolution  = resolution
+ISO = 800
+class Calibration:
+    def __init__(self):
+        self.calibrated = False
+        self.degrees_per_pixel = None
+        self.zero_degree_pixel = None
+
+class Camera:
+    RESOLUTION = (640,480)
+    camera = PiCamera(framerate=6) #make camera class level
+    camera.hflip = True
+    camera.vflip = True
+    camera.resolution = RESOLUTION
+    camera.iso = 800
+    calibration = Calibration()
+    def __init__(self, iso=800):
         self.iso = iso
-        self.camera = PiCamera(framerate=6)
         self.rawCapture = PiRGBArray(self.camera)
-        self.camera.hflip = True
-        self.camera.vflip = True
-        self.camera.resolution = resolution
         self.camera.iso=self.iso
-        time.sleep(2)
-        try:
-            d = np.load("/home/pi/camera_exposure.npz")
-            self.set_exposure(d['shutter'], d['awb_gains'])
-            d.close()
-        except:
-            self.shutter_speed = 0.01
-            self.awb_gains = (1.0, 1.0)
-        
         try:
             d = np.load("/home/pi/camera_calibration.npz")
             self.set_calibration(d['mtx'], d['dist'])
@@ -37,13 +37,10 @@ class Camera():
             self.cal_roi = None
 
     def set_exposure(self, shutter_speed, awb_gains):
-        self.shutter_speed = shutter_speed
-        self.awb_gains = awb_gains
         self.camera.exposure_mode = 'off'
         self.camera.awb_mode = 'off'
-        self.camera.awb_gains = self.awb_gains
-        self.camera.shutter_speed = self.shutter_speed
-        np.savez("/home/pi/camera_exposure.npz", shutter=shutter_speed, awb_gains=awb_gains)
+        self.camera.awb_gains = awb_gains
+        self.camera.shutter_speed = shutter_speed
         
         
     async def get_exposure(self):

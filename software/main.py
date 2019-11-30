@@ -10,6 +10,7 @@ from PIL import ImageFont
 import menu
 from modes import messages, shooter, escape, manual, mode
 from hardware import Drive, Encoder, Display, Controller, Pixels
+import calibrate
 
 class DiscardingQueue(collections.deque):
     def __init__(self, maxlen):
@@ -45,7 +46,11 @@ class Main:
                 ("Minesweeper", None),
                 ("Eco-disaster", None),            
             ]),
-            ("Calibrate", None),
+            ("Calibrate", [
+                ("Lens", calibrate.Lens),
+                ("White Balance", calibrate.WhiteBalance),
+                ("Camera Pos", calibrate.CameraPosition),
+            ]),
             ("STOP", self.driver.stop),
             ("Debug", [
                 ("Debug?", self.exit),
