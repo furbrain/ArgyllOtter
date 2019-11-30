@@ -7,9 +7,6 @@ import logging
 from util import logged
 
 BAUD_RATE = 19200
-FAST = b'F'
-MEDIUM = b'D'
-SLOW = b'M'
 
 class LaserTimeoutError(Exception):
     pass
@@ -18,6 +15,9 @@ class LaserBadReadingError(Exception):
     pass
 
 class Laser:
+    FAST = b'F'
+    MEDIUM = b'D'
+    SLOW = b'M'
     def __init__(self, timeout = 3.0):
         self.timeout = timeout
         self.port = serial.Serial("/dev/serial0", 19200, timeout=0) #yes *this* timeout should be zero
@@ -29,16 +29,17 @@ class Laser:
         return "Laser instance"
 
     @logged
-    def laser_on(self):
+    def on(self):
         self.port.write(b'O')
 
     @logged        
-    def laser_off(self):
+    def off(self):
         self.port.write(b'C')
 
     @logged        
     async def get_distance(self, speed=FAST):
         """Get laser range distance in mm"""
+        self.port.reset_input_buffer()
         start_time = time.time()
         self.port.write(speed)
         buffer = b''
