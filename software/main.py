@@ -100,8 +100,8 @@ class Main:
     def event_is_exit(self, event):
         if isinstance(event, messages.ControllerButtonMessage) and event.button =="home":
             return True
-        if isinstance(event, messages.EncoderPressMessage):
-            return True
+        #if isinstance(event, messages.EncoderPressMessage):
+        #    return True
         return False    
                     
     def handle_event(self, event):

@@ -25,3 +25,24 @@ class Mode:
         
     async def run(self):
         pass
+        
+class Interactive(Mode):
+    def __init__(self, joystick, drive, pixels):
+        self.button_pressed = False
+        super().__init__(joystick, drive, pixels)
+
+    def handle_event(self, event):
+        if super().handle_event(event):
+            return True
+        if isinstance(event, messages.EncoderPressMessage):
+            self.button_pressed = True
+            return True
+        return False
+    
+    async def wait_for_button(self):
+        while True:
+            if self.button_pressed:
+                break
+            await asyncio.sleep(0.1)
+        self.button_pressed=False
+
