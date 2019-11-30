@@ -1,13 +1,13 @@
 import asyncio
 from modes import messages
-
+from utils import start_task
 from approxeng.input.selectbinder import ControllerResource
 
 
 class Controller:
     def __init__(self, event_queue):
         self.event_queue = event_queue
-        asyncio.ensure_future(self.monitor())
+        start_task(self.monitor())
 
     def add_event(self, msg):
         self.event_queue.put(msg)

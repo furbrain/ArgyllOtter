@@ -1,5 +1,10 @@
 import functools
 import logging
+import asyncio
+import concurrent.futures
+
+pool = concurrent.futures.ProcessPoolExecutor()
+
 def logged(func):
     @functools.wraps(func)
     def log_this(*args, **kwargs):
@@ -8,3 +13,11 @@ def logged(func):
         logging.info("Calling %s(%s)",func.__name__, ', '.join(items))
         return func(*args, **kwargs)
     return log_this
+
+def start_task(coro):
+    return asyncio.ensure_future(coro)
+    
+def spawn(func, *args, **kwargs):
+    loop = asyncio.get_running_loop()
+    return loop.run_in_executor(pool, func, *args, **kwargs)
+

@@ -1,5 +1,6 @@
 from . import messages
 import asyncio
+from utils import start_task
 
 class Mode:
     def __init__(self, joystick, drive, pixels):
@@ -7,7 +8,7 @@ class Mode:
         self.drive = drive
         self.pixels = pixels
         self.on_start()
-        self.task = asyncio.ensure_future(self.run())
+        self.task = start_task(self.run())
         
     def on_start(self):
         """this contains anything else that needs to be initialised"""

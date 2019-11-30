@@ -10,6 +10,7 @@ from PIL import ImageFont
 import menu
 from modes import messages, shooter, escape, eco, manual, mode
 from hardware import Drive, Encoder, Display, Controller, Pixels
+from utils import start_task
 import calibrate
 
 class DiscardingQueue(collections.deque):
@@ -88,7 +89,7 @@ class Main:
             traceback.print_exc()
         finally:
             self.driver.stop()
-        self.mode =None
+        self.mode = None
         self.menu.draw()
 
             
@@ -96,7 +97,7 @@ class Main:
     def handle_menu_select_item(self, item):
         if item is None: return
         if isinstance(item,type) and issubclass(item, mode.Mode):
-            asyncio.ensure_future(self.enter_mode(item))
+            start_task(self.enter_mode(item))
         else:
             item()
 

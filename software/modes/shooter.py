@@ -3,6 +3,7 @@ from . import manual, messages
 import hardware
 import asyncio
 import time
+from utils import start_task
 
 class Shooter(manual.Manual):
     def on_start(self):
@@ -23,7 +24,7 @@ class Shooter(manual.Manual):
         if self.state_task is not None:
             self.state_task.cancel()
         self.state = state
-        self.state_task = asyncio.ensure_future(state())
+        self.state_task = start_task(state())
         
     def handle_event(self, event):
         if isinstance(event, messages.ControllerButtonMessage):
@@ -71,7 +72,7 @@ class Shooter(manual.Manual):
             self.set_state(self.Aim)
         
     async def Aim(self):
-        angle_task = asyncio.ensure_future(
+        angle_task = start_task(
                          asyncio.wait_for(
                              self.barrel.set_angle(self.angle),2.0))
         while True:
@@ -99,7 +100,7 @@ class Shooter(manual.Manual):
         while True:
             await asyncio.sleep(0.1)
             if (self.pressure.get_pressure() > 108000):
-                asyncio.ensure_future(self.Load())
+                start_task(self.Load())
                 break
     
     async def Off(self):
@@ -115,7 +116,7 @@ class Shooter(manual.Manual):
         self.barrel.set_angle_quick(60)
         
     async def run(self):
-        asyncio.ensure_future(super().run())
+        start_task(super().run())
         self.set_state(self.Off)
         while True:
             if self.joystick and self.joystick.connected:
