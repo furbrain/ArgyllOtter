@@ -8,7 +8,7 @@ from functools import partial
 from PIL import ImageFont
 
 import menu
-from modes import messages, shooter, escape, manual, mode
+from modes import messages, shooter, escape, eco, manual, mode
 from hardware import Drive, Encoder, Display, Controller, Pixels
 import calibrate
 
@@ -44,7 +44,9 @@ class Main:
                 ]),
                 ("Lava", None),
                 ("Minesweeper", None),
-                ("Eco-disaster", None),            
+                ("Eco-disaster", [
+                    ("Retrieve", eco.Retrieve),
+                ]),            
             ]),
             ("Calibrate", [
                 ("Lens", calibrate.Lens),
