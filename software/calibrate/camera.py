@@ -7,7 +7,7 @@ import math
 from hardware import Camera, Display, Laser
 from modes import mode, messages
 from compute import vision
-from utils import spawn
+from util import spawn
 
 OBJECT_WIDTH = 68.00 #mm
 

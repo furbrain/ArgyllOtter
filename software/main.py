@@ -10,7 +10,7 @@ from PIL import ImageFont
 import menu
 from modes import messages, shooter, escape, eco, manual, mode
 from hardware import Drive, Encoder, Display, Controller, Pixels
-from utils import start_task
+from util import start_task
 import calibrate
 
 class DiscardingQueue(collections.deque):

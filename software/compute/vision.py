@@ -1,5 +1,5 @@
 import cv2
-import imutil
+import imutils
 
 COLOURS = {
     "red": ([-10,80,30],[10,255,255]),

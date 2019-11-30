@@ -1,9 +1,7 @@
 from modes import mode
 from hardware import Camera, Display, Laser, Grabber
-import numpy as np
 import asyncio
 from compute import vision
-import imutils
 
 
 class Retrieve(mode.Mode):

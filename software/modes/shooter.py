@@ -3,7 +3,7 @@ from . import manual, messages
 import hardware
 import asyncio
 import time
-from utils import start_task
+from util import start_task
 
 class Shooter(manual.Manual):
     def on_start(self):
