@@ -90,13 +90,14 @@ class Menu():
             for i in range(self.index+1):
                 self.pixels.setPixelColorRGB(i,*COLORS[self.depth])
             self.pixels.show()
-            with self.display.canvas() as c:
-                self.offset = min(self.index, self.offset)
-                self.offset = max(self.index-3, self.offset)
-                c.rectangle(((0, (self.index-self.offset)*16), (128, (self.index-self.offset+1)*16)), fill=255)
-                for i, (text, action) in enumerate(self.menu_array):
-                    fill = 0 if i==self.index else 255
-                    self.display.draw_text_on_canvas(text, c, x=None, y=(i-self.offset)*16, fill=fill, big=False)
+            if self.display.oled:
+                with self.display.canvas() as c:
+                    self.offset = min(self.index, self.offset)
+                    self.offset = max(self.index-3, self.offset)
+                    c.rectangle(((0, (self.index-self.offset)*16), (128, (self.index-self.offset+1)*16)), fill=255)
+                    for i, (text, action) in enumerate(self.menu_array):
+                        fill = 0 if i==self.index else 255
+                        self.display.draw_text_on_canvas(text, c, x=None, y=(i-self.offset)*16, fill=fill, big=False)
         else:
             self.child.draw()        
 

@@ -5,17 +5,22 @@ from oled.render import canvas
 
 class Display:
     def __init__(self):
-        self.oled = sh1106(port=1, address=0x3C) #create display
-        self.oled.command(const.COMSCANINC, const.SEGREMAP) #invert it
+        try:
+            self.oled = sh1106(port=1, address=0x3C) #create display
+            self.oled.command(const.COMSCANINC, const.SEGREMAP) #invert it
+        except:
+            self.oled = None
         self.little_font = ImageFont.truetype("DejaVuSans.ttf", 16)
         self.big_font = ImageFont.truetype("DejaVuSans.ttf", 32)
 
     def canvas(self):
-        return canvas(self.oled)
+        if self.oled:
+            return canvas(self.oled)
         
     def clear(self):
-        with self.canvas() as c:
-            c.rectangle(((0,0),(128,64)),0,0)
+        if self.oled:
+            with self.canvas() as c:
+                c.rectangle(((0,0),(128,64)),0,0)
 
     def draw_text_on_canvas(self, text, canvas, x=None, y=None, fill=255, big=True):
         if big:
@@ -30,8 +35,9 @@ class Display:
         canvas.text((x, y), text, font=font, fill=fill)
 
     def draw_text(self, text, x=None, y=None, fill=255, big=True, clear=True):
-        with self.canvas() as c:
-            if clear:
-                c.rectangle(((0,0),(128,64)),0,0)                
-            self.draw_text_on_canvas(text, c, x, y, fill, big)
+        if self.oled:
+            with self.canvas() as c:
+                if clear:
+                    c.rectangle(((0,0),(128,64)),0,0)                
+                self.draw_text_on_canvas(text, c, x, y, fill, big)
 

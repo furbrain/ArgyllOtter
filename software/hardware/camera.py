@@ -16,11 +16,14 @@ class Calibration:
 
 class Camera:
     RESOLUTION = (640,480)
-    camera = PiCamera(framerate=6) #make camera class level
-    camera.hflip = True
-    camera.vflip = True
-    camera.resolution = RESOLUTION
-    camera.iso = 800
+    try:
+        camera = PiCamera(framerate=6) #make camera class level
+        camera.hflip = True
+        camera.vflip = True
+        camera.resolution = RESOLUTION
+        camera.iso = 800
+    except:
+        camera = None
     calibration = Calibration()
     def __init__(self, iso=800):
         self.iso = iso
