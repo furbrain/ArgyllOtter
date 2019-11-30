@@ -50,6 +50,7 @@ class Main:
                 ("Lens", calibrate.Lens),
                 ("White Balance", calibrate.WhiteBalance),
                 ("Camera Pos", calibrate.CameraPosition),
+                ("Grabber", calibrate.Grabber),
             ]),
             ("STOP", self.driver.stop),
             ("Debug", [
@@ -85,6 +86,7 @@ class Main:
             traceback.print_exc()
         finally:
             self.driver.stop()
+        self.mode =None
         self.menu.draw()
 
             
