@@ -2,8 +2,8 @@
 import time
 import numpy as np
 import pygame
-
-SCALE = 0.1
+import shapely.geometry as geom
+import vtk
 
 class Shetty:
     def __init__(self, pos = None, direction = 0):
@@ -15,14 +15,17 @@ class Shetty:
         self.speed = 0
         self.angular_velocity = 0
         self.last_now = time.time()
+        self.laser = False
         self.width = 200
         self.length = 300 
         self.colour = (0,255,0)
         self.distance_counter = 0
-        
-    def __repr__(self):
-        return str(self.pos)
-        
+        self.camera = vtk.vtkCamera()
+        self.camera.SetClippingRange(1,10000)
+        self.camera.SetViewUp(0, 1, 0)
+        self.camera.SetViewAngle(41)
+        self.update_camera()
+                
     def move(self, speed):
         self.speed = speed
         
@@ -38,7 +41,14 @@ class Shetty:
         
     def get_coeffs(self):    
         radians = self.direction * np.pi / 180
-        return np.sin(radians), np.cos(radians)
+        return np.array((np.sin(radians), np.cos(radians)))
+        
+    def update_camera(self):
+        focus = self.pos + self.get_coeffs()*100
+        self.camera.SetFocalPoint(focus[0], 100, focus[1])
+        self.camera.SetPosition(self.pos[0], 100, self.pos[1])
+        self.camera.SetViewUp(0,1,0)
+        #self.camera.ComputeViewPlaneNormal()
 
     def update(self, now=None):
         if now is None:
@@ -50,18 +60,48 @@ class Shetty:
         distance = self.speed * dt
         self.distance_counter += distance
         self.pos += coeffs * distance
+        self.update_camera()
         
-    def draw(self, surface):
+    def get_corners(self):
         s, c = self.get_coeffs()
         R = np.array([[c, s], [-s, c]])
-        self.update()
         corners = np.array([[-self.width, self.length],
                             [self.width, self.length],
                             [self.width, -self.length],
                             [-self.width, -self.length]]) / 2
         corners = corners @ R.T
         corners += self.pos
-        pygame.draw.polygon(surface, self.colour, corners * SCALE)
+        return corners
+        
+    def get_shape(self):
+        return geom.LinearRing(self.get_corners())
+        
+    def get_laser_line(self, arena):
+        laser_line = geom.LineString([self.pos, self.pos + self.get_coeffs()*10000.0])
+        start = laser_line.interpolate(self.length/2 + 0.01)
+        laser_line = geom.LineString([start, self.pos + self.get_coeffs()*10000.0])
+        shapes = [x.get_shape() for x in arena.objects]
+        intersections = [laser_line.intersection(x) for x in shapes if x is not None]
+        distance = min(start.distance(x) for x in intersections if not x.is_empty)
+        end = laser_line.interpolate(distance)
+        laser_line = geom.LineString((start, end)) 
+        return laser_line
+        
+    def get_camera(self):
+        return self.camera 
+                
+    def get_distance(arena):
+        return self.get_laser_line(arena).length
+        
+    def draw(self, arena):
+        self.update()
+        corners = self.get_corners()
+        if self.laser:
+            laser_line = self.get_laser_line(arena)
+            coords = np.array(laser_line)
+            pygame.draw.line(arena.screen, (255,0,0), coords[0] * arena.SCALE, coords[1] * arena.SCALE)
+        pygame.draw.polygon(arena.screen, self.colour, corners * arena.SCALE)
+        
         
 if __name__=="__main__":
     s = Shetty()

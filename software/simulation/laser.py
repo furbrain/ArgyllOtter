@@ -15,7 +15,9 @@ class Laser:
     FAST = b'F'
     MEDIUM = b'D'
     SLOW = b'M'
-    def __init__(self, timeout = 3.0):
+    def __init__(self, shetty, arena, timeout = 3.0):
+        self.shetty = shetty
+        self.arena = arena
         self.timeout = timeout
         
     def __del__(self):
@@ -26,14 +28,16 @@ class Laser:
 
     @logged
     def on(self):
-        pass
+        self.shetty.laser = True
 
     @logged        
     def off(self):
-        pass
+        self.shetty.laser = False
 
     @logged        
     async def get_distance(self, speed=FAST):
         """Get laser range distance in mm"""
-        return 1000
-
+        await asyncio.sleep(0.4)
+        distance = self.shetty.get_distance(self.arena)
+        await asyncio.sleep(0.3)
+        return distance
