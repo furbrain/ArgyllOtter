@@ -37,7 +37,9 @@ class Laser:
     @logged        
     async def get_distance(self, speed=FAST):
         """Get laser range distance in mm"""
+        self.on()
         await asyncio.sleep(0.4)
         distance = self.shetty.get_distance(self.arena)
         await asyncio.sleep(0.3)
+        self.off()
         return distance

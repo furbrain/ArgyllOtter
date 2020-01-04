@@ -18,6 +18,6 @@ def start_task(coro):
     return asyncio.ensure_future(coro)
     
 def spawn(func, *args, **kwargs):
-    loop = asyncio.get_running_loop()
+    loop = asyncio.get_event_loop()
     return loop.run_in_executor(pool, func, *args, **kwargs)
 

@@ -23,7 +23,7 @@ class Shetty:
         self.camera = vtk.vtkCamera()
         self.camera.SetClippingRange(1,10000)
         self.camera.SetViewUp(0, 1, 0)
-        self.camera.SetViewAngle(41)
+        self.camera.SetViewAngle(41.41)
         self.update_camera()
                 
     def move(self, speed):
@@ -55,7 +55,7 @@ class Shetty:
             now = time.time()
         dt = now-self.last_now
         self.last_now = now
-        self.direction += self.angular_velocity * dt
+        self.direction -= self.angular_velocity * dt
         coeffs  = np.array(self.get_coeffs())
         distance = self.speed * dt
         self.distance_counter += distance
@@ -90,7 +90,7 @@ class Shetty:
     def get_camera(self):
         return self.camera 
                 
-    def get_distance(arena):
+    def get_distance(self, arena):
         return self.get_laser_line(arena).length
         
     def draw(self, arena):

@@ -2,11 +2,11 @@
 import asyncio
 import sys
 
-from modes import shooter, escape
+from modes import shooter, escape, manual, eco
 import calibrate
 from main import Main
 import logging
-from hardware import Drive
+import argparse
 logging.basicConfig(filename='run_mode.log',level=logging.INFO)
 
 
@@ -17,17 +17,31 @@ async def go(main, main_task, mode):
     await main_task
     print("Main has finished")
     
-default = escape.Learn
-if len(sys.argv) > 1:
-    mode = eval(sys.argv[1])
-else:
-    mode = default
+parser = argparse.ArgumentParser()
+parser.add_argument("mode", help="Mode to run", nargs='?', default="escape.Learn")
+parser.add_argument("-s", "--simulation", help="Run in a simulation", nargs='?', const="simulation.Arena")
+args = parser.parse_args()
+
+mode = eval(args.mode)
+print(args)
 loop = asyncio.get_event_loop()
 loop.set_debug(False)
-m = Main()
+
+
+if args.simulation:
+    import simulation
+    arena = eval(args.simulation)()
+    simulation.Hardware.set_arena(arena)
+    pygame_task = loop.create_task(arena.pygame_loop())
+    hardware = simulation
+else:
+    hardware = None
+
+m = Main(hardware)
 main_task = loop.create_task(m.run())
+
 try:
     loop.run_until_complete(go(m, main_task, mode))
 finally:
-    m.driver.stop()
+    m.hardware.drive.stop()
     

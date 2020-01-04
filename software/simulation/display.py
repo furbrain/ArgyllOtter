@@ -3,7 +3,7 @@ class Display:
         self.oled = None
 
     def canvas(self):
-        raise NotImplemented
+        raise NotImplementedError("canvas not implemented")
         
     def clear(self):
         pass

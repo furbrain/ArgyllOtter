@@ -9,6 +9,7 @@ os.environ['SDL_VIDEO_WINDOW_POS'] = "640,0"
 
 
 from .util import make_actor
+from .shetty import Shetty
 
 class Walls:
     def __init__(self, a, b):
@@ -48,36 +49,6 @@ class Walls:
     def get_actor(self):
         return self.assembly
         
-class Target:
-    def __init__(self, pos, colour):
-        depth = 0.2
-        height = 300
-        width = 600
-        breadth = 200
-        self.colour = np.array(colour)
-        self.pos = np.array(pos)
-        self.size = np.array((width, breadth))
-        dims = (
-            (pos[0], pos[0]+width, 0, height, pos[1], pos[1]+depth),
-            (pos[0], pos[0]+width, 0, depth, pos[1], pos[1]+breadth)
-        )
-        self.assembly = vtk.vtkAssembly()
-        for d in dims:
-            cube = vtk.vtkCubeSource()
-            cube.SetBounds(d)
-            actor = make_actor(cube)
-            actor.GetProperty().SetColor(self.colour/255)  
-            self.assembly.AddPart(actor)
-            
-    def draw(self, arena):
-        pygame.draw.rect(arena.screen, self.colour, (self.pos * arena.SCALE, self.size * arena.SCALE))
-        
-    def get_actor(self):
-        return self.assembly
-        
-    def get_shape(self):
-        return None
-        
         
 class Arena:
     SCALE = 0.2
@@ -91,10 +62,14 @@ class Arena:
         self.objects = []
         self.ren = vtk.vtkRenderer()
         self.ren.SetBackground( 0.5, 0.5, 0.5 )
-        self.renwin = vtk.vtkRenderWindow
         self.renwin = vtk.vtkRenderWindow()
         self.renwin.AddRenderer(self.ren)
         self.renwin.SetSize(640, 480)
+        self.image = vtk.vtkWindowToImageFilter()
+        self.image.SetInput(self.renwin)
+        self.image.SetInputBufferTypeToRGBA()
+        self.image.ReadFrontBufferOff()
+        self.image.Update()
         self.camera = None
         #do ambient lighting
         for i in (-0.5, 0.5):
@@ -104,8 +79,19 @@ class Arena:
                 light.SetFocalPoint(i,0,j)
                 self.ren.AddLight(light)
         self.add_object(self.walls)
-
-
+        self.shetty = None
+        
+    def make_shetty(self):
+        self.shetty = Shetty()
+        
+    def get_shetty(self):
+        if self.shetty is None:
+            self.make_shetty()
+            self.add_object(self.shetty)
+        return self.shetty
+    
+    def get_image(self):
+        return self.image.GetOutput()
         
     def add_object(self, obj):
         self.objects.append(obj)
@@ -126,39 +112,7 @@ class Arena:
             pygame.display.flip()
             self.ren.SetActiveCamera(self.camera)
             self.renwin.Render()
+            self.image.Modified()
+            self.image.Update()
             await asyncio.sleep(0.03)        
-        
-     
-# run the main function only if this module is executed as the main script
-# (if you import this as a module then nothing is executed)
-if __name__=="__main__":
-    from .shetty import Shetty
-    from .drivetrain import Drive
-    from .barrel import Barrel
-    reds = np.random.randint(300,1900,(4,2))
-    greens = np.random.randint(300,1900,(4,2))
-    a = Arena()
-    a.add_object(Target((400,0), (0,0,255)))
-    a.add_object(Target((1200, 0), (255,255,0)))
-    for point in reds:
-        b = Barrel(point, colour=(255,0,0))
-        a.add_object(b)
-    for point in greens:
-        b = Barrel(point, colour=(0,255,0))
-        a.add_object(b)
-    s = Shetty(pos=(1100,1800), direction=180)
-    s.laser = True
-    a.add_object(s)
-    d = Drive(s)
-    async def test():
-       await d.a_goto(600,500)
-       await asyncio.sleep(0.5)
-       await d.spin(-45, 100)
-       #await asyncio.sleep(0.5)
-       #await d.a_goto(600,500)
-       #await asyncio.sleep(0.5)
-       #d.stop()
-    # call the main function
-    loop = asyncio.get_event_loop()
-    asyncio.ensure_future(test())
-    loop.run_until_complete(a.pygame_loop())
+
