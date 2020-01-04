@@ -9,7 +9,6 @@ from PIL import ImageFont
 
 import menu
 from modes import messages, shooter, escape, eco, manual, mode
-from hardware import Drive, Encoder, Display, Controller, Pixels
 from util import start_task
 import calibrate
 
@@ -24,16 +23,14 @@ class DiscardingQueue(collections.deque):
         return self.popleft()
 
 class Main:
-    def __init__(self):
+    def __init__(self, hardware=None):
+        if hardware is None:
+            import hardware
         self.events = DiscardingQueue(20)
+        self.hardware = hardware.Hardware(self.events)
         self.mode = None
         self.finished = False
         self.joystick = None
-        self.display = Display()
-        self.driver = Drive()
-        self.encoder = Encoder(self.events)
-        self.controller = Controller(self.events)
-        self.pixels = Pixels()
         self.menu_items = [
             ("Manual", manual.Manual),
             ("Challenges", [
@@ -55,7 +52,7 @@ class Main:
                 ("Camera Pos", calibrate.CameraPosition),
                 ("Grabber", calibrate.Grabber),
             ]),
-            ("STOP", self.driver.stop),
+            ("STOP", self.hardware.drive.stop),
             ("Debug", [
                 ("Debug?", self.exit),
                 ]),
@@ -64,9 +61,13 @@ class Main:
             ]),
         ]
         self.menu = menu.Menu(self.menu_items, 
-                              self.pixels, 
-                              self.handle_menu_select_item, 
-                              display=self.display)
+                              self.hardware, 
+                              self.handle_menu_select_item)
+                              
+    def clear_displays(self):
+        if self.hardware.display:
+            self.hardware.display.clear()
+        self.hardware.pixels.clear()
 
     async def run(self):
         loop = asyncio.get_event_loop()
@@ -77,10 +78,11 @@ class Main:
     async def enter_mode(self, mode):
         if self.mode:
             self.mode.cancel()
-        self.pixels.clear()
-        self.display.draw_text(mode.__name__)
+        self.clear_displays()
+        if self.hardware.display:
+            self.hardware.display.draw_text(mode.__name__)
         try:
-            self.mode = mode(self.joystick, self.driver, self.pixels)
+            self.mode = mode(self.joystick, self.hardware)
             await self.mode.task
         except asyncio.CancelledError:
             pass
@@ -88,7 +90,7 @@ class Main:
             print("%s raised exception!" % mode.__name__)
             traceback.print_exc()
         finally:
-            self.driver.stop()
+            self.hardware.drive.stop()
         self.mode = None
         self.menu.draw()
 
@@ -102,7 +104,7 @@ class Main:
             item()
 
     def exit_mode(self):
-        self.driver.stop()
+        self.hardware.drive.stop()
         if self.mode:
             self.mode.cancel()
             self.mode = None
@@ -137,13 +139,11 @@ class Main:
             await asyncio.sleep(0.01)
 
     def exit(self):
-        self.display.clear()
-        self.pixels.clear()
+        self.clear_displays()
         self.finished = True
         
     def shutdown(self):
-        self.display.clear()
-        self.pixels.clear()
+        self.clear_displays()
         self.finished = True
         os.system("sudo shutdown -h now")
         

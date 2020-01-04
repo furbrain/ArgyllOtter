@@ -2,7 +2,6 @@
 import time
 import copy
 
-from hardware import Display
 from modes import messages
 
 COLORS = ((0,0,80),
@@ -18,13 +17,9 @@ class Menu():
     where key is a text to show on a menu, and value is either a sub-menu
     or a single callback that takes no arguments"""
     
-    def __init__(self, menu_array, pixels, action_item, depth=0, display = None, parent = None):
+    def __init__(self, menu_array, hardware, action_item, depth=0, parent = None):
         self.menu_array = menu_array
-        self.pixels = pixels
-        if display is None:
-            self.display = Display()
-        else:
-            self.display = display
+        self.hardware = hardware
         self.depth = depth
         self.index = 0
         self.child = None
@@ -69,8 +64,8 @@ class Menu():
         if self.child is None:
             text, item = self.menu_array[self.index]
             if isinstance(item, list):
-                self.child = Menu(item, self.pixels, self.action_item, 
-                                  depth = self.depth+1,display=self.display, parent=self)
+                self.child = Menu(item, self.hardware, self.action_item, 
+                                  depth = self.depth+1, parent=self)
             elif isinstance(item, BackMenuItem):
                 self.parent.child_exit()
             else:
@@ -85,19 +80,20 @@ class Menu():
         
     def draw(self):
         if self.child is None:
-            for i in range(self.pixels.numPixels()):
-                self.pixels.setPixelColorRGB(i,0,0,0)
+            pixels = self.hardware.pixels
+            for i in range(pixels.numPixels()):
+                pixels.setPixelColorRGB(i,0,0,0)
             for i in range(self.index+1):
-                self.pixels.setPixelColorRGB(i,*COLORS[self.depth])
-            self.pixels.show()
-            if self.display.oled:
-                with self.display.canvas() as c:
+                pixels.setPixelColorRGB(i,*COLORS[self.depth])
+            pixels.show()
+            if self.hardware.display:
+                with self.hardware.display.canvas() as c:
                     self.offset = min(self.index, self.offset)
                     self.offset = max(self.index-3, self.offset)
                     c.rectangle(((0, (self.index-self.offset)*16), (128, (self.index-self.offset+1)*16)), fill=255)
                     for i, (text, action) in enumerate(self.menu_array):
                         fill = 0 if i==self.index else 255
-                        self.display.draw_text_on_canvas(text, c, x=None, y=(i-self.offset)*16, fill=fill, big=False)
+                        self.hardware.display.draw_text_on_canvas(text, c, x=None, y=(i-self.offset)*16, fill=fill, big=False)
         else:
             self.child.draw()        
 
