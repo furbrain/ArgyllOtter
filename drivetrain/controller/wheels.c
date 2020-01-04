@@ -7,6 +7,12 @@
 #include "mcc_generated_files/pwm4.h"
 #include "mcc_generated_files/pwm5.h"
 #include "mcc_generated_files/interrupt_manager.h"
+#include "mcc_generated_files/tmr1.h"
+
+#define update_times(wheel)\
+    wheels[wheel].last_time = wheels[wheel].time;\
+    wheels[wheel].time = TMR1_ReadTimer();    
+
 
 int16_t power2duty(float power) {
     return (int16_t)(power*0x3ff);
@@ -38,6 +44,7 @@ void FR_sensor(void) {
     } else {
         position[FRONT_RIGHT]--;
     }
+    update_times(FRONT_RIGHT);
 }
 
 void FL_sensor(void) {
@@ -46,6 +53,7 @@ void FL_sensor(void) {
     } else {
         position[FRONT_LEFT]--;
     }
+    update_times(FRONT_LEFT);
 }
 
 void RR_sensor(void) {
@@ -54,6 +62,7 @@ void RR_sensor(void) {
     } else {
         position[REAR_RIGHT]--;
     }
+    update_times(REAR_RIGHT);
 }
 
 void RL_sensor(void) {
@@ -62,6 +71,7 @@ void RL_sensor(void) {
     } else {
         position[REAR_LEFT]--;
     }
+    update_times(REAR_LEFT);
 }
 
 
@@ -73,6 +83,8 @@ pid_t pids[4] = {0};
         false,\
         0,\
         &position[name],\
+        0,\
+        0,\
         0,\
         &current[name],\
         &pids[name],\
@@ -145,7 +157,22 @@ void wheel_update_power(wheel_t *whl) {
 }
 
 void wheel_update_velocity(wheel_t *whl) {
-    velocity[whl->index] = (*whl->pos - whl->last_pos) * SAMPLE_FREQUENCY/SAMPLE_SKIP;
+    int32_t diff = *whl->pos - whl->last_pos;
+    int32_t speed;
+    if (diff==0) {
+        velocity[whl->index] = 0;
+    } else if ((-30 < diff) && (diff < 30)) {
+        uint16_t dt = whl->time - whl->last_time;
+        speed = 1000000/dt;
+        if (diff<0) {
+            velocity[whl->index] = -speed;
+        } else {
+            velocity[whl->index] = speed;
+        }
+    }
+    else {
+        velocity[whl->index] = diff * SAMPLE_FREQUENCY/SAMPLE_SKIP;
+    }
     whl->last_pos = *whl->pos;
 }
 

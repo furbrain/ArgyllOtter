@@ -24,6 +24,7 @@
         <itemPath>mcc_generated_files/pwm5.h</itemPath>
         <itemPath>mcc_generated_files/pwm1.h</itemPath>
         <itemPath>mcc_generated_files/tmr4.h</itemPath>
+        <itemPath>mcc_generated_files/tmr1.h</itemPath>
       </logicalFolder>
       <itemPath>comms.h</itemPath>
       <itemPath>pid.h</itemPath>
@@ -56,6 +57,7 @@
         <itemPath>mcc_generated_files/pwm5.c</itemPath>
         <itemPath>mcc_generated_files/pwm1.c</itemPath>
         <itemPath>mcc_generated_files/tmr4.c</itemPath>
+        <itemPath>mcc_generated_files/tmr1.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>comms.c</itemPath>

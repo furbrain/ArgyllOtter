@@ -238,6 +238,7 @@ void main(void)
         wheel_stop(whl);
     }
     TMR0_SetInterruptHandler(OneHundredHertz);
+    TMR1_StartTimer();
     ADCC_SetADIInterruptHandler(ADCResultReady);
     ADCC_SetChannel(FRONT_GROUND);
     // Enable the Interrupts

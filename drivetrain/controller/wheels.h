@@ -36,6 +36,8 @@ typedef struct {
     bool stopped;
     volatile int32_t last_pos;
     volatile int32_t * const pos;
+    volatile uint16_t last_time;
+    volatile uint16_t time;
     volatile int32_t target_pos;
     volatile int16_t * const current;
     pid_t   *pid;
