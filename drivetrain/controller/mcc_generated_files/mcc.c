@@ -57,11 +57,11 @@ void SYSTEM_Initialize(void)
     DAC_Initialize();
     PWM2_Initialize();
     ADCC_Initialize();
-    TMR4_Initialize();
     PWM4_Initialize();
+    TMR4_Initialize();
     TMR2_Initialize();
-    TMR0_Initialize();
     PWM1_Initialize();
+    TMR6_Initialize();
     PWM5_Initialize();
     TMR1_Initialize();
     EUSART_Initialize();

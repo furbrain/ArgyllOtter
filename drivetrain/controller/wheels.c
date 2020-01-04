@@ -162,15 +162,18 @@ void wheel_update_velocity(wheel_t *whl) {
     if (diff==0) {
         velocity[whl->index] = 0;
     } else if ((-30 < diff) && (diff < 30)) {
-        uint16_t dt = whl->time - whl->last_time;
-        speed = 1000000/dt;
-        if (diff<0) {
-            velocity[whl->index] = -speed;
+        uint16_t dt = whl->time - whl->last_time;        
+        if (dt==0) {
+            velocity[whl->index] = diff * SAMPLE_FREQUENCY/SAMPLE_SKIP;
         } else {
-            velocity[whl->index] = speed;
+            speed = 1000000/dt;
+            if (diff<0) {
+                velocity[whl->index] = -speed;
+            } else {
+                velocity[whl->index] = speed;
+            }
         }
-    }
-    else {
+    } else {
         velocity[whl->index] = diff * SAMPLE_FREQUENCY/SAMPLE_SKIP;
     }
     whl->last_pos = *whl->pos;

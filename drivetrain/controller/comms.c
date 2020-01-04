@@ -111,7 +111,7 @@ void I2C1_StatusCallback(I2C1_SLAVE_DRIVER_STATUS i2c_bus_state)
             }
             if (eepromAddress == ALERT_ADDRESS) {
                 ALERT_SetLow();
-                SSP1BUF = alert_status;
+                SSP1BUF = *alert_status;
                 eepromAddress++;
             } else {
                 SSP1BUF = EEPROM_Buffer[eepromAddress++];
@@ -131,10 +131,10 @@ void I2C1_StatusCallback(I2C1_SLAVE_DRIVER_STATUS i2c_bus_state)
                     if (writeStart==0) {
                         new_command=true;
                     }
-                    memcpyBuffer2Shadow(writeStart, eepromAddress-writeStart);
+                    memcpyBuffer2Shadow(writeStart, (uint8_t)(eepromAddress-writeStart));
                 } else if (writeStart > eepromAddress) {
                     memcpyBuffer2Shadow(0, eepromAddress);
-                    memcpyBuffer2Shadow(writeStart, BUFFER_SIZE-writeStart);
+                    memcpyBuffer2Shadow(writeStart, (uint8_t)(BUFFER_SIZE-writeStart));
                 }
                 if (writeStart==0x30) {
                     //constants written so update NVRAM

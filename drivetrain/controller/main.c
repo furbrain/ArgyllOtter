@@ -237,7 +237,7 @@ void main(void)
     FOR_ALL_WHEELS(whl) {
         wheel_stop(whl);
     }
-    TMR0_SetInterruptHandler(OneHundredHertz);
+    TMR6_SetInterruptHandler(OneHundredHertz);
     TMR1_StartTimer();
     ADCC_SetADIInterruptHandler(ADCResultReady);
     ADCC_SetChannel(FRONT_GROUND);
