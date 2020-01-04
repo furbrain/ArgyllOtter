@@ -2,11 +2,19 @@ from . import messages
 import asyncio
 from util import start_task
 
+class HardwareNotFoundError(Exception):
+    pass
+
 class Mode:
-    def __init__(self, joystick, drive, pixels):
+    HARDWARE = ()
+    
+    def __init__(self, joystick, hardware):        
         self.joystick = joystick
-        self.drive = drive
-        self.pixels = pixels
+        for item in self.HARDWARE:
+            if getattr(hardware,item) is None:
+                raise HardwareNotFoundError(item)
+            setattr(self,item,getattr(hardware,item))
+            
         self.on_start()
         self.task = start_task(self.run())
         
@@ -28,9 +36,9 @@ class Mode:
         pass
         
 class Interactive(Mode):
-    def __init__(self, joystick, drive, pixels):
+    def __init__(self, joystick, hardware):
         self.button_pressed = False
-        super().__init__(joystick, drive, pixels)
+        super().__init__(joystick, hardware)
 
     def handle_event(self, event):
         if super().handle_event(event):

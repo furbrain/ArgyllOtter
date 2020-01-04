@@ -4,7 +4,6 @@ import cv2
 import imutils
 import math
 
-from hardware import Camera, Display, Laser
 from modes import mode, messages
 from compute import vision
 from util import spawn
@@ -12,9 +11,7 @@ from util import spawn
 OBJECT_WIDTH = 68.00 #mm
 
 class WhiteBalance(mode.Interactive):
-    def on_start(self):
-        self.camera = Camera()
-        self.display = Display()
+    HARDWARE = ('camera', 'display')
         
     async def run(self):
         # Set ISO to the desired value
@@ -42,11 +39,7 @@ class WhiteBalance(mode.Interactive):
         
 
 class CameraPosition(mode.Interactive):
-    def on_start(self):
-        self.camera = Camera()
-        self.display = Display()
-        self.laser = Laser()
-        self.button_pressed = False
+    HARDWARE = ('camera', 'display', 'laser')
 
     async def run(self):
         self.display.draw_text("Place Object", big=False)
@@ -71,9 +64,7 @@ class CameraPosition(mode.Interactive):
             self.display.draw_text("Nuffin")
 
 class Lens(mode.Mode):
-    def on_start(self):
-        self.camera = Camera()
-        self.display = Display()
+    HARDWARE = ('camera', 'display')
         
     async def run(self):
         # termination criteria

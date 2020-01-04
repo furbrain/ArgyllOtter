@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from . import mode, messages
 import numpy as np
-import hardware
 import asyncio
 import time
 
@@ -39,9 +38,9 @@ async def dance(d):
 
 
 class Learn(mode.Mode):
+    HARDWARE = ('drive', 'laser')
     def on_start(self):
         self.data = open(ESCAPE_DATA, "w")
-        self.laser = hardware.Laser()
         
     def handle_event(self, event):
         """Autonomous; no events handled"""
@@ -65,9 +64,9 @@ class Learn(mode.Mode):
         await dance(self.drive)
         
 class Walk(mode.Mode):
+    HARDWARE = ('drive', 'laser')
     def on_start(self):
         self.handling = walking
-        self.laser = hardware.Laser()
         
     async def get_distance(self):
         """return the distance of the wall in front and current position
@@ -88,6 +87,7 @@ class Walk(mode.Mode):
     async def run(self):
         running = False
         self.drive.drive(self.handling.speed, reset_position=True)
+        powers = None
         for i in ORDER:
             await asyncio.sleep(0.05)
             for _ in range(4):
@@ -124,7 +124,8 @@ class Walk(mode.Mode):
                     await self.drive.fast_turn(-90, self.handling.turn_speed, differential=0)
                     #await self.drive.fast_turn(-10, self.handling.turn_speed, differential=0.8)
             #and pull out...
-            self.drive.set_powers(*powers, reset_position=True)
+            if powers is not None:
+                self.drive.set_powers(*powers, reset_position=True)
         #exit the place
         await self.drive.a_goto(self.handling.speed, 1000, soft_start=True)
         # do a little dance
@@ -133,6 +134,7 @@ class Walk(mode.Mode):
         await dance(self.drive)
                 
 class Run(mode.Mode):
+    HARDWARE = ('drive', 'laser')
     def on_start(self):
         super().on_start()
         self.handling = running

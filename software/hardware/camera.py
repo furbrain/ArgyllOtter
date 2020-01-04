@@ -8,6 +8,8 @@ import asyncio
 import time
 
 ISO = 800
+RESOLUTION=(640,480)
+
 class Calibration:
     def __init__(self):
         self.calibrated = False
@@ -15,20 +17,16 @@ class Calibration:
         self.zero_degree_pixel = None
 
 class Camera:
-    RESOLUTION = (640,480)
-    try:
-        camera = PiCamera(framerate=6) #make camera class level
-        camera.hflip = True
-        camera.vflip = True
-        camera.resolution = RESOLUTION
-        camera.iso = 800
-    except:
-        camera = None
-    calibration = Calibration()
-    def __init__(self, iso=800):
+    def __init__(self, iso=ISO):
+        self.camera = PiCamera(framerate=6) #make camera class level
+        self.camera.hflip = True
+        self.camera.vflip = True
+        self.camera.resolution = RESOLUTION
+        self.camera.iso = 800
         self.iso = iso
         self.rawCapture = PiRGBArray(self.camera)
         self.camera.iso=self.iso
+        self.calibration = Calibration
         try:
             d = np.load("/home/pi/camera_calibration.npz")
             self.set_calibration(d['mtx'], d['dist'])

@@ -13,6 +13,13 @@ BMP388_ADDRESS = 0x77
 CAL_FILE = "/home/pi/shooter_calibration.npz"
 CAL_RANGE = (-100,900,50)
 
+class Shooter:
+    def __init__(self):
+        self.pressure = Pressure()
+        self.pump = Pump()
+        self.pointer = Pointer()
+        self.barrel = Barrel()
+
 class Pressure:
     def __init__(self, bus = None, address = BMP388_ADDRESS):
         if bus is None:

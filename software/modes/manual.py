@@ -4,8 +4,8 @@ from . import messages
 from util import start_task
 import asyncio
 
-import hardware
 class Manual(mode.Mode):
+    HARDWARE = ('drive',)
     def on_start(self):
         self.slow_speed = 40
         self.normal_speed = 200

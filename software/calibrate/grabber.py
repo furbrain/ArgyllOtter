@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 from modes import mode, messages
-import hardware
 import asyncio
 import time
 
 class Grabber(mode.Interactive):
+    HARDWARE = ('grabber', 'display')
+
     def on_start(self):
         super().on_start()
         self.grabber = hardware.Grabber()
