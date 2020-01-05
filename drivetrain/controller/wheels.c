@@ -10,8 +10,11 @@
 #include "mcc_generated_files/tmr1.h"
 
 #define update_times(wheel)\
-    wheels[wheel].last_time = wheels[wheel].time;\
-    wheels[wheel].time = TMR1_ReadTimer();    
+    last_times[wheel] = times[wheel];\
+    times[wheel] = TMR1_ReadTimer();    
+
+uint16_t times[4] = {0};
+uint16_t last_times[4] = {0};
 
 
 int16_t power2duty(float power) {
@@ -83,8 +86,6 @@ pid_t pids[4] = {0};
         false,\
         0,\
         &position[name],\
-        0,\
-        0,\
         0,\
         &current[name],\
         &pids[name],\
@@ -159,22 +160,23 @@ void wheel_update_power(wheel_t *whl) {
 void wheel_update_velocity(wheel_t *whl) {
     int32_t diff = *whl->pos - whl->last_pos;
     int32_t speed;
+    uint8_t idx = whl->index;
     if (diff==0) {
-        velocity[whl->index] = 0;
+        velocity[idx] = 0;
     } else if ((-30 < diff) && (diff < 30)) {
-        uint16_t dt = whl->time - whl->last_time;        
+        uint16_t dt = times[idx] - last_times[idx];        
         if (dt==0) {
-            velocity[whl->index] = diff * SAMPLE_FREQUENCY/SAMPLE_SKIP;
+            velocity[idx] = diff * SAMPLE_FREQUENCY/SAMPLE_SKIP;
         } else {
             speed = 1000000/dt;
             if (diff<0) {
-                velocity[whl->index] = -speed;
+                velocity[idx] = -speed;
             } else {
-                velocity[whl->index] = speed;
+                velocity[idx] = speed;
             }
         }
     } else {
-        velocity[whl->index] = diff * SAMPLE_FREQUENCY/SAMPLE_SKIP;
+        velocity[idx] = diff * SAMPLE_FREQUENCY/SAMPLE_SKIP;
     }
     whl->last_pos = *whl->pos;
 }
