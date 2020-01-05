@@ -65,7 +65,7 @@ class Drive:
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, [0, flags])
     
     @logged        
-    def drive(self, left, right = None, soft_start=False, reset_position=True):
+    def drive(self, left, right = None, soft_start=False, reset_position=False):
         if right is None:
             right = left
         flags = self.get_flags(soft_start, reset_position)
