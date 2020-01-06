@@ -97,6 +97,12 @@ void set_wheel_differentials(int32_t left, int32_t right, int16_t speed) {
 void Update(void) {
     static uint8_t count = 0;
     wheel_t* whl;
+    count++;
+    if (count >= SAMPLE_SKIP) {
+        FOR_ALL_WHEELS(whl) {
+            wheel_update_velocity(whl);
+        }
+    }
     if (new_command) {
         cmd = *command;
         raise_alert(ALERT_NOALERT);
@@ -177,10 +183,9 @@ void Update(void) {
             }
         }
     }
-    if (count++ >= SAMPLE_SKIP) {
+    if (count >= SAMPLE_SKIP) {
         count = 0;
         FOR_ALL_WHEELS(whl) {
-            wheel_update_velocity(whl);
             if (cmd.mode != CMD_INDIVIDUAL) {
                 wheel_update_power(whl);
             }

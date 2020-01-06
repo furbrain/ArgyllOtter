@@ -80,7 +80,7 @@ void RL_sensor(void) {
 
 pid_t pids[4] = {0};
 
-#define WHEEL_DATA(initials, name, pwm) \
+#define WHEEL_DATA(initials, name) \
     {\
         initials##_CURRENT,\
         false,\
@@ -88,34 +88,47 @@ pid_t pids[4] = {0};
         &position[name],\
         0,\
         &current[name],\
-        &pids[name],\
-        initials##_set_direction,\
-        pwm##_LoadDutyValue,\
         0,\
         1 << 4 + name,\
         name\
     }
 
 wheel_t wheels[4] = {
-    WHEEL_DATA(FR, FRONT_RIGHT, PWM5),
-    WHEEL_DATA(FL, FRONT_LEFT, PWM1),
-    WHEEL_DATA(RR, REAR_RIGHT, PWM2),
-    WHEEL_DATA(RL, REAR_LEFT, PWM4),
+    WHEEL_DATA(FR, FRONT_RIGHT),
+    WHEEL_DATA(FL, FRONT_LEFT),
+    WHEEL_DATA(RR, REAR_RIGHT),
+    WHEEL_DATA(RL, REAR_LEFT),
 };
 
 
 
+void (*set_direction[4])(uint8_t) = {
+    FR_set_direction,
+    FL_set_direction,
+    RR_set_direction,
+    RL_set_direction
+};
+
+void (*set_pwm[4])(uint16_t) = {
+    PWM5_LoadDutyValue,
+    PWM1_LoadDutyValue,
+    PWM2_LoadDutyValue,
+    PWM4_LoadDutyValue
+};
+
+
 void wheels_init(void) {
     wheel_t* whl;
+    uint8_t idx;
     IOCAF3_SetInterruptHandler(FL_sensor);
     IOCAF2_SetInterruptHandler(FR_sensor);
     IOCCF5_SetInterruptHandler(RL_sensor);
     IOCBF5_SetInterruptHandler(RR_sensor);
     FOR_ALL_WHEELS(whl) {
-        pid_init(whl->pid, 0, 0);
-        pid_tune(whl->pid, 0.0015, 0.0005, 0.0005);
-        whl->pid->pOnE=true;
-        pid_setPoint(whl->pid, 0);
+        idx = whl->index;
+        pid_init(&pids[idx], 0, 0);
+        pids[idx].pOnE=true;
+        pid_setPoint(&pids[idx], 0);
     }
 }
 
@@ -123,21 +136,23 @@ void wheels_reset_position(void) {
     wheel_t *whl;
     FOR_ALL_WHEELS(whl) {
         *whl->pos = 0;
+        whl->last_pos = 0;
     }  
 }
 
 void wheel_set_power(wheel_t *whl, int16_t duty) {
+    uint8_t idx = whl->index;
     if (duty < 0) {
-        whl->set_direction(WHEEL_REVERSE);
+        set_direction[idx](WHEEL_REVERSE);
     } else {
-        whl->set_direction(WHEEL_FORWARD);
+        set_direction[idx](WHEEL_FORWARD);
     }    
-    whl->set_pwm((uint16_t)duty);
-    power[whl->index] = duty;
+    set_pwm[idx]((uint16_t)duty);
+    power[idx] = duty;
 }
 
 void wheel_set_speed(wheel_t *whl, float speed) {
-    pid_setPoint(whl->pid, speed);
+    pid_setPoint(&pids[whl->index], speed);
 }    
 
 void wheel_set_target_pos(wheel_t *whl, int32_t target) {
@@ -145,14 +160,16 @@ void wheel_set_target_pos(wheel_t *whl, int32_t target) {
 }    
 
 void wheel_soft_start(wheel_t *whl) {
-    pid_init(whl->pid, (float)velocity[whl->index], duty2power(power[whl->index]));
+    uint8_t idx = whl->index;
+    pid_init(&pids[idx], (float)velocity[idx], duty2power(power[idx]));
 }
 
 void wheel_update_power(wheel_t *whl) {
     float output;
     int16_t duty;
+    uint8_t idx = whl->index;
     if (whl->stopped) return;
-    output = pid_compute(whl->pid, (float)velocity[whl->index]);
+    output = pid_compute(&pids[idx], (float)velocity[idx]);
     duty = power2duty(output);
     wheel_set_power(whl, duty);
 }
@@ -182,10 +199,11 @@ void wheel_update_velocity(wheel_t *whl) {
 }
 
 void wheel_stop(wheel_t *whl) {
-    whl->set_direction(0);
-    whl->set_pwm(0);
+    uint8_t idx = whl->index;
+    set_direction[idx](0);
+    set_pwm[idx](0);
     whl->stopped = true;
-    pid_init(whl->pid, 0, 0);
+    pid_init(&pids[idx], 0, 0);
 }
 
 void wheel_move_to(wheel_t *whl, int16_t max_speed) {

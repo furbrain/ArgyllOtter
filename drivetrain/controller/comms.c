@@ -19,7 +19,7 @@ volatile int16_t* const peripheral_voltage = (int16_t*)&EEPROM_Shadow[0x54];
 volatile uint8_t* const alert_status = &EEPROM_Shadow[ALERT_ADDRESS];
 
 
-const constants_t constants_default = {0.0015, 0.0005, 0.0005, (WHEEL_DIAMETER*2*M_PI/374.0)};
+const constants_t constants_default = {0.001, 0.0001, 0.0000, (WHEEL_DIAMETER*2*M_PI/374.0)};
 
 volatile bool new_command = false;
 
@@ -51,6 +51,7 @@ void eecpy2mem(uint8_t *dest, uint16_t src, uint8_t count) {
 
 
 void comms_init(void) {
+    *constants = constants_default;
 //    if (DATAEE_ReadByte(0)==0xFF) {
 //        //first run
 //        *constants = constants_default;

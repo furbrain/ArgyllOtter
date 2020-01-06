@@ -20,7 +20,6 @@ extern "C" {
 #define RATE_LIMIT 0.15 //1.0 = disabled
     
 typedef struct {
-    float kP, kI, kD;
     float setPoint, lastInput, ITerm;
     float startInput, lastOutput;
     bool pOnE;
@@ -29,7 +28,6 @@ typedef struct {
 void pid_init(pid_t *ctx, float input, float current_output);
 float pid_compute(pid_t *ctx, float input);
 void pid_setPoint(pid_t *ctx, float point);
-void pid_tune(pid_t *ctx, float Kp, float Ki, float Kd);
 
 #ifdef	__cplusplus
 }
