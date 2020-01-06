@@ -18,7 +18,7 @@ class Controller:
     async def monitor(self, poll_time=0.1):
         while True:
             try:
-                controller = ControllerResource(dead_zone=0.1, hot_zone=0.2)
+                controller = ControllerResource(dead_zone=0.05, hot_zone=0.1)
             except IOError:
                 #no joystick found, wait a bit and try again
                 await asyncio.sleep(1.0)

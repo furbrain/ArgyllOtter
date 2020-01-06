@@ -3,6 +3,7 @@ import smbus
 import struct
 import math
 import logging
+import time
 from util import logged
 
 MPU9250_ADDRESS = 0x68
@@ -17,6 +18,9 @@ class Orientation:
         self.bus.write_byte_data(self.address,27,0x10) #gyro 1000dps full scale
         self.bus.write_byte_data(self.address,28,0x08) #accel 4g full scale
         self.bus.write_byte_data(self.address,28,0x04) #accel 8ms low pass filter
+        self.last_time = time.time()
+        self.total_rotation = 0.0
+        self.gyro_cal = [0,0,0]
     
         
     @logged
@@ -38,6 +42,27 @@ class Orientation:
         rots = struct.unpack(">3h", bytes(data))
         return [(x*1000/0x8000) for x in rots]
         
+    def calibrate_gyro(self):
+        results = []
+        for i in range(20):
+            results += [self.get_rotation()]
+            time.sleep(0.02)
+        self.gyro_cal = np.mean(results, axis=0)
+
+        
+    def start_rotation(self):
+        self.last_time = time.time()
+        self.total_rotation = 0
+        
+    def get_total_rotation(self):
+        this_time = time.time()
+        rotation = self.get_rotation()-self.gyro_cal
+        rotation = rotation[2]*(this_time-self.last_time)
+        logging.debug("Spin: Rotation: %6f + %6f (%f s)" % (current_angle, rotation, this_time-last_time))
+        self.total_rotation += rotation
+        self.last_time = this_time
+        return self.total_rotation
+
         
 if __name__ == "__main__":
     import time

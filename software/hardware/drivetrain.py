@@ -27,11 +27,7 @@ class Drive:
         self.clicks_per_mm = clicks_per_revolution/(math.pi*wheel_diameter)
         self.orientation = orientation.Orientation(bus=self.bus)
         self.alert = gpiozero.Button(4)
-        results = []
-        for i in range(20):
-            results += [self.orientation.get_rotation()]
-            time.sleep(0.02)
-        self.gyro_cal = np.mean(results, axis=0)
+        self.orientation.calibrate_gyro()
         self.reset_position()
         
     def __str__(self):
@@ -156,23 +152,17 @@ class Drive:
         return (peripheral, main)
     
     @logged    
-    async def spin(self, angle, max_speed, soft_start = False, reset_position=True):
-        current_angle = 0
-        last_time  = time.time()
+    async def spin(self, angle, max_speed, soft_start = False, reset_position=True, accurate=True):
         slow_speed = min(max_speed,100)
         slowed = False
+        self.orientation.start_rotation()
         if angle > 0:
             self.drive(max_speed, -max_speed, soft_start=soft_start, reset_position=reset_position)
         else:
             self.drive(-max_speed, max_speed, soft_start=soft_start, reset_position=reset_position)
         while True:
             await asyncio.sleep(0.007)
-            this_time = time.time()
-            rotation = self.orientation.get_rotation()-self.gyro_cal
-            rotation = rotation[2]*(this_time-last_time)
-            logging.debug("Spin: Rotation: %6f + %6f (%f s)" % (current_angle, rotation, this_time-last_time))
-            current_angle += rotation
-            last_time = this_time
+            current_angle = self.orientation.get_total_rotation()
             if not slowed:
                 if abs(current_angle - angle) < 30:
                     logging.debug("Spin: Current angle %f: slowed" % current_angle)
@@ -185,8 +175,13 @@ class Drive:
                 logging.debug("Spin: Current angle %f: stopped" % current_angle)
                 break;
         self.stop() #this sometimes is not received, so repeat after a short interval
-        time.sleep(0.01)
+        await asyncio.sleep(0.01)
         self.stop()
+        if accurate:
+            for i in range(20):
+                current_angle = self.orientation.get_total_rotation()
+                await asyncio.sleep(0.007)
+        return current_angle
             
     @logged    
     async def fast_turn(self, angle, max_speed, differential = 0.333, soft_start = False, reset_position=True):
