@@ -1,4 +1,5 @@
 """Hardware representations for Shetland Attack Pony: mobile"""
+import picamera
 from .drivetrain import Drive
 from .grabber import Grabber
 from .shooter import Shooter
@@ -19,7 +20,7 @@ class Hardware:
         
         try:
             self.camera = Camera()
-        except IOError:
+        except picamera.exc.PiCameraError:
             self.camera = None
         
         try:
