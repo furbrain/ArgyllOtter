@@ -28,7 +28,7 @@ class Drive:
         self.orientation = orientation.Orientation(bus=self.bus)
         self.alert = gpiozero.Button(4)
         self.orientation.calibrate_gyro()
-        self.reset_position()
+        self.stop(reset_position=True)
         
     def __str__(self):
         return "Drive instance"
@@ -100,11 +100,6 @@ class Drive:
             return self.c2mm(*positions)
         raise DriveError("Couldn't get reasonable positions, latest readings are" + ', '.join(str(x) for x in positions))
 
-    @logged
-    def reset_position(self):
-        data = struct.pack("<4i", 0, 0, 0, 0)
-        self.bus.write_i2c_block_data(I2C_ADDRESS, 0x10, list(data))
-    
     @logged    
     async def a_goto(self, max_speed, right, left=None, fast=False, soft_start = False, reset_position=True):
         self.goto(max_speed, right, left, fast, soft_start, reset_position)
