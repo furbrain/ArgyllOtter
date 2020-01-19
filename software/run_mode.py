@@ -2,7 +2,7 @@
 import asyncio
 import sys
 
-from modes import shooter, escape, manual, eco
+from modes import shooter, escape, manual, eco, lava
 import calibrate
 from main import Main
 import logging

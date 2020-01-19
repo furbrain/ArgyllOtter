@@ -63,3 +63,22 @@ async def find_objects(camera, colour, width):
         results.append([angle,distance])
     return results
 
+def find_lines(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 100, 200)
+    lines = cv2.HoughLinesP(edges,1,np.pi/180, 30, np.array([]), 30,10)
+    if lines is None:
+        return None
+    lines = lines[:,0,:]
+    x1,y1,x2,y2 = lines.T
+    #get angle as offset from vertical
+    theta = np.arctan2(y1-y2, x1-x2)
+    rho = np.sin(theta)*x1+np.cos(theta)*y1
+    angle = np.rad2deg(theta) % 180
+    angle %= 180
+    angle -= 90
+    angle *= -1
+    # find duplicates, based on angle and rho
+    return np.stack((x1,y1,x2,y2,angle, rho)).T
+
+

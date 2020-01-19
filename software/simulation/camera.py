@@ -52,4 +52,17 @@ class Camera:
                 
     def get_pose(self):
         raise NotImplemented
+        
+    def get_position(self, x, y):
+        y = 240-y
+        angle = -y * self.calibration.degrees_per_pixel
+        print("angle", angle)
+        height = 100
+        newy = height/np.tan(np.deg2rad(angle))
+        x = x- self.calibration.zero_degree_pixel
+        print(x,y)
+        angle = x  * self.calibration.degrees_per_pixel
+        print("angle", angle)
+        newx = newy * np.tan(np.deg2rad(angle))
+        return np.array([newx, newy])
 
