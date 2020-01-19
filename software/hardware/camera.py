@@ -15,6 +15,7 @@ class Calibration:
         self.calibrated = False
         self.degrees_per_pixel = None
         self.zero_degree_pixel = None
+        self.distance_curve = np.array([])
 
 class Camera:
     def __init__(self, iso=ISO):

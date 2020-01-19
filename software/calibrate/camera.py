@@ -49,8 +49,18 @@ class CameraPosition(mode.Interactive):
         await asyncio.sleep(1)
         self.laser.off()       
         await asyncio.sleep(2)
-        image = self.camera.get_image()
-        contour = await spawn(vision.find_biggest_contour(image, "red"))
+        points = []
+        for i in range(4):
+            image = self.camera.get_image()
+            contour = await spawn(vision.find_biggest_contour(image, "red"))
+            if contour is None:
+                self.display.draw_text("Nuffin")
+                return
+            dist = await self.laser.get_distance(Laser.MEDIUM)
+            y_max = max(contour[:,:,0])[1]
+            points.append([y_max, dist])
+            await self.drive.a_goto(250)
+        np.save("distance",np.array(points))
         if contour is not None:        
 	        x_min = min(contour[:,:,0])[0]
 	        x_max = max(contour[:,:,0])[0]
