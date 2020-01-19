@@ -59,7 +59,7 @@ class Drive:
             else:
                 if self.shetty.distance_counter < right:
                     break
-            if abs(self.shetty.distance_counter - right) < 200:
+            if not fast and abs(self.shetty.distance_counter - right) < 200:
                 self.shetty.move(max_speed/4)
         self.stop()
         
