@@ -22,7 +22,7 @@ class Hardware:
         self.pixels = Pixels()
         self.laser = Laser(self.shetty, self.arena)
         self.camera = Camera(self.arena)
-        self.display = None
+        self.display = Display()
         self.shooter = None
         self.grabber = Grabber()
         

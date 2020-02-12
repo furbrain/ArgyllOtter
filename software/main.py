@@ -137,6 +137,13 @@ class Main:
                 else:
                     self.mode.handle_event(event)
             await asyncio.sleep(0.01)
+            
+    def draw(self, arena):
+        if self.mode:
+            self.mode.draw(arena)
+            
+    def get_shape(self):
+        return None
 
     def exit(self):
         self.clear_displays()

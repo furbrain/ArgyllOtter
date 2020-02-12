@@ -28,6 +28,7 @@ loop = asyncio.get_event_loop()
 loop.set_debug(False)
 
 
+
 if args.simulation:
     import simulation
     arena = eval(args.simulation)()
@@ -39,6 +40,9 @@ else:
 
 m = Main(hardware)
 main_task = loop.create_task(m.run())
+
+if args.simulation:
+    arena.add_object(m)
 
 try:
     loop.run_until_complete(go(m, main_task, mode))

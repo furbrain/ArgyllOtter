@@ -21,6 +21,10 @@ class Mode:
     def on_start(self):
         """this contains anything else that needs to be initialised"""
         pass
+        
+    def draw(self):
+        """this draws to the top_down arena in simulation"""
+        pass
     
     def cancel(self):
         self.task.cancel()
