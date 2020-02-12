@@ -52,11 +52,12 @@ class CameraPosition(mode.Interactive):
         points = []
         for i in range(4):
             image = self.camera.get_image()
-            contour = await spawn(vision.find_biggest_contour(image, "red"))
+            contour = await spawn(vision.find_biggest_contour, image, "red")
             if contour is None:
                 self.display.draw_text("Nuffin")
                 return
             dist = await self.laser.get_distance(Laser.MEDIUM)
+            print(contour)
             y_max = max(contour[:,:,0])[1]
             points.append([y_max, dist])
             await self.drive.a_goto(250)

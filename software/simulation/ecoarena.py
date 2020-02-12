@@ -7,8 +7,8 @@ from .barrel import Barrel
 from .util import make_actor
 from .shetty import Shetty
 
-NUM_BARRELS = 8
-START_POS = np.array((1100,1800))
+NUM_BARRELS = 12
+START_POS = np.array((1100, 1800))
 class Target:
     def __init__(self, pos, colour):
         depth = 0.2
@@ -42,9 +42,12 @@ class Target:
 class EcoArena(Arena):
     def __init__(self):
         super().__init__(size=(2200,2200))
+        np.random.seed(3)
         barrels = np.empty((0,2))
         i=0
         # do red barrels
+        self.add_object(Target((400,0), (0,0,255)))
+        self.add_object(Target((1200, 0), (255,255,0)))
         while i < NUM_BARRELS:    
             point = np.random.randint(300,1900,(1,2))
             try:
@@ -56,15 +59,11 @@ class EcoArena(Arena):
                 if i % 2==0:
                     colour = (255,0,0)
                     rel_point = point[0]-START_POS
-                    print(rel_point)
-                    print(np.arctan2(rel_point[0], -rel_point[1])*180/np.pi, np.linalg.norm(rel_point))
                 else:
                     colour = (0,255,0)
                 barrel = Barrel(point[0], colour=colour)
                 self.add_object(barrel)
                 i += 1
-        self.add_object(Target((400,0), (0,0,255)))
-        self.add_object(Target((1200, 0), (255,255,0)))
     
     def make_shetty(self):
         print("setting up eco shetty")
