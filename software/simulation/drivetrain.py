@@ -44,7 +44,7 @@ class Drive:
         self.shetty.move((left+right)/2)
     
     @logged    
-    async def a_goto(self, max_speed, right, left=None, fast=False, soft_start = False, reset_position=True):
+    async def a_goto(self, max_speed, right, left=None, fast=False, soft_start = False, reset_position=True, accurate=False):
         if left is not None:
             raise NotImplemented("Can't handle differential goto in simulation")
         if reset_position:
@@ -62,6 +62,9 @@ class Drive:
             if not fast and abs(self.shetty.distance_counter - right) < 200:
                 self.shetty.move(max_speed/4)
         self.stop()
+        if accurate:
+            await asyncio.sleep(0.1)
+        return self.shetty.distance_counter
         
     @logged                        
     def get_velocities(self):
@@ -85,7 +88,7 @@ class Drive:
         return rate
     
     @logged    
-    async def spin(self, angle, max_speed, soft_start = False, reset_position=True):
+    async def spin(self, angle, max_speed, soft_start = False, reset_position=True, accurate=False):
         self.shetty.stop()
         
         current_angle = 0
@@ -112,6 +115,11 @@ class Drive:
                 logging.debug("Spin: Current angle %f: stopped" % current_angle)
                 break;
         self.stop() #this sometimes is not received, so repeat after a short interval
+        if accurate:
+            await asyncio.sleep(0.14)
+            current_angle = self.shetty.direction - start_angle
+        current_angle  = -current_angle
+        return current_angle
             
     @logged    
     async def fast_turn(self, angle, max_speed, differential = 0.333, soft_start = False, reset_position=True):
