@@ -20,21 +20,6 @@ class Handling:
 walking = Handling(400, 300, 0.53, 50)
 running = Handling(600, 300, 0.62, 0.33)
 
-async def dance(d):
-        # do a little dance
-        d.drive(-800, 800)
-        await asyncio.sleep(0.3)
-        d.stop()
-        await asyncio.sleep(0.1)
-        # make a little love
-        d.drive(800, -800)
-        await asyncio.sleep(0.4)
-        d.stop()
-        await asyncio.sleep(0.1)
-        # get down tonight
-        d.drive(-800, 800)
-        await asyncio.sleep(0.3)
-        d.stop()
 
 
 class Learn(mode.Mode):
@@ -61,7 +46,7 @@ class Learn(mode.Mode):
         self.data.close()
         await self.drive.a_goto(LEARN_SPEED, 1000)
         self.drive.stop()
-        await dance(self.drive)
+        await self.drive.dance()
         
 class Walk(mode.Mode):
     HARDWARE = ('drive', 'laser')
@@ -131,7 +116,7 @@ class Walk(mode.Mode):
         # do a little dance
         self.drive.stop()
         await asyncio.sleep(0.2)
-        await dance(self.drive)
+        await self.drive.dance()
                 
 class Run(mode.Mode):
     HARDWARE = ('drive', 'laser')
