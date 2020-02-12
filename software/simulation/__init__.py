@@ -24,7 +24,7 @@ class Hardware:
         self.camera = Camera(self.arena)
         self.display = Display()
         self.shooter = None
-        self.grabber = Grabber()
+        self.grabber = Grabber(self.shetty, self.arena)
         
     @classmethod
     def set_arena(cls, arena):
