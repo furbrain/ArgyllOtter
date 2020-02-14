@@ -59,8 +59,10 @@ class Process(mode.Mode):
         self.route = []
         self.blockages = []
         
-    def get_coeffs(self):
-        radians = self.azimuth * np.pi / 180
+    def get_coeffs(self, bearing=None):
+        if bearing is None:
+            bearing = self.azimuth
+        radians = bearing * np.pi / 180
         return np.array((np.cos(radians), np.sin(radians)))
         
     async def set_azimuth(self, azimuth):
@@ -84,11 +86,19 @@ class Process(mode.Mode):
         distance = await self.drive.a_goto(speed, distance, accurate=True)
         self.pos += self.get_coeffs() * distance
         
+    def correct_barrel(self, barrel):
+        angle, distance, colour = barrel
+        opposite = np.tan(np.deg2rad(angle)) * distance
+        distance += 150
+        theta = np.rad2deg(np.arctan2(opposite, distance))
+        return (theta, distance, colour)
+        
     async def find_barrels(self):
         tasks = [vision.find_objects(self.camera, x, 56) for x in ("red","green")]
         reds, greens = await asyncio.gather(*tasks)
         barrels = [(angle, distance, "red") for angle, distance in reds]
         barrels += [(angle, distance, "green") for angle, distance in greens]
+        barrels = [self.correct_barrel(b) for b in barrels]
         return barrels
         
     async def check_centred(self, colour):
@@ -101,7 +111,7 @@ class Process(mode.Mode):
         else:
             return central[1] 
          
-    async def create_map(self, start_angle, finish_angle):
+    async def create_map(self, start_angle, finish_angle, reverse=False, thorough=False):
         self.display.draw_text("Mapping")
         targeted = False
         first = True
@@ -109,6 +119,7 @@ class Process(mode.Mode):
         self.barrel_map = []
         #find most leftward barrels
         await self.set_azimuth(start_angle)
+        min_distance = 10000
         while not angle_over(finish_angle, self.azimuth):
             barrels = await self.find_barrels()
             if targeted:
@@ -116,20 +127,24 @@ class Process(mode.Mode):
             elif not first:
                 barrels = list(filter(lambda x: x[0] > -13, barrels))
             first = False
-            if len(barrels)>0:
-                target = sorted(barrels)[0]
-                await self.turn(target[0])
-                speed = TURN_SPEED/2
-                while True:
-                    distance, adjustment = await asyncio.gather(self.laser.get_distance(), self.check_centred(target[2]))
-                    if adjustment == 0:
-                        break
-                    await self.turn(adjustment, speed=speed)
-                    speed /= 2
-                targeted = True
-                pos = self.pos + self.get_coeffs() * (distance+150)
-                if pos[1]>250:
-                    self.barrel_map.append((pos, target[2]))
+            for target in sorted(barrels):
+                rough_pos = self.pos + self.get_coeffs() * target[1]
+                if thorough or (rough_pos[1] < min_distance*1.2):
+                    await self.turn(target[0])
+                    speed = TURN_SPEED/2
+                    while True:
+                        adjustment = await self.check_centred(target[2])
+                        if adjustment == 0:
+                            break
+                        await self.turn(adjustment, speed=speed)
+                        speed /= 2
+                    distance = await self.laser.get_distance()
+                    targeted = True
+                    pos = self.pos + self.get_coeffs() * (distance+150)
+                    if pos[1]>250:
+                        self.barrel_map.append((pos, target[2]))
+                        min_distance = min(min_distance, pos[1])
+                    break
             else:
                 await self.turn(15)
                 targeted = False
@@ -167,6 +182,11 @@ class Process(mode.Mode):
         del self.barrel_map[barrel[1]]
         return (barrel[2])            
         
+    def get_highest_barrel(self):
+        self.barrel_map = sorted(self.barrel_map, key= lambda x: x[0][1])
+        barrel = self.barrel_map.pop(0)
+        return barrel
+        
     async def retrieve_barrel(self, barrel):
         self.display.draw_text("Hunting")
         self.grabber.open()
@@ -174,13 +194,20 @@ class Process(mode.Mode):
         offset = pos-self.pos
         bearing = np.rad2deg(np.arctan2(offset[1], offset[0]))
         distance = np.hypot(*offset)
-        distance -= 150 + 30 + 100    
+        if distance > 500:
+            distance -= 150 + 30 + 150
+        else:    
+            distance -= 150 + 30 + 100
         await self.set_azimuth(bearing)
         await self.goto(distance)
-        targets = await self.find_barrels()
-        target = min(targets, key= lambda x: x[1])
-        if abs(target[0] > 3):
-            await self.turn(target[0])
+        while True:
+            targets = await self.find_barrels()
+            print("Retrieving")
+            print(targets)
+            target = min(targets, key= lambda x: x[1])
+            if abs(target[0] < 3):
+                break
+            await self.turn(target[0], speed=TURN_SPEED/2)
         distance = await self.laser.get_distance()
         await self.goto(distance - 20)
         self.grabber.close()
@@ -201,12 +228,19 @@ class Process(mode.Mode):
         red_count=0
         green_count=0
         await self.goto(-100.0)
-        await self.create_map(180,360)
-        while (self.barrel_map):
-            target = self.get_nearest_barrel()
+        first = True
+        while (True):
+            if first:
+                await self.create_map(180,360, thorough=True)
+                target = self.get_nearest_barrel()
+                first=False
+            else:
+                await self.create_map(0, 180)  
+                if len(self.barrel_map)==0:
+                    break
+                target = self.get_highest_barrel()            
             colour = await self.retrieve_barrel(target)
             await self.create_visibility_graph(self.barrel_map)
-            #FIXME check going to right destination and adjust destination to suit number of barrels delivered
             if (colour=="green") :
                 destination = (450+green_count*100,100)
                 green_count += 1
@@ -218,7 +252,6 @@ class Process(mode.Mode):
             self.grabber.open()
             await asyncio.sleep(0.5)
             await self.goto(-100)
-            await self.create_map(0, 180)  
         self.route = [[1100,1000]]
         await self.follow_route(shorten=0)
         await self.drive.dance()
