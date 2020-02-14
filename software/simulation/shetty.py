@@ -44,9 +44,10 @@ class Shetty:
         return np.array((np.sin(radians), np.cos(radians)))
         
     def update_camera(self):
-        focus = self.pos + self.get_coeffs()*100
+        pos = self.pos + self.get_coeffs()*150
+        focus = self.pos + self.get_coeffs()*250
         self.camera.SetFocalPoint(focus[0], 100, focus[1])
-        self.camera.SetPosition(self.pos[0], 100, self.pos[1])
+        self.camera.SetPosition(pos[0], 100, pos[1])
         self.camera.SetViewUp(0,1,0)
         #self.camera.ComputeViewPlaneNormal()
 

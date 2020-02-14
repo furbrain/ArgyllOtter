@@ -6,7 +6,7 @@ class HardwareNotFoundError(Exception):
     pass
 
 class Mode:
-    HARDWARE = ()
+    HARDWARE = ("drive",)
     
     def __init__(self, joystick, hardware):        
         self.joystick = joystick
@@ -22,7 +22,7 @@ class Mode:
         """this contains anything else that needs to be initialised"""
         pass
         
-    def draw(self):
+    def draw(self, screen):
         """this draws to the top_down arena in simulation"""
         pass
     
@@ -58,4 +58,9 @@ class Interactive(Mode):
                 break
             await asyncio.sleep(0.1)
         self.button_pressed=False
-
+        
+class Null(Mode):
+    HARDWARE = ('drive', 'camera')
+    async def run(self):
+        while True:
+            await asyncio.sleep(1)
