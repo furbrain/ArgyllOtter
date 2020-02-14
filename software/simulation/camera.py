@@ -39,6 +39,11 @@ class Camera:
     def undistort_image(self, image):
         raise NotImplemented
         
+    async def a_get_image(self):
+        image = self.get_image()
+        await asyncio.sleep(0.15)
+        return image
+        
     def get_image(self):
         image = self.arena.get_image()
         rows, cols, _ = image.GetDimensions()

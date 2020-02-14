@@ -102,6 +102,10 @@ class Arena:
             self.ren.AddActor(obj.get_actor())
         if hasattr(obj, 'get_camera'):
             self.camera = obj.get_camera()
+            
+    def poll(self):
+        """ called every few seconds """
+        pass
 
     async def pygame_loop(self):
         while True:
@@ -117,5 +121,6 @@ class Arena:
             self.renwin.Render()
             self.image.Modified()
             self.image.Update()
+            self.poll()
             await asyncio.sleep(0.03)        
 

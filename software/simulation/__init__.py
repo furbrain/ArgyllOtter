@@ -10,6 +10,7 @@ from .shetty import Shetty
 from .arena import Arena
 from .grabber import Grabber
 from .ecoarena import EcoArena
+from .minefield import MineField
 from .lava import LavaArena
 
 
