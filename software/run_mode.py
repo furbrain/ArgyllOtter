@@ -2,7 +2,7 @@
 import asyncio
 import sys
 
-from modes import shooter, escape, manual, eco, lava
+from modes import shooter, escape, manual, eco, lava, mode, minesweeper
 import calibrate
 from main import Main
 import logging
@@ -10,9 +10,14 @@ import argparse
 logging.basicConfig(filename='run_mode.log',level=logging.INFO)
 
 
-async def go(main, main_task, mode):
-    await asyncio.sleep(1)
-    await m.enter_mode(mode)
+async def go(main, main_task, mode, pygame_task):
+    await asyncio.sleep(0.1)
+    if pygame_task:
+        done, pending  = await asyncio.wait((m.enter_mode(mode),pygame_task), return_when=asyncio.FIRST_COMPLETED)
+    else:
+        await m.enter_mode(mode)
+    for d in done:
+        d.result()
     m.exit()
     await main_task
     print("Main has finished")
@@ -28,6 +33,7 @@ loop = asyncio.get_event_loop()
 loop.set_debug(False)
 
 
+
 if args.simulation:
     import simulation
     arena = eval(args.simulation)()
@@ -36,12 +42,16 @@ if args.simulation:
     hardware = simulation
 else:
     hardware = None
+    pygame_task = None
 
 m = Main(hardware)
 main_task = loop.create_task(m.run())
 
+if args.simulation:
+    arena.add_object(m)
+
 try:
-    loop.run_until_complete(go(m, main_task, mode))
+    loop.run_until_complete(go(m, main_task, mode, pygame_task))
 finally:
     m.hardware.drive.stop()
     

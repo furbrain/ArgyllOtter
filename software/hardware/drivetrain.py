@@ -147,7 +147,7 @@ class Drive:
         return (peripheral, main)
     
     @logged    
-    async def spin(self, angle, max_speed, soft_start = False, reset_position=True, accurate=True):
+    async def spin(self, angle, max_speed, soft_start = False, reset_position=True, accurate=False):
         slow_speed = min(max_speed,100)
         slowed = False
         self.orientation.start_rotation()
@@ -193,6 +193,23 @@ class Drive:
                 logging.info("Fast_turn: Current angle %f: finished" % current_angle)
                 break;
                     
+    async def dance(self):
+        # do a little dance
+        self.drive(-800, 800)
+        await asyncio.sleep(0.3)
+        self.stop()
+        await asyncio.sleep(0.1)
+        # make a little love
+        self.drive(800, -800)
+        await asyncio.sleep(0.4)
+        self.stop()
+        await asyncio.sleep(0.1)
+        # get down tonight
+        self.drive(-800, 800)
+        await asyncio.sleep(0.3)
+        self.stop()
+
+
 if __name__ == "__main__":
     async def go():
         d = Drive()

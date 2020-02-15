@@ -52,7 +52,7 @@ class Walls:
         
 class Arena:
     SCALE = 0.2
-    def __init__(self, size=(2200,2200), bg=(0,0,0)):
+    def __init__(self, size=(2200,2200), bg=(0,0,0), mode=None):
         self.size = np.array(size)
         self.bg = bg
         pygame.init()
@@ -79,6 +79,9 @@ class Arena:
                 light.SetFocalPoint(i,0,j)
                 self.ren.AddLight(light)
         self.add_object(self.walls)
+        if mode:
+            if hasattr(mode, 'draw'):
+                self.add_object(mode)
         self.shetty = None
         
     def make_shetty(self):
@@ -99,6 +102,10 @@ class Arena:
             self.ren.AddActor(obj.get_actor())
         if hasattr(obj, 'get_camera'):
             self.camera = obj.get_camera()
+            
+    def poll(self):
+        """ called every few seconds """
+        pass
 
     async def pygame_loop(self):
         while True:
@@ -114,5 +121,6 @@ class Arena:
             self.renwin.Render()
             self.image.Modified()
             self.image.Update()
+            self.poll()
             await asyncio.sleep(0.03)        
 

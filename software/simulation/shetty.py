@@ -44,9 +44,10 @@ class Shetty:
         return np.array((np.sin(radians), np.cos(radians)))
         
     def update_camera(self):
-        focus = self.pos + self.get_coeffs()*100
+        pos = self.pos + self.get_coeffs()*150
+        focus = self.pos + self.get_coeffs()*250
         self.camera.SetFocalPoint(focus[0], 100, focus[1])
-        self.camera.SetPosition(self.pos[0], 100, self.pos[1])
+        self.camera.SetPosition(pos[0], 100, pos[1])
         self.camera.SetViewUp(0,1,0)
         #self.camera.ComputeViewPlaneNormal()
 
@@ -76,9 +77,13 @@ class Shetty:
     def get_shape(self):
         return geom.LinearRing(self.get_corners())
         
+    def get_front(self, offset):
+        line = geom.LineString([self.pos, self.pos + self.get_coeffs()*10000.0])
+        front = line.interpolate(self.length/2 + offset)
+        return front
+        
     def get_laser_line(self, arena):
-        laser_line = geom.LineString([self.pos, self.pos + self.get_coeffs()*10000.0])
-        start = laser_line.interpolate(self.length/2 + 0.01)
+        start = self.get_front(0.001)
         laser_line = geom.LineString([start, self.pos + self.get_coeffs()*10000.0])
         shapes = [x.get_shape() for x in arena.objects]
         intersections = [laser_line.intersection(x) for x in shapes if x is not None]

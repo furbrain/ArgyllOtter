@@ -10,6 +10,7 @@ from .shetty import Shetty
 from .arena import Arena
 from .grabber import Grabber
 from .ecoarena import EcoArena
+from .minefield import MineField
 from .lava import LavaArena
 
 
@@ -22,9 +23,9 @@ class Hardware:
         self.pixels = Pixels()
         self.laser = Laser(self.shetty, self.arena)
         self.camera = Camera(self.arena)
-        self.display = None
+        self.display = Display()
         self.shooter = None
-        self.grabber = Grabber()
+        self.grabber = Grabber(self.shetty, self.arena)
         
     @classmethod
     def set_arena(cls, arena):

@@ -19,16 +19,33 @@ class Barrel:
         self.actor = make_actor(cyl)
         self.actor.GetProperty().SetColor(*(self.colour / 255.0))
         self.actor.SetPosition(self.pos[0], 0, self.pos[1])
+        self.grabber = None
+        
+        
+    def grab(self, grabber):
+        if np.hypot(*(grabber.get_pos()-self.pos)) < self.size/2:
+            self.grabber = grabber
+        
+    def release(self, grabber):
+        if self.grabber==grabber:
+            self.grabber = None
+        
+    def get_pos(self):
+        if self.grabber:
+            self.pos = self.grabber.get_pos()
+            self.actor.SetPosition(self.pos[0], 0, self.pos[1])
+        return self.pos
         
     def get_shape(self):
-        pt = geom.Point(self.pos)
+        pt = geom.Point(self.get_pos())
         return pt.buffer(self.size/2).exterior
         
     def draw(self, arena):
         pygame.draw.circle(arena.screen, 
                            self.colour, 
-                           [int(x) for x in self.pos * arena.SCALE], 
+                           [int(x) for x in self.get_pos() * arena.SCALE], 
                            int(self.size * arena.SCALE / 2))
                            
     def get_actor(self):
+        self.get_pos()
         return self.actor
