@@ -8,7 +8,7 @@ from functools import partial
 from PIL import ImageFont
 
 import menu
-from modes import messages, shooter, escape, eco, manual, mode
+from modes import messages, shooter, escape, eco, manual, mode, lava
 from util import start_task
 import calibrate
 
@@ -40,7 +40,9 @@ class Main:
                     ("Walk", escape.Walk),
                     ("Run", escape.Run)
                 ]),
-                ("Lava", None),
+                ("Lava", [
+                    ("Palava", lava.Lava),
+                ]),
                 ("Minesweeper", None),
                 ("Eco-disaster", [
                     ("Retrieve", eco.Retrieve),

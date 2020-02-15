@@ -4,30 +4,42 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 import cv2
 import numpy as np
+import scipy.optimize
 import asyncio
 import time
 
 ISO = 800
 RESOLUTION=(640,480)
 
+
+
 class Calibration:
     def __init__(self):
         self.calibrated = False
-        self.degrees_per_pixel = None
-        self.zero_degree_pixel = None
-        self.distance_curve = np.array([])
+        self.degrees_per_pixel = 53.5/640
+        self.zero_degree_pixel = 320
+        self.distance_params = np.array([100,np.deg2rad(53.5/640.0),240])
+
+    def _get_distance(self, x, h, k, offset):
+        return h/np.tan(k*(x+offset))
+
+    def fit_curve(self, y, distance):
+        self.distance_params = scipy.optimize.curve_fit(self._get_distance, y, distance, self.distance_params)[0]
+
+    def get_distance(self, y):
+        return self._get_distance(y, *self.distance_params)
 
 class Camera:
     def __init__(self, iso=ISO):
-        self.camera = PiCamera(framerate=6) #make camera class level
+        self.camera = PiCamera(framerate=20) #make camera class level
         self.camera.hflip = True
         self.camera.vflip = True
         self.camera.resolution = RESOLUTION
-        self.camera.iso = 800
+        self.camera.exposure_mode = "sports"
+        #self.camera.iso = 800
         self.iso = iso
         self.rawCapture = PiRGBArray(self.camera)
-        self.camera.iso=self.iso
-        self.calibration = Calibration
+        self.calibration = Calibration()
         try:
             d = np.load("/home/pi/camera_calibration.npz")
             self.set_calibration(d['mtx'], d['dist'])
@@ -62,9 +74,9 @@ class Camera:
     def save_calibration(self):
         np.savez("/home/pi/camera_calibration.npz", mtx=self.cal_mtx, dist=self.cal_dist)
 
-    def get_raw_image(self):
+    def get_raw_image(self, fast=False):
         self.rawCapture.truncate(0)
-        self.camera.capture(self.rawCapture, format="bgr")
+        self.camera.capture(self.rawCapture, format="bgr", use_video_port=fast)
         image = self.rawCapture.array
         return image
 
@@ -76,8 +88,8 @@ class Camera:
         dst = dst[y:y+h, x:x+w]
         return dst
         
-    def get_image(self):
-        image = self.get_raw_image()
+    def get_image(self, fast=False):
+        image = self.get_raw_image(fast)
         return self.undistort_image(image)
                 
     def get_pose(self):
@@ -104,6 +116,13 @@ class Camera:
         else:
             print("Fail")
 
+    def get_position(self, x, y):
+        newy = self.calibration.get_distance(y)
+        x = x - self.calibration.zero_degree_pixel
+        angle = x  * self.calibration.degrees_per_pixel
+        newx = newy * np.tan(np.deg2rad(angle))
+        return np.array([newx, newy])
+        
 if __name__=="__main__":
     c = Camera()
     #calibrate()        

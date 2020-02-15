@@ -4,6 +4,7 @@ import struct
 import math
 import logging
 import time
+import numpy as np
 from util import logged
 
 MPU9250_ADDRESS = 0x68
@@ -58,7 +59,6 @@ class Orientation:
         this_time = time.time()
         rotation = self.get_rotation()-self.gyro_cal
         rotation = rotation[2]*(this_time-self.last_time)
-        logging.debug("Spin: Rotation: %6f + %6f (%f s)" % (current_angle, rotation, this_time-last_time))
         self.total_rotation += rotation
         self.last_time = this_time
         return self.total_rotation

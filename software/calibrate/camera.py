@@ -39,7 +39,7 @@ class WhiteBalance(mode.Interactive):
         
 
 class CameraPosition(mode.Interactive):
-    HARDWARE = ('camera', 'display', 'laser')
+    HARDWARE = ('drive', 'camera', 'display', 'laser')
 
     async def run(self):
         self.display.draw_text("Place Object", big=False)
@@ -49,22 +49,26 @@ class CameraPosition(mode.Interactive):
         await asyncio.sleep(1)
         self.laser.off()       
         await asyncio.sleep(2)
-        points = []
+        ys = []
+        distances = []
         for i in range(4):
+            dist = await self.laser.get_distance(self.laser.MEDIUM)
             image = self.camera.get_image()
-            contour = await spawn(vision.find_biggest_contour(image, "red"))
+            contour = await spawn(vision.find_biggest_contour, image, "red")
             if contour is None:
                 self.display.draw_text("Nuffin")
                 return
-            dist = await self.laser.get_distance(Laser.MEDIUM)
-            y_max = max(contour[:,:,0])[1]
-            points.append([y_max, dist])
-            await self.drive.a_goto(250)
-        np.save("distance",np.array(points))
+            y_max = max(contour[:,:,1])[0]
+            ys.append(y_max)
+            distances.append(dist)
+            self.laser.on()
+            await self.wait_for_button()
+        self.camera.calibration.fit_curve(ys, distances)
+        print(self.camera.calibration.distance_params)
         if contour is not None:        
 	        x_min = min(contour[:,:,0])[0]
 	        x_max = max(contour[:,:,0])[0]
-	        dist = await self.laser.get_distance(Laser.MEDIUM)
+	        dist = await self.laser.get_distance(self.laser.MEDIUM)
 	        cal = self.camera.calibration
 	        degrees_subtended = math.atan2(OBJECT_WIDTH,dist)*180/math.pi
 	        cal.degrees_per_pixel = degrees_subtended/(x_max-x_min)

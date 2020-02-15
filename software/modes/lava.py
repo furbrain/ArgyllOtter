@@ -3,37 +3,47 @@ import asyncio
 from compute import vision
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
 from util import spawn
+import time
 
 
-DRIVE_SPEED = 600
-TURN_SPEED = DRIVE_SPEED * 0.8
+DRIVE_SPEED = 400
+TURN_SPEED = DRIVE_SPEED * 0.7
 
 class Lava(mode.Mode):
     HARDWARE = ('drive','camera')
-    TURNS = "rllr"    
-    async def find_lines(self):
-        img = self.camera.get_image()
-        img = img[240:,:]
-        return await spawn(vision.find_lines,img)
+    TURNS = "l"    
+    async def find_lines(self, debug=False):
+        img = self.camera.get_image(fast=True)
+        if debug:
+            cv2.imwrite("original.png",img)
+        cropped = img[240:,:]
+        lines = await spawn(vision.find_lines,cropped, debug)
+        if debug:
+            for x1,y1,x2,y2,angle, rho in lines:
+                cv2.line(img,(int(x1),int(y1+240)),(int(x2),int(y2+240)),(0,255,0),2)
+            cv2.imwrite("lined.png",img)
+        return lines
         
     def veer_left(self):
+        print("<")
         self.drive.drive(TURN_SPEED, DRIVE_SPEED)
 
     def veer_right(self):
+        print(">")
         self.drive.drive(DRIVE_SPEED, TURN_SPEED)
 
     def go_straight(self):
+        print("|")
         self.drive.drive(DRIVE_SPEED)
         
     def get_current_line(self, lines):
         matches = []
         for x1,y1,x2,y2,angle,rho in lines:     
             if -40 < angle < 40:
-                if y1 > 220:
+                if y1 > 140:
                     matches.append([angle, x1, y2])
-                elif y2 > 220:       
+                elif y2 > 140:       
                     matches.append([angle, x2, y1])
         if len(matches) == 0:
             return None, None, None
@@ -54,6 +64,8 @@ class Lava(mode.Mode):
             
     def get_next_line(self, lines, direction):
         matches = []
+        if len(lines)==0:
+            return None, None
         x1,y1,x2,y2,angle,rho = lines.T
         if direction=="r":
             matches = np.logical_and(-80 < angle, angle < -20)
@@ -78,15 +90,21 @@ class Lava(mode.Mode):
         angle = np.arctan2(vector[1],vector[0])
         return np.rad2deg(angle), start[1]
         
-    async def follow_line(self, direction):
+    async def follow_line(self, direction, debug=False):
+        last_distance=180
         while True:
-            last_distance=180
-            lines = await self.find_lines()
-            angle, pos, distance = self.get_current_line(lines)
-            if angle is None:
-                angle, _ = self.get_next_line(lines, direction)
-                return angle, last_distance
-            last_distance = distance
+            lines = await self.find_lines(debug)
+            if lines is not None:
+                angle, pos, distance = self.get_current_line(lines)
+                if angle is None:
+                    print("Lines:", lines)
+                    angle, _ = self.get_next_line(lines, direction)
+                    return angle, last_distance
+            else:
+                print("Lines:", lines)
+                return 0, last_distance
+            last_distance = self.camera.calibration.get_distance(distance)
+            print(last_distance)
             if 240 < pos < 400:
                 if angle < -10:
                     self.veer_left()
@@ -100,7 +118,7 @@ class Lava(mode.Mode):
                 self.veer_right()
             
     async def run(self):
-        self.drive.drive(DRIVE_SPEED)
+        self.go_straight()
         while True:
             lines = await self.find_lines()
             current,_,_ = self.get_current_line(lines)
@@ -108,23 +126,24 @@ class Lava(mode.Mode):
                 break
         for direction in self.TURNS:
             angle, distance = await self.follow_line(direction)
-            if distance is not None:
-                await self.drive.a_goto(DRIVE_SPEED, distance, fast=True)
-            else:
-                print("guessing")
-                await self.drive.a_goto(DRIVE_SPEED, 100, fast=True)
+            print("distance",distance)
+            #if distance is not None:
+            #    await self.drive.a_goto(DRIVE_SPEED, distance, fast=True)
+            #else:
+            #    print("guessing")
+            #    await self.drive.a_goto(DRIVE_SPEED, 100, fast=True)
             if direction=="r":
-                await self.drive.fast_turn(45, TURN_SPEED)
+                await self.drive.fast_turn(45, TURN_SPEED, differential=0)
             else:
-                await self.drive.fast_turn(-45, TURN_SPEED)
+                await self.drive.fast_turn(-45, TURN_SPEED, differential=0)
             while True:
                 break
                 lines = await self.find_lines()
                 current,_,_ = self.get_current_line(lines)
                 if current is not None:
                     break                 
-            self.drive.drive(DRIVE_SPEED)
-        await self.follow_line("r")            
-        await self.drive.a_goto(DRIVE_SPEED,700)
+            self.go_straight()
+        await self.follow_line("r", debug=True)            
+        #await self.drive.a_goto(DRIVE_SPEED,700)
         self.drive.stop()
 

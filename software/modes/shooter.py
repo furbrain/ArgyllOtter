@@ -5,7 +5,7 @@ import time
 from util import start_task
 
 class Shooter(manual.Manual):
-    HARDWARE = ('drive', 'shooter', 'laser')
+    HARDWARE = ('drive', 'shooter', 'laser', 'display')
     def on_start(self):
         super().on_start()
         self.angle = 0
@@ -17,6 +17,7 @@ class Shooter(manual.Manual):
         
     def set_state(self, state):
         print("Setting state to ", state.__name__)
+        self.display.draw_text(state.__name__)
         if self.state_task is not None:
             self.state_task.cancel()
         self.state = state
@@ -34,10 +35,10 @@ class Shooter(manual.Manual):
                 self.set_state(self.Reload)
             if self.aimable:
                 if event.button == "dup":
-                    self.angle += 2
+                    self.angle += 10
                     self.shooter.barrel.set_pos(self.angle)                    
                 elif event.button == "ddown":
-                    self.angle -= 2
+                    self.angle -= 10
                     self.shooter.barrel.set_pos(self.angle)                    
                 elif event.button == "cross":
                     self.set_state(self.Fire)

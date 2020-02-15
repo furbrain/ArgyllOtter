@@ -3,6 +3,7 @@ import imutils
 import numpy as np
 import asyncio
 from util import spawn
+import time
 
 COLOURS = {
     "red": ([-10,80,30],[10,255,255]),
@@ -63,14 +64,28 @@ async def find_objects(camera, colour, width):
         results.append([angle,distance])
     return results
 
-def find_lines(image):
+def find_lines(image, debug=False):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray, 100, 200)
+    smaller = cv2.resize(gray,(315,115))
+    cropped = smaller[10:-10,10:-10]
+    least = np.amin(cropped)
+    most = np.amax(cropped)
+    smaller -=least
+    smaller *= 255//most-least
+    #smaller = cv2.equalizeHist(smaller)
+    edges = cv2.Canny(smaller, 2000, 3000, apertureSize=5)
+    if debug:
+        cv2.imwrite("smaller.png", smaller)
+        cv2.imwrite("edges.png", edges)
     lines = cv2.HoughLinesP(edges,1,np.pi/180, 30, np.array([]), 30,10)
     if lines is None:
-        return None
+        return []
     lines = lines[:,0,:]
     x1,y1,x2,y2 = lines.T
+    x1*=2
+    x2*=2
+    y1*=2
+    y2*=2
     #get angle as offset from vertical
     theta = np.arctan2(y1-y2, x1-x2)
     rho = np.sin(theta)*x1+np.cos(theta)*y1
