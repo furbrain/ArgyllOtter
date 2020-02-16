@@ -31,11 +31,12 @@ class Calibration:
 
 class Camera:
     def __init__(self, iso=ISO):
-        self.camera = PiCamera(framerate=20) #make camera class level
+        self.camera = PiCamera(framerate=20) 
         self.camera.hflip = True
         self.camera.vflip = True
         self.camera.resolution = RESOLUTION
-        self.camera.exposure_mode = "sports"
+        self.camera.exposure_mode = "auto"
+        self.camera.awb_mode = "fluorescent"
         #self.camera.iso = 800
         self.iso = iso
         self.rawCapture = PiRGBArray(self.camera)

@@ -54,7 +54,7 @@ class CameraPosition(mode.Interactive):
         for i in range(4):
             dist = await self.laser.get_distance(self.laser.MEDIUM)
             image = self.camera.get_image()
-            contour = await spawn(vision.find_biggest_contour, image, "red")
+            contour = await spawn(vision.find_biggest_contour, image, "green")
             if contour is None:
                 self.display.draw_text("Nuffin")
                 return
