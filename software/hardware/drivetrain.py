@@ -148,23 +148,29 @@ class Drive:
     
     @logged    
     async def spin(self, angle, max_speed, soft_start = False, reset_position=True, accurate=False):
-        slow_speed = min(max_speed,100)
+        slow_speed = min(max_speed, 300)
         slowed = False
         self.orientation.start_rotation()
         if angle > 0:
-            self.drive(max_speed, -max_speed, soft_start=soft_start, reset_position=reset_position)
+            left = max_speed
+            slow_left = slow_speed
         else:
-            self.drive(-max_speed, max_speed, soft_start=soft_start, reset_position=reset_position)
+            left = -max_speed
+            slow_left = slow_speed
+        if accurate:
+            right = 0
+            slow_right = 0
+        else:
+            right = -left
+            slow_right = slow_left
+        self.drive(left, right, soft_start=soft_start, reset_position=reset_position)
         while True:
             await asyncio.sleep(0.007)
             current_angle = self.orientation.get_total_rotation()
             if not slowed:
                 if abs(current_angle - angle) < 30:
                     logging.debug("Spin: Current angle %f: slowed" % current_angle)
-                    if angle > 0:
-                        self.drive(slow_speed, -slow_speed, soft_start=False, reset_position=False)
-                    else:
-                        self.drive(-slow_speed, slow_speed, soft_start=False, reset_position=False)
+                    self.drive(left, right, soft_start=False, reset_position=False)
                     slowed = True
             if abs(current_angle) > abs(angle):
                 logging.debug("Spin: Current angle %f: stopped" % current_angle)
