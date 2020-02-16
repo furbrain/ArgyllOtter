@@ -12,7 +12,7 @@ from modes import mode
 from compute import vision
 from util import spawn
 
-TURN_SPEED = 100
+TURN_SPEED = 600
 DRIVE_SPEED = 800
 
 def draw_cross(surface, colour, pos, size, width=1):
@@ -74,9 +74,15 @@ class Process(mode.Mode):
             turn  = turn - 360
         await self.turn(turn)
         
+    def correct_position(self, angle):
+        bearing = self.azimuth+60
+        axis = self.pos + self.get_coeffs(bearing) * 0.1
+        bearing += angle
+        self.pos = axis - self.get_coeffs(bearing) * 0.1
         
     async def turn(self, angle, speed=TURN_SPEED):
         true_angle = await self.drive.spin(angle, speed, accurate=True)
+        self.correct_position(true_angle)
         self.azimuth += true_angle
         self.azimuth %= 360
         
@@ -255,3 +261,13 @@ class Process(mode.Mode):
         self.route = [[1100,1000]]
         await self.follow_route(shorten=0)
         await self.drive.dance()
+        
+class Test(Process):
+    def on_start(self):
+        super().on_start()
+        self.pos = np.array((0,2000))
+        
+    async def run(self):
+        await self.create_map(180,360, thorough=True)
+        print(self.barrel_map)
+        await self.set_azimuth(270)
