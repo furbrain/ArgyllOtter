@@ -30,8 +30,8 @@ def find_all_contours(image, colour="red"):
     
     #get rid of random blobs	
     mask = cv2.erode(mask, None, iterations=2)
-    mask = cv2.dilate(mask, None, iterations=2)
-    
+    mask = cv2.dilate(mask, None, iterations=4)
+    mask = cv2.erode(mask, None, iterations=2)
     cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     return cnts
@@ -45,8 +45,9 @@ def find_biggest_contour(image, colour="red"):
     else:
         return None
 
-async def find_objects(camera, colour, width):
-    image = camera.get_image()
+async def find_objects(camera, colour, width, image=None):
+    if image is None:
+        image = camera.get_image()
     contours = await spawn(find_all_contours, image, colour)
     results = []
     for c in contours:
