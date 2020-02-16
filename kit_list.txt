@@ -7,8 +7,8 @@ Tools:
     serial connector
     crimper
     picoscope
-    Glue gun?
-    Drill?
+    Glue gun
+    Drill
     Calipers?
 
 General parts:
@@ -53,6 +53,7 @@ Grabber
 Shooter
     1 each of support bridges (maybe use old wooden ones)
     
-    
+Laser
+    1 spare unit    
     
     
