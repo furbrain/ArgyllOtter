@@ -14,10 +14,10 @@ async def go(main, main_task, mode, pygame_task):
     await asyncio.sleep(0.1)
     if pygame_task:
         done, pending  = await asyncio.wait((m.enter_mode(mode),pygame_task), return_when=asyncio.FIRST_COMPLETED)
+        for d in done:
+            d.result()
     else:
         await m.enter_mode(mode)
-    for d in done:
-        d.result()
     m.exit()
     await main_task
     print("Main has finished")
