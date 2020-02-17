@@ -101,13 +101,15 @@ class Drive:
         raise DriveError("Couldn't get reasonable positions, latest readings are" + ', '.join(str(x) for x in positions))
 
     @logged    
-    async def a_goto(self, max_speed, right, left=None, fast=False, soft_start = False, reset_position=True):
+    async def a_goto(self, max_speed, right, left=None, fast=False, soft_start = False, reset_position=True, accurate=False):
         self.goto(max_speed, right, left, fast, soft_start, reset_position)
         while True:
             await asyncio.sleep(0.01)
             if not self.alert.is_pressed:
                 await asyncio.sleep(0.01)
-                return self.get_positions()
+                if accurate:
+                    await asyncio.sleep(0.1)
+                return np.mean(self.get_positions())
     
     @logged                        
     def get_velocities(self):
