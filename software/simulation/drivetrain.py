@@ -50,6 +50,8 @@ class Drive:
         if reset_position:
             self.shetty.reset_position()
         self.shetty.spin(0)
+        if right < 0:
+            max_speed = -max_speed
         self.shetty.move(max_speed)
         while True:
             await asyncio.sleep(0.1)

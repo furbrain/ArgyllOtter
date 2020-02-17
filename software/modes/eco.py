@@ -87,11 +87,18 @@ class Process(mode.Mode):
         self.azimuth %= 360
         
     async def goto(self, distance, speed=DRIVE_SPEED):
-        if distance < 0:
-            speed = -speed
+        print("a")
         distance = await self.drive.a_goto(speed, distance, accurate=True)
+        print("b")
         self.pos += self.get_coeffs() * distance
         
+    async def get_distance(self):
+        for i in range(3):
+            dist = self.laser.get_distance()
+            if dist < 10000:
+                return dist
+        return None
+
     def correct_barrel(self, barrel):
         angle, distance, colour = barrel
         opposite = np.tan(np.deg2rad(angle)) * distance
@@ -108,14 +115,30 @@ class Process(mode.Mode):
         return barrels
         
     async def check_centred(self, colour):
-        image = self.camera.get_image()
         positions = await vision.find_objects(self.camera, colour, 56)
+        if len(positions)==0:
+            return None
         angles = [(abs(x[0]), x[0]) for x in positions]
         central = sorted(angles)[0]
         if central[0]<1:
             return 0
         else:
             return central[1] 
+            
+    async def fine_tune(self, colour):
+        speed = TURN_SPEED/2
+        lost = False
+        while True:
+            adjustment = await self.check_centred(colour)
+            if adjustment == 0:
+                return True
+                break
+            if adjustment is None:
+                return False
+                break
+            await self.turn(adjustment, speed=speed)
+            speed /= 2
+            
          
     async def create_map(self, start_angle, finish_angle, reverse=False, thorough=False):
         self.display.draw_text("Mapping")
@@ -137,18 +160,14 @@ class Process(mode.Mode):
                 rough_pos = self.pos + self.get_coeffs() * target[1]
                 if thorough or (rough_pos[1] < min_distance*1.2):
                     await self.turn(target[0])
-                    speed = TURN_SPEED/2
-                    while True:
-                        adjustment = await self.check_centred(target[2])
-                        if adjustment == 0:
-                            break
-                        await self.turn(adjustment, speed=speed)
-                        speed /= 2
-                    distance = await self.laser.get_distance()
-                    targeted = True
-                    pos = self.pos + self.get_coeffs() * (distance+150)
-                    if pos[1]>250:
-                        self.barrel_map.append((pos, target[2]))
+                    found = await self.fine_tune(target[2])
+                    if found:
+                        distance = await self.laser.get_distance()
+                        targeted = True
+                        pos = self.pos + self.get_coeffs() * (distance+150)
+                        print("Barrel: ", pos)
+                        if pos[1]>250:
+                            self.barrel_map.append((pos, target[2]))
                         min_distance = min(min_distance, pos[1])
                     break
             else:
@@ -205,6 +224,7 @@ class Process(mode.Mode):
         else:    
             distance -= 150 + 30 + 100
         await self.set_azimuth(bearing)
+        await self.fine_tune(barrel[1])
         await self.goto(distance)
         while True:
             targets = await self.find_barrels()
@@ -235,6 +255,7 @@ class Process(mode.Mode):
         green_count=0
         await self.goto(-100.0)
         first = True
+        self.grabber.open()
         while (True):
             if first:
                 await self.create_map(180,360, thorough=True)
@@ -269,5 +290,9 @@ class Test(Process):
         
     async def run(self):
         await self.create_map(180,360, thorough=True)
-        print(self.barrel_map)
-        await self.set_azimuth(270)
+        target = self.get_nearest_barrel()
+        colour = await self.retrieve_barrel(target)
+        print("Got a %s barrel" % colour)
+        self.grabber.off()
+
+
