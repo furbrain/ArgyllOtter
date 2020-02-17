@@ -14,10 +14,15 @@ class Grabber:
         except IOError:
             self.opened = 300
             self.closed = -500
+            self.release = -100
             
     @logged    
     def open(self):
         self.servo.set_pos(self.opened)
+        
+    @logged
+    def release(self):
+        self.servo.set_pos(self.release)
     
     @logged    
     def close(self):

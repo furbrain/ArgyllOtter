@@ -14,7 +14,11 @@ class Grabber:
     def open(self):
         for item in self.arena.objects:
             if hasattr(item, "release"):
-                item.release(self)        
+                item.release(self)  
+                
+    @logged
+    def release(self):
+        self.open()     
     
     @logged    
     def close(self):
