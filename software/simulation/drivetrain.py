@@ -92,26 +92,33 @@ class Drive:
     @logged    
     async def spin(self, angle, max_speed, soft_start = False, reset_position=True, accurate=False):
         self.shetty.stop()
-        
+
+        slow_speed = min(max_speed, 300)
+        slowed = False
+
+        if angle > 0:
+            left = max_speed
+            slow_left = slow_speed
+        else:
+            left = -max_speed
+            slow_left = slow_speed
+        if accurate:
+            right = 0
+            slow_right = 0
+        else:
+            right = -left
+            slow_right = slow_left
+
         current_angle = 0
         start_angle = self.shetty.direction
-        slow_speed = min(max_speed,100)
-        slowed = False
-        rate = self.get_spin_rate(max_speed,-max_speed)
-        if angle > 0:
-            self.shetty.spin(rate)
-        else:
-            self.shetty.spin(-rate)
+        self.drive(left, right, soft_start=soft_start, reset_position=reset_position)
         while True:
             await asyncio.sleep(0.007)
             current_angle  = self.shetty.direction - start_angle
             if not slowed:
                 if abs(current_angle - angle) < 30:
                     logging.debug("Spin: Current angle %f: slowed" % current_angle)
-                    if angle > 0:
-                        self.shetty.spin(slow_speed)
-                    else:
-                        self.shetty.spin(-slow_speed)
+                    self.drive(left, right, soft_start=False, reset_position=False)
                     slowed = True
             if abs(current_angle) > abs(angle):
                 logging.debug("Spin: Current angle %f: stopped" % current_angle)
