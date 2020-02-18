@@ -80,12 +80,13 @@ class Menu():
         
     def draw(self):
         if self.child is None:
-            pixels = self.hardware.pixels
-            for i in range(pixels.numPixels()):
-                pixels.setPixelColorRGB(i,0,0,0)
-            for i in range(self.index+1):
-                pixels.setPixelColorRGB(i,*COLORS[self.depth])
-            pixels.show()
+            if self.hardware.pixels:
+                pixels = self.hardware.pixels
+                for i in range(pixels.numPixels()):
+                    pixels.setPixelColorRGB(i,0,0,0)
+                for i in range(self.index+1):
+                    pixels.setPixelColorRGB(i,*COLORS[self.depth])
+                pixels.show()
             if self.hardware.display:
                 try:
                     with self.hardware.display.canvas() as c:

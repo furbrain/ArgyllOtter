@@ -16,7 +16,6 @@ class Grabber:
             self.opened = 300
             self.closed = -500
             self.released = -100
-        print(self.release)
             
     @logged    
     def open(self):

@@ -70,7 +70,8 @@ class Main:
     def clear_displays(self):
         if self.hardware.display:
             self.hardware.display.clear()
-        self.hardware.pixels.clear()
+        if self.hardware.pixels:
+            self.hardware.pixels.clear()
 
     async def run(self):
         loop = asyncio.get_event_loop()

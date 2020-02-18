@@ -15,7 +15,11 @@ class Hardware:
         self.drive = Drive()
         self.encoder = Encoder(queue)
         self.controller = Controller(queue)
-        self.pixels = Pixels()
+        try:
+            self.pixels = Pixels()
+        except RuntimeError:
+            self.pixels = None
+            print("Unable to start neopixels - are you root?")
         self.laser = Laser()
         
         try:
