@@ -15,15 +15,33 @@ ALERT_REGISTER = 0x5F
 RESET_POSITION = 0x01
 SOFT_START = 0x02
 
+DRIVE_CAL_FILE="/home/pi/drivetrain.npz"
+
 class DriveError(Exception):
     pass
 
+class DriveCalibration:
+    def __init__(self):
+        try:
+            d = np.load(DRIVE_CAL_FILE)
+            self.spin_k = d['spin_k']
+            self.forward_k = d['forward_k']
+            self.reverse_k = d['reverse_k']
+        except IOError:
+            self.spin_k = 0
+            self.forward_k = 0
+            self.reverse_k = 0
+            
+    def save(self):
+        np.savez(DRIVE_CAL_FILE, spin_k = self.spin_k, forward_k=self.forward_k, reverse_k=self.reverse_k)
+                
 class Drive:
     def __init__(self, bus=None, wheel_diameter=70.0, clicks_per_revolution=374):
         if bus is None:
             self.bus = smbus.SMBus(1)
         else:
             self.bus = bus
+        self.cal = DriveCalibration()
         self.clicks_per_mm = clicks_per_revolution/(math.pi*wheel_diameter)
         self.orientation = orientation.Orientation(bus=self.bus)
         self.alert = gpiozero.Button(4)
@@ -158,32 +176,39 @@ class Drive:
             slow_left = slow_speed
         else:
             left = -max_speed
-            slow_left = slow_speed
+            slow_left = -slow_speed
         if accurate:
             right = 0
             slow_right = 0
+            if angle>0:
+                k = self.cal.forward_k
+            else:
+                k = self.cal.reverse_k
         else:
             right = -left
-            slow_right = slow_left
+            slow_right = -slow_left
+            k = self.cal.spin_k
         self.drive(left, right, soft_start=soft_start, reset_position=reset_position)
         while True:
             await asyncio.sleep(0.007)
-            current_angle = self.orientation.get_total_rotation()
+            current_angle, v = self.orientation.get_total_rotation()
             if not slowed:
                 if abs(current_angle - angle) < 30:
                     logging.debug("Spin: Current angle %f: slowed" % current_angle)
-                    self.drive(left, right, soft_start=False, reset_position=False)
+                    self.drive(slow_left, slow_right, soft_start=False, reset_position=False)
                     slowed = True
-            if abs(current_angle) > abs(angle):
+            if abs(current_angle) > (abs(angle) - k*v*v): #kvv correction helps us stop on target
                 logging.debug("Spin: Current angle %f: stopped" % current_angle)
+                print("vel: ", v)
                 break;
         self.stop() #this sometimes is not received, so repeat after a short interval
         await asyncio.sleep(0.01)
         self.stop()
-        if accurate:
+        if True:
             for i in range(20):
-                current_angle = self.orientation.get_total_rotation()
+                current_angle, _ = self.orientation.get_total_rotation()
                 await asyncio.sleep(0.007)
+        print("output: ", current_angle)
         return current_angle
             
     @logged    

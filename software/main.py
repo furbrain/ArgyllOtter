@@ -53,6 +53,7 @@ class Main:
                 ("Lens", calibrate.Lens),
                 ("White Balance", calibrate.WhiteBalance),
                 ("Camera Pos", calibrate.CameraPosition),
+                ("Turning", calibrate.Spin),
                 ("Grabber", calibrate.Grabber),
             ]),
             ("STOP", self.hardware.drive.stop),

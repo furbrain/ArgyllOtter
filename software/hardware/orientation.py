@@ -58,10 +58,11 @@ class Orientation:
     def get_total_rotation(self):
         this_time = time.time()
         rotation = self.get_rotation()-self.gyro_cal
-        rotation = rotation[2]*(this_time-self.last_time)
+        ang_velocity = rotation[2]
+        rotation = ang_velocity*(this_time-self.last_time)
         self.total_rotation += rotation
         self.last_time = this_time
-        return self.total_rotation
+        return self.total_rotation, ang_velocity
 
         
 if __name__ == "__main__":
