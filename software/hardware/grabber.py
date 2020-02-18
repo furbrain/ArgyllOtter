@@ -11,10 +11,12 @@ class Grabber:
             d = np.load(CAL_FILE)
             self.opened = d['opened']
             self.closed = d['closed']
+            self.released = (self.opened+self.closed)/2
         except IOError:
             self.opened = 300
             self.closed = -500
-            self.release = -100
+            self.released = -100
+        print(self.release)
             
     @logged    
     def open(self):
@@ -22,7 +24,7 @@ class Grabber:
         
     @logged
     def release(self):
-        self.servo.set_pos(self.release)
+        self.servo.set_pos(self.released)
     
     @logged    
     def close(self):
