@@ -8,9 +8,7 @@ class Grabber(mode.Interactive):
 
     def on_start(self):
         super().on_start()
-        self.grabber = hardware.Grabber()
         self.angle = 0
-        self.display = hardware.Display()
 
     def handle_event(self, event):
         if super().handle_event(event):
@@ -31,7 +29,10 @@ class Grabber(mode.Interactive):
         self.display.draw_text("Closed")
         await self.wait_for_button()
         closed = self.angle
-        self.grabber.set_positions(opened, closed)
+        self.display.draw_text("Release")
+        await self.wait_for_button()
+        released = self.angle
+        self.grabber.set_positions(opened, closed, released)
         self.display.clear()
         self.grabber.open()
         await asyncio.sleep(2)
