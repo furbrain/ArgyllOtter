@@ -14,7 +14,9 @@ from util import spawn, logged
 
 TURN_SPEED = 600
 DRIVE_SPEED = 800
+
 TURN_RADIUS = 100
+CAMERA_OFFSET = 150
 
 def draw_cross(surface, colour, pos, size, width=1):
     x = pos[0]
@@ -35,20 +37,62 @@ def angle_over(target, angle):
         return True
     return False
     
-class Retrieve(mode.Mode):
-    HARDWARE = ('drive','camera','laser','grabber')
+def get_coeffs(bearing):    
+    radians = bearing * np.pi / 180
+    return np.array((np.cos(radians), np.sin(radians)))
+    
+
+class Barrel:
+    def __init__(self, pos, colour, precise):
+        self.pos = pos
+        self.colour = colour
+        self.precise = precise
+    
+    @staticmethod    
+    def fromPolar(origin, azimuth, distance, colour, precise=True):
+        pos = origin + get_coeffs(azimuth) * distance
+        return Barrel(pos, colour, precise)
         
-    async def run(self):
-        self.grabber.open()
-        await asyncio.sleep(1)
-        image = self.camera.get_image()
-        cv2.imwrite("fred.jpg", image)
-        positions = await vision.find_objects(self.camera, "red", 56)
-        nearest = min(positions, key = lambda x: x[1], default=(0,0))
-        await self.drive.spin(nearest[0], 20)
-        dist = await self.laser.get_distance()
-        await self.drive.a_goto(400, dist-50)
-        await asyncio.sleep(2)
+    @staticmethod
+    def fromCamera(origin, azimuth, angle, distance, colour):
+        b = Barrel.fromPolar(origin, azimuth+angle, distance, colour, False)
+        offset = get_coeffs(azimuth) * CAMERA_OFFSET
+        b.pos  += offset
+        return b
+        
+    @staticmethod
+    async def fromImage(camera, origin, azimuth):
+        image = camera.get_image()
+        tasks = [vision.find_objects(camera, col, 56, image) for col in ("red","green")]
+        reds, greens = await asyncio.gather(*tasks)
+        barrels = [Barrel.fromCamera(origin, azimuth, angle, distance, "red") for angle, distance in reds]
+        barrels += [Barrel.fromCamera(origin, azimuth, angle, distance, "green") for angle, distance in greens]
+        return barrels
+        
+    def get_relative_bearing(self, origin, azimuth):
+        pos = self.pos - origin
+        angle = np.rad2deg(np.arctan2(pos[1], pos[0]))
+        angle -= azimuth
+        if angle >180:
+            return angle - 360
+        elif angle < -180:
+            return angle + 360
+        else:
+            return angle
+                
+    def in_bounds(self):
+        #maybe adjust for less precise to give more leeway...
+        if 200 < self.pos[0] < 2000:
+            if 250 < self.pos[1] < 2000:
+                return True
+        return False
+
+
+    def draw(self, arena):
+        pos = [int(x) for x in self.pos * arena.SCALE]
+        draw_cross(arena.screen, self.colour, pos, 10)
+    
+
 
 class Process(mode.Mode):
     HARDWARE = ('drive','camera','laser','grabber', 'display')
@@ -60,13 +104,7 @@ class Process(mode.Mode):
         self.route = []
         self.blockages = []
         self.debug = False
-        
-    def get_coeffs(self, bearing=None):
-        if bearing is None:
-            bearing = self.azimuth
-        radians = bearing * np.pi / 180
-        return np.array((np.cos(radians), np.sin(radians)))
-        
+                
     async def set_azimuth(self, azimuth):
         azimuth %= 360
         turn = azimuth - self.azimuth
@@ -76,6 +114,15 @@ class Process(mode.Mode):
             turn  = turn - 360
         await self.turn(turn)
         
+    def get_axis_and_bearing(self):
+        if self.debug:
+            bearing = self.azimuth+60
+        else:
+            bearing = self.azimuth+90
+        axis = self.pos + get_coeffs(bearing) * TURN_RADIUS
+        return axis, bearing        
+
+
     def get_azimuth_and_distance_to(self, pos):
         axis, bearing = self.get_axis_and_bearing()
         offset = pos-axis
@@ -86,25 +133,12 @@ class Process(mode.Mode):
         distance = np.sqrt(hypot*hypot - o*o)
         return bearing+extra, distance
         
-    def get_axis_and_bearing(self):
-        if self.debug:
-            bearing = self.azimuth+60
-        else:
-            bearing = self.azimuth+90
-        axis = self.pos + self.get_coeffs(bearing) * TURN_RADIUS
-        return axis, bearing        
         
     def correct_position(self, angle):
         axis, bearing = self.get_axis_and_bearing()
         bearing += angle
-        self.pos = axis - self.get_coeffs(bearing) * TURN_RADIUS
+        self.pos = axis - get_coeffs(bearing) * TURN_RADIUS
         
-    def in_field(self, pos):
-        if 200 < pos[0] < 2000:
-            if 250 < pos[1] < 2000:
-                return True
-        return False
-
     async def turn(self, angle, speed=TURN_SPEED):
         true_angle = await self.drive.spin(angle, speed, accurate=True)
         self.correct_position(true_angle)
@@ -113,32 +147,18 @@ class Process(mode.Mode):
         
     async def goto(self, distance, speed=DRIVE_SPEED):
         distance = await self.drive.a_goto(speed, distance, accurate=True)
-        self.pos += self.get_coeffs() * distance
+        self.pos += get_coeffs(self.azimuth) * distance
         
     async def get_distance(self):
         for i in range(3):
-            dist = self.laser.get_distance()
+            dist = await self.laser.get_distance()
             if dist < 10000:
                 return dist
         return None
 
-    def correct_barrel(self, barrel):
-        angle, distance, colour = barrel
-        opposite = np.tan(np.deg2rad(angle)) * distance
-        distance += 150
-        theta = np.rad2deg(np.arctan2(opposite, distance))
-        return (theta, distance, colour)
-        
-    async def find_barrels(self):
-        tasks = [vision.find_objects(self.camera, x, 56) for x in ("red","green")]
-        reds, greens = await asyncio.gather(*tasks)
-        barrels = [(angle, distance, "red") for angle, distance in reds]
-        barrels += [(angle, distance, "green") for angle, distance in greens]
-        barrels = [self.correct_barrel(b) for b in barrels]
-        return barrels
-    
     @logged    
     async def check_centred(self, colour, precision):
+        #FIXME refactor this to just look for the right barrel and make sure straddles laser line
         positions = await vision.find_objects(self.camera, colour, 56)
         if len(positions)==0:
             return None
@@ -150,11 +170,11 @@ class Process(mode.Mode):
             return central[1] 
             
     @logged        
-    async def fine_tune(self, colour, precision=1):
+    async def fine_tune(self, barrel, precision=1):
         speed = TURN_SPEED/2
         lost = False
         while True:
-            adjustment = await self.check_centred(colour, precision)
+            adjustment = await self.check_centred(barrel.colour, precision)
             if adjustment == 0:
                 return True
                 break
@@ -175,25 +195,26 @@ class Process(mode.Mode):
         await self.set_azimuth(start_angle)
         min_distance = 10000
         while not angle_over(finish_angle, self.azimuth):
-            barrels = await self.find_barrels()
+            barrels = await Barrel.fromImage(self.camera, self.pos, self.azimuth)
+            barrels = [(x.get_relative_bearing(self.pos, self.azimuth),x) for x in barrels]
+            print(barrels)
             if targeted:
-                barrels = list(filter(lambda x: x[0] > 2, barrels))
+                barrels = [x for x in barrels if x[0] > 2]
             elif not first:
-                barrels = list(filter(lambda x: x[0] > -13, barrels))
+                barrels = [x for x in barrels if x[0] > -13]
             first = False
-            for target in sorted(barrels):
-                rough_pos = self.pos + self.get_coeffs() * target[1]
-                if thorough or (rough_pos[1] < min_distance*1.2):
-                    await self.turn(target[0])
-                    found = await self.fine_tune(target[2], precision=1)
+            for angle, target in sorted(barrels):
+                print(angle, target)
+                if thorough or (target.pos[1] < min_distance*1.2):
+                    await self.turn(angle)
+                    found = await self.fine_tune(target, precision=1)
                     if found:
-                        distance = await self.laser.get_distance()
+                        distance = await self.get_distance()
                         targeted = True
-                        pos = self.pos + self.get_coeffs() * (distance+150)
-                        print("Barrel: ", pos, target[2])
-                        if self.in_field(pos):
-                            self.barrel_map.append((pos, target[2]))
-                        min_distance = min(min_distance, pos[1])
+                        barrel =  Barrel.fromPolar(self.pos, self.azimuth, distance+150, target.colour)
+                        if barrel.in_bounds():
+                            self.barrel_map.append(barrel)
+                        min_distance = min(min_distance, barrel.pos[1])
                     break
             else:
                 await self.turn(15)
@@ -202,8 +223,8 @@ class Process(mode.Mode):
     async def create_visibility_graph(self, barrels):
         self.display.draw_text("Planning")
         self.blockages = []
-        for pos, colour in barrels:
-            pt = geom.Point(pos).buffer(200, resolution=2)
+        for barrel in barrels:
+            pt = geom.Point(barrel.pos).buffer(200, resolution=2)
             self.blockages.append(pt)
         blockages = ops.unary_union(self.blockages)
         if isinstance(blockages, geom.polygon.Polygon):
@@ -217,9 +238,8 @@ class Process(mode.Mode):
     
     @logged    
     async def goto_pos(self, waypoint, shorten=0):
-            offset = waypoint - self.pos
-            bearing = np.rad2deg(np.arctan2(offset[1], offset[0]))
-            distance = np.hypot(*offset)
+            bearing, distance = self.get_azimuth_and_distance_to(waypoint)
+            distance -= shorten
             if distance > 1000: #if a long distance break into shorter sections
                 await self.goto_pos((waypoint-self.pos)/2 + self.pos)
                 await self.goto_pos(waypoint)
@@ -239,13 +259,13 @@ class Process(mode.Mode):
            
     @logged
     def get_nearest_barrel(self):
-        mapped = [(np.hypot(*(pos-self.pos)), i, (pos,colour)) for i,(pos, colour) in enumerate(self.barrel_map)]
+        mapped = [(np.hypot(*(b.pos-self.pos)), i, b) for i, b in enumerate(self.barrel_map)]
         barrel = min(mapped)
         del self.barrel_map[barrel[1]]
         return (barrel[2])            
         
     def get_highest_barrel(self):
-        self.barrel_map = sorted(self.barrel_map, key= lambda x: x[0][1])
+        self.barrel_map = sorted(self.barrel_map, key= lambda x: x.pos[1])
         barrel = self.barrel_map.pop(0)
         return barrel
     
@@ -255,35 +275,31 @@ class Process(mode.Mode):
         self.grabber.open()
         print("my pos: ", self.pos)
         print("barrel: ", barrel)
-        pos = barrel[0]
-        offset = pos-self.pos
-        bearing,distance = self.get_azimuth_and_distance_to(pos)
+        bearing,distance = self.get_azimuth_and_distance_to(barrel.pos)
         print("ret bearing, dist: ", bearing, distance)
         if distance > 500:
             distance -= 150 + 30 + 150
         else:    
             distance -= 150 + 30 + 100
         await self.set_azimuth(bearing)
-        await self.fine_tune(barrel[1])
+        await self.fine_tune(barrel)
         await self.goto(distance)
         while True:
-            on_target = await self.fine_tune(barrel[1],precision=3)
+            on_target = await self.fine_tune(barrel,precision=3)
             if on_target:
                 break
             await self.goto(-50)        
-        distance = await self.laser.get_distance()
+        distance = await self.get_distance()
         await self.goto(distance - 20)
         self.grabber.close()
-        return barrel[1]
+        return barrel.colour
         
     def draw(self, arena):
         self.debug = True
-        print("drawn pos: ", self.pos)
         pos = [int(x) for x in self.pos * arena.SCALE]
         draw_cross(arena.screen, "white", pos, 20)
-        for pos, colour in self.barrel_map:
-            pos = [int(x) for x in pos * arena.SCALE]
-            draw_cross(arena.screen, colour, pos, 10)
+        for barrel in self.barrel_map:
+            barrel.draw(arena)
         for blockage in self.blockages:
             b = affinity.scale(blockage, xfact=arena.SCALE, yfact=arena.SCALE, origin = (0,0))
             pygame.draw.lines(arena.screen, (128,128,128), True, b.exterior.coords)
