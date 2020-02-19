@@ -4,7 +4,7 @@ from .drivetrain import Drive
 from .grabber import Grabber
 from .shooter import Shooter
 from .encoder import Encoder
-from .laser import Laser
+from .laser import Laser, LaserTimeoutError, LaserBadReadingError
 from .display import Display
 from .controller import Controller
 from .pixels import Pixels

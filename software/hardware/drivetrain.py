@@ -199,7 +199,6 @@ class Drive:
                     slowed = True
             if abs(current_angle) > (abs(angle) - k*v*v): #kvv correction helps us stop on target
                 logging.debug("Spin: Current angle %f: stopped" % current_angle)
-                print("vel: ", v)
                 break;
         self.stop() #this sometimes is not received, so repeat after a short interval
         await asyncio.sleep(0.01)
@@ -208,7 +207,6 @@ class Drive:
             for i in range(20):
                 current_angle, _ = self.orientation.get_total_rotation()
                 await asyncio.sleep(0.007)
-        print("output: ", current_angle)
         return current_angle
             
     @logged    

@@ -3,6 +3,7 @@ import pyvisgraph as vg
 import cv2
 import numpy as np
 import pygame
+import hardware
 
 import shapely.geometry as geom
 import shapely.ops as ops
@@ -151,9 +152,14 @@ class Process(mode.Mode):
         
     async def get_distance(self):
         for i in range(3):
-            dist = await self.laser.get_distance()
+            try:
+                dist = await self.laser.get_distance(speed=self.laser.MEDIUM)
+            except (hardware.LaserBadReadingError, hardware.LaserTimeoutError) as e:
+                print("Laser error: ", e)
+                continue
             if dist < 10000:
                 return dist
+            print("distance too far")
         return None
 
     @logged    
