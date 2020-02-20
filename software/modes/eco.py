@@ -5,13 +5,11 @@ import numpy as np
 import pygame
 import hardware
 
-import shapely.geometry as geom
-import shapely.ops as ops
-import shapely.affinity as affinity
 
 from modes import mode
 from compute import vision
 from util import spawn, logged
+from .barrel_map import Barrel, BarrelMap
 
 TURN_SPEED = 600
 DRIVE_SPEED = 800
@@ -26,10 +24,6 @@ def draw_cross(surface, colour, pos, size, width=1):
     pygame.draw.line(surface, colour, [x-size, y-size], [x+size, y+size], width)
     pygame.draw.line(surface, colour, [x-size, y+size], [x+size, y-size], width)
     
-def get_visgraph(points_list):
-    graph = vg.VisGraph()
-    graph.build(points_list, workers=3, status=False)
-    return graph
 
 def angle_over(target, angle):
     while target > angle:
@@ -43,78 +37,15 @@ def get_coeffs(bearing):
     return np.array((np.cos(radians), np.sin(radians)))
     
 
-class Barrel:
-    def __init__(self, pos, colour, precise):
-        self.pos = pos
-        self.colour = colour
-        self.precise = precise
-    
-    @staticmethod    
-    def fromPolar(origin, azimuth, distance, colour, precise=True):
-        pos = origin + get_coeffs(azimuth) * distance
-        return Barrel(pos, colour, precise)
-        
-    @staticmethod
-    def fromCamera(origin, azimuth, angle, distance, colour):
-        b = Barrel.fromPolar(origin, azimuth+angle, distance, colour, False)
-        offset = get_coeffs(azimuth) * CAMERA_OFFSET
-        b.pos  += offset
-        return b
-        
-    @staticmethod
-    async def fromImage(camera, origin, azimuth):
-        image = camera.get_image()
-        tasks = [vision.find_objects(camera, col, 56, image) for col in ("red","green")]
-        reds, greens = await asyncio.gather(*tasks)
-        barrels = [Barrel.fromCamera(origin, azimuth, angle, distance, "red") for angle, distance in reds]
-        barrels += [Barrel.fromCamera(origin, azimuth, angle, distance, "green") for angle, distance in greens]
-        return barrels
-        
-    def get_relative_bearing(self, origin, azimuth):
-        pos = self.pos - origin
-        angle = np.rad2deg(np.arctan2(pos[1], pos[0]))
-        angle -= azimuth
-        if angle >180:
-            return angle - 360
-        elif angle < -180:
-            return angle + 360
-        else:
-            return angle
-                
-    def in_bounds(self):
-        #maybe adjust for less precise to give more leeway...
-        if 200 < self.pos[0] < 2000:
-            if 250 < self.pos[1] < 2000:
-                return True
-        return False
-
-
-    def draw(self, arena):
-        pos = [int(x) for x in self.pos * arena.SCALE]
-        draw_cross(arena.screen, self.colour, pos, 10)
-    
 
 
 class Process(mode.Mode):
     HARDWARE = ('drive','camera','laser','grabber', 'display')
     
     def on_start(self):
-        self.pos =np.array((1100, 1800), dtype="float64")
-        self.azimuth = 270 #"north", in degrees
-        self.barrel_map = []
-        self.route = []
-        self.blockages = []
-        self.debug = False
-                
-    async def set_azimuth(self, azimuth):
-        azimuth %= 360
-        turn = azimuth - self.azimuth
-        if turn < -180:
-            turn  = turn + 360
-        if turn > 180:
-            turn  = turn - 360
-        await self.turn(turn)
-        
+        self.barrel_map = BarrelMap()
+        self.shetty = Shetty(np.array((1100, 1800), 0, self.drive))
+                        
     def get_axis_and_bearing(self):
         if self.debug:
             bearing = self.azimuth+60
@@ -122,7 +53,6 @@ class Process(mode.Mode):
             bearing = self.azimuth+90
         axis = self.pos + get_coeffs(bearing) * TURN_RADIUS
         return axis, bearing        
-
 
     def get_azimuth_and_distance_to(self, pos):
         axis, bearing = self.get_axis_and_bearing()
@@ -133,22 +63,6 @@ class Process(mode.Mode):
         extra = np.rad2deg(np.sin(o/hypot))
         distance = np.sqrt(hypot*hypot - o*o)
         return bearing+extra, distance
-        
-        
-    def correct_position(self, angle):
-        axis, bearing = self.get_axis_and_bearing()
-        bearing += angle
-        self.pos = axis - get_coeffs(bearing) * TURN_RADIUS
-        
-    async def turn(self, angle, speed=TURN_SPEED):
-        true_angle = await self.drive.spin(angle, speed, accurate=True)
-        self.correct_position(true_angle)
-        self.azimuth += true_angle
-        self.azimuth %= 360
-        
-    async def goto(self, distance, speed=DRIVE_SPEED):
-        distance = await self.drive.a_goto(speed, distance, accurate=True)
-        self.pos += get_coeffs(self.azimuth) * distance
         
     async def get_distance(self):
         for i in range(3):
@@ -226,21 +140,7 @@ class Process(mode.Mode):
                 await self.turn(15)
                 targeted = False
                 
-    async def create_visibility_graph(self, barrels):
-        self.display.draw_text("Planning")
-        self.blockages = []
-        for barrel in barrels:
-            pt = geom.Point(barrel.pos).buffer(200, resolution=2)
-            self.blockages.append(pt)
-        blockages = ops.unary_union(self.blockages)
-        if isinstance(blockages, geom.polygon.Polygon):
-            blockages = [blockages]
-        vg_points = [[vg.Point(x,y) for x,y in pts.exterior.coords] for pts in blockages]
-        self.graph = await spawn(get_visgraph, vg_points)
                 
-    def calculate_route(self, destination):
-        route = self.graph.shortest_path(vg.Point(*self.pos), vg.Point(*destination))
-        self.route = np.array([[p.x, p.y] for p in route])
     
     @logged    
     async def goto_pos(self, waypoint, shorten=0):
@@ -263,17 +163,6 @@ class Process(mode.Mode):
                 shortening = 0
             await self.goto_pos(waypoint, shortening)
            
-    @logged
-    def get_nearest_barrel(self):
-        mapped = [(np.hypot(*(b.pos-self.pos)), i, b) for i, b in enumerate(self.barrel_map)]
-        barrel = min(mapped)
-        del self.barrel_map[barrel[1]]
-        return (barrel[2])            
-        
-    def get_highest_barrel(self):
-        self.barrel_map = sorted(self.barrel_map, key= lambda x: x.pos[1])
-        barrel = self.barrel_map.pop(0)
-        return barrel
     
     @logged    
     async def retrieve_barrel(self, barrel):
@@ -306,9 +195,6 @@ class Process(mode.Mode):
         draw_cross(arena.screen, "white", pos, 20)
         for barrel in self.barrel_map:
             barrel.draw(arena)
-        for blockage in self.blockages:
-            b = affinity.scale(blockage, xfact=arena.SCALE, yfact=arena.SCALE, origin = (0,0))
-            pygame.draw.lines(arena.screen, (128,128,128), True, b.exterior.coords)
         if len(self.route)>0:
             scaled_route = np.array(self.route)*arena.SCALE
             pygame.draw.lines(arena.screen, (255,255,0), False, scaled_route)
