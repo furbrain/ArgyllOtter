@@ -1,16 +1,28 @@
 #!/usr/bin/env python3
 import numpy as np
+import pygame
+import asyncio
+
 import pyvisgraph as vg
 import shapely.geometry as geom
 import shapely.ops as ops
 import shapely.affinity as affinity
 
-
+from compute import vision
+from util import get_coeffs, spawn
 
 def get_visgraph(points_list):
     graph = vg.VisGraph()
     graph.build(points_list, workers=3, status=False)
     return graph
+
+def draw_cross(surface, colour, pos, size, width=1):
+    x = pos[0]
+    y = pos[1]
+    colour = pygame.Color(colour)
+    pygame.draw.line(surface, colour, [x-size, y-size], [x+size, y+size], width)
+    pygame.draw.line(surface, colour, [x-size, y+size], [x+size, y-size], width)
+
 
 
 class Barrel:
@@ -18,6 +30,12 @@ class Barrel:
         self.pos = pos
         self.colour = colour
         self.precise = precise
+        
+    def __str__(self):
+        return "Barrel: (%s), %s, %s" % (self.pos,self.colour, self.precise)
+        
+    def __repr__(self):
+        return str(self)
     
     @staticmethod    
     def fromPolar(origin, azimuth, distance, colour, precise=True):
@@ -27,22 +45,14 @@ class Barrel:
     @staticmethod
     def fromCamera(origin, azimuth, angle, distance, colour):
         b = Barrel.fromPolar(origin, azimuth+angle, distance, colour, False)
-        offset = get_coeffs(azimuth) * CAMERA_OFFSET
-        b.pos  += offset
         return b
         
-    @staticmethod
-    async def fromImage(camera, origin, azimuth):
-        image = camera.get_image()
-        tasks = [vision.find_objects(camera, col, 56, image) for col in ("red","green")]
-        reds, greens = await asyncio.gather(*tasks)
-        barrels = [Barrel.fromCamera(origin, azimuth, angle, distance, "red") for angle, distance in reds]
-        barrels += [Barrel.fromCamera(origin, azimuth, angle, distance, "green") for angle, distance in greens]
-        return barrels
+    def get_distance(self, pos):
+        return np.hypot(*(self.pos)-pos)
         
     def get_relative_bearing(self, origin, azimuth):
         pos = self.pos - origin
-        angle = np.rad2deg(np.arctan2(pos[1], pos[0]))
+        angle = np.rad2deg(np.arctan2(pos[0], pos[1]))
         angle -= azimuth
         if angle >180:
             return angle - 360
@@ -54,27 +64,44 @@ class Barrel:
     def in_bounds(self):
         #maybe adjust for less precise to give more leeway...
         if 200 < self.pos[0] < 2000:
-            if 250 < self.pos[1] < 2000:
+            if 200 < self.pos[1] < 1950:
                 return True
         return False
 
 
     def draw(self, arena):
         pos = [int(x) for x in self.pos * arena.SCALE]
+        height = arena.screen.get_height()
+        pos[1] = height-pos[1]
         draw_cross(arena.screen, self.colour, pos, 10)
-    
-class BarrelMap(self):
+        
+    def near(self, other):
+        if self.colour==other.colour:
+            offset = self.pos - other.pos
+            distance = np.hypot(*offset)
+            if distance < 200:
+                return True
+        return False
+            
+class BarrelMap:
     def __init__(self):
         self.barrels = []
         self.blockages = []
         
+    def __str__(self):
+        text="\n            ".join(str(b) for b in self.barrels)
+        return "Barrel Map: " + text
+        
     def add(self, barrel):
         self.barrels.append(barrel)
 
-    def del(self, barrel):
+    def remove(self, barrel):
         self.barrels.remove(barrel)
         
-    def get_nearest(self):
+    def empty(self):
+        return len(self.barrels)==0
+        
+    def get_nearest(self, pos):
         barrel = min(self.barrels, key= lambda x: np.hypot(*(x.pos-pos)))
         return barrel
         
@@ -88,19 +115,26 @@ class BarrelMap(self):
             pt = geom.Point(barrel.pos).buffer(200, resolution=2)
             self.blockages.append(pt)
         self.blockages = ops.unary_union(self.blockages)
-        if isinstance(blockages, geom.polygon.Polygon):
-            blockages = [blockages]
-        vg_points = [[vg.Point(x,y) for x,y in pts.exterior.coords] for pts in blockages]
+        if isinstance(self.blockages, geom.polygon.Polygon):
+            self.blockages = [self.blockages]
+        vg_points = [[vg.Point(x,y) for x,y in pts.exterior.coords] for pts in self.blockages]
         graph = await spawn(get_visgraph, vg_points)
         route = graph.shortest_path(vg.Point(*start), vg.Point(*destination))
         route = np.array([[p.x, p.y] for p in route])
         return route
         
+    def known(self, barrel):
+        for b in self.barrels:
+            if b.near(barrel):
+                return b
+        return None
 
     def draw(self, arena):
+        h = arena.screen.get_height()
         for barrel in self.barrels:
             barrel.draw(arena)
-        for blockage in self.blockages:
+        for blockage in self.blockages:            
             b = affinity.scale(blockage, xfact=arena.SCALE, yfact=arena.SCALE, origin = (0,0))
+            b = affinity.scale(b, xfact=1, yfact=-1, origin = (0,h/2))
             pygame.draw.lines(arena.screen, (128,128,128), True, b.exterior.coords)
             

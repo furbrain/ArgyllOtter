@@ -15,6 +15,9 @@ class Laser:
     FAST = b'F'
     MEDIUM = b'D'
     SLOW = b'M'
+    TimeoutError = LaserTimeoutError
+    BadReadingError = LaserBadReadingError
+
     def __init__(self, shetty, arena, timeout = 3.0):
         self.shetty = shetty
         self.arena = arena

@@ -7,6 +7,7 @@ import time
 
 COLOURS = {
     "red": ([-10,80,30],[10,255,255]),
+    "yellow": ([20,80,30],[40,255,255]),
     "green": ([50,80,30],[70,255,255]),
     "blue": ([110,80,30],[130,255,255]),
 }
@@ -45,25 +46,6 @@ def find_biggest_contour(image, colour="red"):
     else:
         return None
 
-async def find_objects(camera, colour, width, image=None):
-    if image is None:
-        image = camera.get_image()
-    contours = await spawn(find_all_contours, image, colour)
-    results = []
-    for c in contours:
-        x_min = min(c[:,:,0])[0]
-        x_max = max(c[:,:,0])[0]
-        if x_min==0:
-            continue #ignore as at edge of image
-        if x_max>=image.shape[1]-2:
-            continue #ignore as at edge of image
-    
-        centre = (x_min+x_max)/2
-        size = x_max-x_min
-        angle = (centre - camera.calibration.zero_degree_pixel) * camera.calibration.degrees_per_pixel
-        distance = width /  np.tan(size*camera.calibration.degrees_per_pixel*np.pi/180.0)
-        results.append([angle,distance])
-    return results
 
 def find_lines(image, debug=False):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

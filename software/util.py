@@ -2,6 +2,7 @@ import functools
 import logging
 import asyncio
 import concurrent.futures
+import numpy as np
 
 pool = concurrent.futures.ProcessPoolExecutor()
 
@@ -20,4 +21,9 @@ def start_task(coro):
 def spawn(func, *args):
     loop = asyncio.get_event_loop()
     return loop.run_in_executor(pool, func, *args)
+    
+def get_coeffs(bearing):    
+    radians = np.deg2rad(bearing)
+    return np.array((np.sin(radians), np.cos(radians)))
+
 

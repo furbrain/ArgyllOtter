@@ -3,19 +3,19 @@ import pyvisgraph as vg
 import cv2
 import numpy as np
 import pygame
-import hardware
 
 
 from modes import mode
 from compute import vision
 from util import spawn, logged
-from .barrel_map import Barrel, BarrelMap
+from .barrels import Barrel, BarrelMap
+from .shettycloud import Shetty
+from . import eye
 
 TURN_SPEED = 600
+MIN_TURN_SPEED = 150
 DRIVE_SPEED = 800
 
-TURN_RADIUS = 100
-CAMERA_OFFSET = 150
 
 def draw_cross(surface, colour, pos, size, width=1):
     x = pos[0]
@@ -32,43 +32,24 @@ def angle_over(target, angle):
         return True
     return False
     
-def get_coeffs(bearing):    
-    radians = bearing * np.pi / 180
-    return np.array((np.cos(radians), np.sin(radians)))
-    
-
-
-
 class Process(mode.Mode):
-    HARDWARE = ('drive','camera','laser','grabber', 'display')
+    HARDWARE = ('drive', 'camera', 'laser', 'grabber', 'display')
     
     def on_start(self):
         self.barrel_map = BarrelMap()
-        self.shetty = Shetty(np.array((1100, 1800), 0, self.drive))
-                        
-    def get_axis_and_bearing(self):
-        if self.debug:
-            bearing = self.azimuth+60
-        else:
-            bearing = self.azimuth+90
-        axis = self.pos + get_coeffs(bearing) * TURN_RADIUS
-        return axis, bearing        
+        self.shetty = Shetty(np.array((1100, 550)), 0, self.drive)
+        self.eyeball = eye.Ball(self.camera, self.shetty, self.barrel_map)
+        self.route = []
+        self.red_count=0
+        self.green_count=0
 
-    def get_azimuth_and_distance_to(self, pos):
-        axis, bearing = self.get_axis_and_bearing()
-        offset = pos-axis
-        hypot = np.hypot(*(pos-axis))
-        bearing = np.rad2deg(np.arctan2(offset[1], offset[0]))
-        o = TURN_RADIUS
-        extra = np.rad2deg(np.sin(o/hypot))
-        distance = np.sqrt(hypot*hypot - o*o)
-        return bearing+extra, distance
+                        
         
     async def get_distance(self):
         for i in range(3):
             try:
                 dist = await self.laser.get_distance(speed=self.laser.MEDIUM)
-            except (hardware.LaserBadReadingError, hardware.LaserTimeoutError) as e:
+            except (self.laser.BadReadingError, self.laser.TimeoutError) as e:
                 print("Laser error: ", e)
                 continue
             if dist < 10000:
@@ -90,68 +71,78 @@ class Process(mode.Mode):
             return central[1] 
             
     @logged        
-    async def fine_tune(self, barrel, precision=1):
+    async def fine_tune_laser(self, barrel):
         speed = TURN_SPEED/2
         lost = False
         while True:
-            adjustment = await self.check_centred(barrel.colour, precision)
-            if adjustment == 0:
-                return True
-                break
+            adjustment = await self.eyeball.line_up_for_laser(barrel)
             if adjustment is None:
                 return False
                 break
-            await self.turn(adjustment, speed=speed)
-            speed /= 2
+            if abs(adjustment) < 1:
+                return True
+                break
+            await self.shetty.turn(adjustment, speed=speed)
+            speed = max(speed/2, MIN_TURN_SPEED)
+            
+    async def fine_tune_grab(self, barrel):        
+        speed = TURN_SPEED/2
+        lost = False
+        while True:
+            adjustment = await self.eyeball.line_up_for_grab(barrel)
+            if adjustment is None:
+                return False
+                break
+            if abs(adjustment) < 3:
+                return True
+                break
+            await self.shetty.turn(adjustment, speed=speed)
+            speed = max(speed/2, MIN_TURN_SPEED)
+            
+    async def pinpoint_barrel(self, barrel):
+        angle,_ = self.shetty.get_azimuth_and_distance_to(barrel.pos)
+        await self.shetty.turn_to_azimuth(angle)
+        found = await self.fine_tune_laser(barrel)
+        if found:
+            distance = await self.get_distance()
+            targeted = True
+            precise_barrel =  Barrel.fromPolar(self.shetty.pos, self.shetty.azimuth, distance, barrel.colour)
+            if barrel.near(precise_barrel):
+                return precise_barrel
+            else: #oops, probably another barrel in the way or we just missed with the laser
+                return barrel #use position from camera
+        return None
             
     @logged     
-    async def create_map(self, start_angle, finish_angle, reverse=False, thorough=False):
+    async def create_map(self, start_angle, finish_angle):
         self.display.draw_text("Mapping")
-        targeted = False
-        first = True
-        #FIXME - save copy of barrel map and use to update position...
-        self.barrel_map = []
         #find most leftward barrels
-        await self.set_azimuth(start_angle)
-        min_distance = 10000
-        while not angle_over(finish_angle, self.azimuth):
-            barrels = await Barrel.fromImage(self.camera, self.pos, self.azimuth)
-            barrels = [(x.get_relative_bearing(self.pos, self.azimuth),x) for x in barrels]
-            print(barrels)
-            if targeted:
-                barrels = [x for x in barrels if x[0] > 2]
-            elif not first:
-                barrels = [x for x in barrels if x[0] > -13]
-            first = False
-            for angle, target in sorted(barrels):
-                print(angle, target)
-                if thorough or (target.pos[1] < min_distance*1.2):
-                    await self.turn(angle)
-                    found = await self.fine_tune(target, precision=1)
-                    if found:
-                        distance = await self.get_distance()
-                        targeted = True
-                        barrel =  Barrel.fromPolar(self.pos, self.azimuth, distance+150, target.colour)
-                        if barrel.in_bounds():
-                            self.barrel_map.append(barrel)
-                        min_distance = min(min_distance, barrel.pos[1])
-                    break
+        await self.shetty.turn_to_azimuth(start_angle)
+        while not angle_over(finish_angle, self.shetty.azimuth):
+            barrel = await self.eyeball.find_leftmost_unknown_barrel()
+            if barrel is None:
+                await self.shetty.turn(15)
             else:
-                await self.turn(15)
-                targeted = False
+                barrel = await self.pinpoint_barrel(barrel)   
+                if barrel is not None:      
+                    if barrel.in_bounds():
+                        self.barrel_map.add(barrel)
                 
                 
     
     @logged    
     async def goto_pos(self, waypoint, shorten=0):
-            bearing, distance = self.get_azimuth_and_distance_to(waypoint)
+            bearing, distance = self.shetty.get_azimuth_and_distance_to(waypoint)
             distance -= shorten
             if distance > 1000: #if a long distance break into shorter sections
-                await self.goto_pos((waypoint-self.pos)/2 + self.pos)
+                print("breaking up long route")
+                await self.goto_pos((waypoint-self.shetty.pos)/2 + self.shetty.pos)
                 await self.goto_pos(waypoint)
             else:
-                await self.set_azimuth(bearing)
-                await self.goto(distance)
+                await self.shetty.turn_to_azimuth(bearing)
+                await self.eyeball.just_looking()
+                await self.shetty.move(distance)
+                await self.eyeball.just_looking()
 
     @logged                
     async def follow_route(self, shorten=0):
@@ -168,80 +159,86 @@ class Process(mode.Mode):
     async def retrieve_barrel(self, barrel):
         self.display.draw_text("Hunting")
         self.grabber.open()
-        print("my pos: ", self.pos)
-        print("barrel: ", barrel)
-        bearing,distance = self.get_azimuth_and_distance_to(barrel.pos)
-        print("ret bearing, dist: ", bearing, distance)
-        if distance > 500:
-            distance -= 150 + 30 + 150
-        else:    
-            distance -= 150 + 30 + 100
-        await self.set_azimuth(bearing)
-        await self.fine_tune(barrel)
-        await self.goto(distance)
+        await self.goto_pos(barrel.pos, shorten=150)
+        expected_distance = 100
+        count = 0 
         while True:
-            on_target = await self.fine_tune(barrel,precision=3)
+            on_target = await self.fine_tune_grab(barrel)
             if on_target:
-                break
-            await self.goto(-50)        
-        distance = await self.get_distance()
-        await self.goto(distance - 20)
+                distance = await self.get_distance()
+                if distance < barrel.get_distance(self.shetty.pos) + expected_distance: ### looking good
+                    break
+                else:
+                    print("bad distance: ", distance, expected_distance)
+            #something has gone wrong. Back off a bit and try again
+            await self.shetty.move(-50)        
+            expected_distance += 50
+            count +=1
+            if count > 5:
+                #can't find it - has it rolled away?
+                self.barrel_map.remove(barrel)
+                return False
+        await self.shetty.move(distance - 20)
         self.grabber.close()
-        return barrel.colour
+        self.barrel_map.remove(barrel)
+        return True
         
     def draw(self, arena):
-        self.debug = True
-        pos = [int(x) for x in self.pos * arena.SCALE]
-        draw_cross(arena.screen, "white", pos, 20)
-        for barrel in self.barrel_map:
-            barrel.draw(arena)
-        if len(self.route)>0:
+        self.shetty.draw(arena)
+        self.barrel_map.draw(arena)
+        if len(self.route)>1:
             scaled_route = np.array(self.route)*arena.SCALE
+            scaled_route[:,1] = arena.screen.get_height() - scaled_route[:,1]
             pygame.draw.lines(arena.screen, (255,255,0), False, scaled_route)
+            
+    async def process_barrel(self, barrel):
+        if not await self.retrieve_barrel(barrel):
+            return False
+        if (barrel.colour=="green") :
+            destination = (450+self.green_count*100,2100)
+            self.green_count += 1
+        else:
+            destination = (1750-self.red_count*100,2100)
+            self.red_count += 1
+        self.route = await self.barrel_map.calculate_route(self.shetty.pos, destination)
+        await self.follow_route(shorten=50)
+        self.grabber.release()
+        await asyncio.sleep(0.5)
+        await self.shetty.move(-250)
+        return True
         
     async def run(self):
-        red_count=0
-        green_count=0
-        await self.goto(-100.0)
-        first = True
+        await self.shetty.move(-100.0)
         self.grabber.release()
-        while (True):
-            if first:
-                await self.create_map(180,360, thorough=True)
-                target = self.get_nearest_barrel()
-                first=False
-            else:
-                await self.create_map(0, 180, thorough=True)  
-                if len(self.barrel_map)==0:
+        
+        #do first map and find first barrel
+        await self.create_map(270,90)
+        self.eyeball.track_barrels = True
+        target = self.barrel_map.get_nearest(self.shetty.pos)
+        await self.process_barrel(target)
+
+        #scan barrels from other direction        
+        i=0
+        
+        while True:
+            #if we think we've finished, or we've got four barrels
+            if self.barrel_map.empty() or i%4==0:
+                await self.create_map(90,270)
+                if self.barrel_map.empty():
                     break
-                target = self.get_highest_barrel()
-            print(self.barrel_map)
-            print(target)
-            colour = await self.retrieve_barrel(target)
-            await self.create_visibility_graph(self.barrel_map)
-            if (colour=="green") :
-                destination = (450+green_count*100,100)
-                green_count += 1
-            else:
-                destination = (1750-red_count*100,100)
-                red_count += 1
-            self.calculate_route(destination)
-            await self.follow_route(shorten=170)
-            self.grabber.release()
-            await asyncio.sleep(0.5)
-            await self.goto(-250)
-        self.route = [[1100,1000]]
+            target = self.barrel_map.get_highest()
+            if not await self.process_barrel(target):
+                await self.create_map(0, 359)
+            i +=1
+        self.route = [self.shetty.pos, [1100,1000]]
         await self.follow_route(shorten=0)
         await self.drive.dance()
         
 class Test(Process):
-    def on_start(self):
-        super().on_start()
-        self.pos = np.array((0,2000))
         
     async def run(self):
-        await self.create_map(180,360, thorough=True)
-        target = self.get_nearest_barrel()
+        await self.create_map(270,90, thorough=True)
+        target = self.barrel_map.get_nearest(self.shetty.pos)
         colour = await self.retrieve_barrel(target)
         print("Got a %s barrel" % colour)
         self.grabber.off()

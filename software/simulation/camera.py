@@ -10,8 +10,14 @@ ISO = 800
 class Calibration:
     def __init__(self):
         self.calibrated = False
-        self.degrees_per_pixel = 53.5/640.0
+        self.degrees_per_pixel = 56/640.0
         self.zero_degree_pixel = 320
+        
+    def get_bearing(self, x_coord):
+        return (x_coord - self.zero_degree_pixel) * self.degrees_per_pixel
+
+    def get_angle_width(self, size):
+        return size * self.degrees_per_pixel
 
 class Camera:
     camera = None

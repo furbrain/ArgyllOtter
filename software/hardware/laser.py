@@ -18,6 +18,9 @@ class Laser:
     FAST = b'F'
     MEDIUM = b'D'
     SLOW = b'M'
+    TimeoutError = LaserTimeoutError
+    BadReadingError = LaserBadReadingError
+    
     def __init__(self, timeout = 3.0):
         self.timeout = timeout
         self.port = serial.Serial("/dev/serial0", 19200, timeout=0) #yes *this* timeout should be zero

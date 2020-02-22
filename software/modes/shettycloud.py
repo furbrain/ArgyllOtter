@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 import numpy as np
 import scipy.stats as stats
+import pygame
+
+from util import get_coeffs
 
 #errors are +/- ERROR corresponds to 95 % CIs
 START_POS_ERROR = 10
@@ -8,12 +11,14 @@ START_AZ_ERROR = 5
 SWARM_SIZE = 200
 TURN_ERROR = 2
 DISTANCE_ERROR = 10
-TURN_RADIUS = 100
-CAMERA_ANGLE_ERROR = 3
+AXIS_OFFSET = -100
+AXIS_BEARING = -45
+DEBUG_AXIS_BEARING = -30
+DEBUG_AXIS_OFFSET = -180
 
-def get_coeffs(bearing):    
-    radians = np.deg2rad(bearing)
-    return np.array((np.sin(radians), np.cos(radians)))
+CAMERA_ANGLE_ERROR = 6
+CAMERA_DISTANCE_ERROR = 80
+
 
 def draw_cross(surface, colour, pos, size, width=1):
     x = pos[0]
@@ -39,6 +44,7 @@ class Shetty:
     def __init__(self, pos, azimuth, drive):
         self.drive = drive
         self.cloud = ShettyCloud(pos, azimuth)
+        self.debug = False
 
     @property
     def pos(self):
@@ -62,18 +68,46 @@ class Shetty:
         await self.turn(turn)
         
     def correct_position(self, angle):
-        self.swarm.turn(-45, error=0) #axis of rotation is about 7 cm 45 degrees to rigth behind camera
-        self.swam.move(-70, error=0)
-        self.swarm.turn(angle)
-        self.swam.move(70, error=0)
-        self.swarm.turn(45, error=0)
-        self.swarm.adjust_pos(0) #add some x/y error in here
+        if self.debug:
+            bearing_adjust = DEBUG_AXIS_BEARING
+            offset = DEBUG_AXIS_OFFSET
+        else:
+            bearing_adjust = AXIS_BEARING
+            offset = AXIS_OFFSET
+            
+        self.cloud.turn(bearing_adjust, error=0) #axis of rotation is about 7 cm 45 degrees to rigth behind camera
+        self.cloud.move(offset, error=0)
+        self.cloud.turn(angle)
+        self.cloud.move(-offset, error=0)
+        self.cloud.turn(-bearing_adjust, error=0)
+        self.cloud.adjust_pos(0) #add some x/y error in here
 
     async def move(self, distance, speed=DRIVE_SPEED):
         distance = await self.drive.a_goto(speed, distance, accurate=True)
-        self.swarm.move(distance)
+        self.cloud.move(distance)
+
+    def get_azimuth_and_distance_to(self, pos):
+        if self.debug:
+            bearing_adjust = DEBUG_AXIS_BEARING
+            offset = DEBUG_AXIS_OFFSET
+        else:
+            bearing_adjust = AXIS_BEARING
+            offset = AXIS_OFFSET
+        bearing = self.azimuth + bearing_adjust
+        axis = self.pos + get_coeffs(bearing) * offset
+        offset = pos-axis
+        hypot = np.hypot(*(pos-axis))
+        bearing = np.rad2deg(np.arctan2(offset[0], offset[1]))
+        o = self.TURN_RADIUS
+        extra = np.rad2deg(np.sin(o/hypot))
+        distance = np.sqrt(hypot*hypot - o*o)
+        return bearing+extra, distance-150
+        
+    def observed(self, angle, pos, distance=None):
+        self.cloud.observation(angle, pos, distance)
 
     def draw(self, arena):
+        self.debug = True
         self.cloud.draw(arena)
 
 class ShettyCloud:
@@ -83,23 +117,24 @@ class ShettyCloud:
     xy refers to the camera position (not centre as previously)
     """
     def __init__(self, pos, azimuth):
-        dtype = np.dtype([('azimuth', 'float64'), ('xy', 'float64', (2,)), ('weight', 'float64')])
-        temp_swarm = np.zeros(SWARM_SIZE, dtype=dtype)
+        self.dtype = np.dtype([('azimuth', 'float64'), ('xy', 'float64', (2,)), ('weight', 'float64')])
+        temp_swarm = np.zeros(SWARM_SIZE, dtype=self.dtype)
         temp_swarm['xy'] = np.random.normal(pos, START_POS_ERROR/2, (SWARM_SIZE, 2))
         temp_swarm['azimuth'] = np.random.normal(azimuth, START_AZ_ERROR/2, (SWARM_SIZE))
         temp_swarm['weight'] = np.ones((SWARM_SIZE))
         self.swarm = temp_swarm.view(np.recarray)
+        self.dirty = True
         
     def wrap_azimuth(self):
         self.swarm.azimuth %= 360
 
     def normalize_weights(self):
-        self.swarm.weights /= np.sum(self.swarm.weights)
+        self.swarm.weight /= np.sum(self.swarm.weight)
 
     def resample(self):
         self.normalize_weights()
         Ninv = 1/SWARM_SIZE
-        new_swarm = np.zeros(SWARM_SIZE, dtype=dtype)
+        new_swarm = np.zeros(SWARM_SIZE, dtype=self.dtype)
         r = np.random.uniform(0, Ninv)
         # weight
         c = self.swarm.weight[0]
@@ -112,6 +147,7 @@ class ShettyCloud:
                 c = c + self.swarm.weight[i]
             new_swarm[j] = self.swarm[i]
         self.swarm = new_swarm.view(np.recarray)
+        self.dirty = True
         
     def get_bearing_to_pos(self, pos):
         offsets = pos - self.swarm.xy
@@ -120,47 +156,89 @@ class ShettyCloud:
         bearings %= 360
         return bearings
 
-    def observation(self, angle, pos, std=CAMERA_ANGLE_ERROR):
+    def get_distance_to_pos(self, pos):
+        offsets = pos - self.swarm.xy
+        distances = np.hypot(offsets[:,0], offsets[:,1])
+        return distances
+
+    def observation(self, angle, pos, distance):
         """the camera has seen feature at known pos, with given angle"""
         bearings = self.get_bearing_to_pos(pos)
         error = bearings - angle
         #convert to  interval of -180 -> +180
         error[error > 180] -= 360
         error[error < -180] += 360
-        weighting = stats.norm.pdf(error, scale=std)
+        weighting = stats.norm.pdf(error, scale=CAMERA_ANGLE_ERROR)
         self.swarm.weight *= weighting
+        if distance is not None:
+             error = self.get_distance_to_pos(pos)-distance
+             weighting = stats.norm.pdf(error, scale=CAMERA_DISTANCE_ERROR)
+             self.swarm.weight *= weighting
+        self.normalize_weights()
+        self.dirty = True
         
 
-    def turn(self, angle, error=TURN_ERROR):   
+    def turn(self, angle, error=TURN_ERROR):
+        self.resample()  
         self.swarm.azimuth += angle
         if error != 0:
-            self.swarm.azimuth += np.random.normal(0, error/2, SWARM_SIZE)
+            offset = np.random.normal(0, error/2, SWARM_SIZE)
+            weighting = stats.norm.pdf(offset, scale=error/2)
+            self.swarm.azimuth += offset
+            self.swarm.weight *= weighting
         self.wrap_azimuth()
+        self.dirty = True
         
-    def move(self, distance, error):
+    def move(self, distance, error=DISTANCE_ERROR):
+        self.resample()  
         coeff = get_coeffs(self.swarm.azimuth)
-        if distance != 0:
-            distance = np.random.normal(distance, error/2, SWARM_SIZE)
+        if error != 0:
+            offset = np.random.normal(distance, error/2, SWARM_SIZE)
+            weighting = stats.norm.pdf(offset, loc=distance, scale=error/2)
+            distance = offset
+        else:
+            weighting = 1
         offsets = coeff * distance
         self.swarm.xy += offsets.T
+        self.swarm.weight *= weighting
+        self.dirty = True
         
     def adjust_pos(self, offset, error=DISTANCE_ERROR):
+        self.resample()  
         error = np.random.normal(0, error/2, (SWARM_SIZE,2))
         self.swarm.xy += offset
         self.swarm.xy += error
+        self.dirty = True
         
+    def calc_pos_and_azimuth(self):
+        self.pos = np.average(self.swarm.xy, weights=self.swarm.weight, axis=0)
+        if max(self.swarm.azimuth) - min(self.swarm.azimuth) > 180:
+            rotated = (self.swarm.azimuth + 180) % 360
+            result = np.average(rotated, weights=self.swarm.weight)
+            self.azimuth = (result - 180) % 360
+        else:
+            self.azimuth = np.average(self.swarm.azimuth, weights=self.swarm.weight)
+        self.dirty = False
+                
     def get_pos(self):
-        return np.average(s.swarm.xy, weights=s.swarm.weight, axis=0)
+        if self.dirty:
+            self.calc_pos_and_azimuth()
+        return self.pos
     
     def get_azimuth(self):
-        return np.average(s.swarm.azimuth, weights=s.swarm.weight)
+        if self.dirty:
+            self.calc_pos_and_azimuth()
+        return self.azimuth
     
     def draw(self, arena):
+        height = arena.screen.get_height()
         for pos in self.swarm.xy:
             pt = [int(x*arena.SCALE) for x in pos]
-            arena.surface.set_at(pos, (255,255,255))
+            pt[1] = height-pt[1]
+            arena.screen.set_at(pt, (255,255,255))
         pt = [int(x*arena.SCALE) for x in self.get_pos()]
-        draw_cross(arena.surface, pt, "white", 15)
+        pt[1] = height-pt[1]
+        draw_cross(arena.screen, "white", pt, 15)
 
 if __name__=="__main__":
     s = ShettyCloud((1100,400),0)
