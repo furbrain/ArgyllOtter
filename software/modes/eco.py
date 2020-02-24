@@ -48,7 +48,7 @@ class Process(mode.Mode):
     async def get_distance(self):
         for i in range(3):
             try:
-                dist = await self.laser.get_distance(speed=self.laser.MEDIUM)
+                dist = await self.laser.get_distance(speed=self.laser.FAST)
             except (self.laser.BadReadingError, self.laser.TimeoutError) as e:
                 print("Laser error: ", e)
                 continue
@@ -100,12 +100,15 @@ class Process(mode.Mode):
             speed = max(speed/2, MIN_TURN_SPEED)
             
     async def pinpoint_barrel(self, barrel):
+        return barrel
         angle,_ = self.shetty.get_azimuth_and_distance_to(barrel.pos)
         await self.shetty.turn_to_azimuth(angle)
         found = await self.fine_tune_laser(barrel)
         if found:
             distance = await self.get_distance()
             targeted = True
+            if distance is None:
+                return barrel
             precise_barrel =  Barrel.fromPolar(self.shetty.pos, self.shetty.azimuth, distance, barrel.colour)
             if barrel.near(precise_barrel):
                 return precise_barrel
@@ -178,7 +181,7 @@ class Process(mode.Mode):
                 #can't find it - has it rolled away?
                 self.barrel_map.remove(barrel)
                 return False
-        await self.shetty.move(distance - 20)
+        await self.shetty.move(distance - 50, speed=400)
         self.grabber.close()
         self.barrel_map.remove(barrel)
         return True

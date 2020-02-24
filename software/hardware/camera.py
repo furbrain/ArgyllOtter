@@ -29,6 +29,14 @@ class Calibration:
     def get_distance(self, y):
         return self._get_distance(y, *self.distance_params)
 
+    def get_bearing(self, x_coord):
+        return (x_coord - self.zero_degree_pixel) * self.degrees_per_pixel
+
+    def get_angle_width(self, size):
+        return size * self.degrees_per_pixel
+
+
+
 class Camera:
     def __init__(self, iso=ISO):
         self.camera = PiCamera(framerate=20) 
