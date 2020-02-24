@@ -7,10 +7,9 @@ import numpy as np
 import asyncio
 import logging
 from util import logged
-
+import calibrate
 
 BMP388_ADDRESS = 0x77
-CAL_FILE = "/home/pi/shooter_calibration.npz"
 CAL_RANGE = (-100,900,50)
 
 class Shooter:
@@ -40,26 +39,27 @@ class Pressure:
         except IOError:
             result = None
         return result
-        
+
+class BarrelPositions(calibrate.Settings):
+    def default(self):
+        rng = range(*CAL_RANGE)
+        self.range = np.arange(*CAL_RANGE)
+        self.up = self.cal_range[:]
+        self.down = self.cal_range[:]
+
+    def get_up_position(self, angle):        
+        return np.interp(angle, self.up, self.range)
+    
+    def get_down_position(self, angle):
+        return np.interp(angle, self.down, self.range)
+    
 class Barrel:
     def __init__(self, bus=None):
         self.servo = servo.Servo(inverted=True)
         self.position = -10
         self.orientation = orientation.Orientation(bus=bus, address=0x69)
         self.angle = self.orientation.get_angle()
-        try:
-            f = np.load(CAL_FILE)
-        except IOError:
-            rng = range(*CAL_RANGE)
-            rv = reversed(rng)
-            self.cal_range = np.arange(*CAL_RANGE)
-            self.cal_up = self.cal_range[:]
-            self.cal_down = self.cal_range[:]
-        else:
-            with f:
-                self.cal_range = f['range']
-                self.cal_up = f['up']
-                self.cal_down = f['down']
+        self.cal = BarrelPositions()
                 
     @logged
     def getAngle(self):
@@ -78,11 +78,9 @@ class Barrel:
     def set_angle_quick(self, angle):
         cur_angle = self.orientation.get_angle()
         if angle > cur_angle+5:
-            self.position = np.interp(angle, self.cal_up, self.cal_range)
-            self.servo.set_pos(self.position)
+            self.servo.set_pos(self.cal.get_up_position(angle))
         elif angle < cur_angle-5:
-            self.position = np.interp(angle, self.cal_down, self.cal_range)
-            self.servo.set_pos(self.position)
+            self.servo.set_pos(self.cal.get_down_position(angle))
 
     @logged
     async def set_angle(self, angle):
@@ -105,22 +103,6 @@ class Barrel:
             await asyncio.sleep(0.04)
             cur_angle = self.orientation.get_angle()
         print("set_angle finished")
-            
-    @logged
-    async def calibrate(self):
-        rng = np.arange(*CAL_RANGE)
-        up = []
-        down = []
-        for i in rng:
-            self.servo.set_pos(i)
-            await asyncio.sleep(1)
-            up.append(self.orientation.get_angle())
-        for i in reversed(rng):
-            self.servo.set_pos(i)
-            await asyncio.sleep(1)
-            down.append(self.orientation.get_angle())
-        down = down[::-1]
-        np.savez(CAL_FILE, range=rng, up=up, down=down)             
         
 def Pointer():
     return gpiozero.LED(22)

@@ -50,13 +50,19 @@ class Interactive(Mode):
         if isinstance(event, messages.EncoderPressMessage):
             self.button_pressed = True
             return True
+        if isinstance(event, messages.EncoderChangeMessage):
+            self.change_event(event.pos)
+            return True
         return False
+        
+    def change_event(self, up):
+        pass
     
     async def wait_for_button(self):
         while True:
             if self.button_pressed:
                 break
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.2)
         self.button_pressed=False
         
 class Null(Mode):

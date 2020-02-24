@@ -31,7 +31,9 @@ class Settings:
             
     def save(self):
         #exceptions deliberately un-caught here
-        np.savez(self.filename(), **self.__dict__)
+        saveable = {k:v for k, v in self.__dict__.items() if k[0]!="_"}
+        np.savez(self.filename(), **saveable)
+        os.chmod(self.filename(),0o666)
         
 if __name__=="__main__":
     class TestSettings(Settings):

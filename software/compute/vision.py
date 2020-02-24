@@ -5,22 +5,11 @@ import asyncio
 from util import spawn
 import time
 
-COLOURS = {
-    "red": ([-10,80,30],[10,255,255]),
-    "yellow": ([25,120,30],[35,255,255]),
-    "green": ([50,80,30],[70,255,255]),
-    "blue": ([110,50,30],[130,255,255]),
-}
-
-def find_all_contours(image, colour="red"):
-    if isinstance(colour, str):
-        colour_arrays = COLOURS[colour]
-    else:
-        colour_arrays = colour
+def find_colour(image, colour, smoothed=True):
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    least_hue = colour_arrays[0][0]
-    lower = np.array(colour_arrays[0], dtype = "uint8")
-    upper = np.array(colour_arrays[1], dtype = "uint8")
+    least_hue = colour[0][0]
+    lower = np.array(colour[0], dtype = "uint8")
+    upper = np.array(colour[1], dtype = "uint8")
     if least_hue < 0: # rotate colour space so all is positive
         hsv_image += np.array([-least_hue,0,0], dtype = "uint8")
         hsv_image[:,:,0] = np.mod(hsv_image[:,:,0], 180)
@@ -28,11 +17,15 @@ def find_all_contours(image, colour="red"):
         upper[0] += -least_hue
 
     mask = cv2.inRange(hsv_image, lower, upper)
+    if smoothed:
+        mask = cv2.erode(mask, None, iterations=2)
+        mask = cv2.dilate(mask, None, iterations=4)
+        mask = cv2.erode(mask, None, iterations=2)
+    return mask
     
+def find_all_contours(image, colour):
+    mask = find_colour(image,colour)    
     #get rid of random blobs	
-    mask = cv2.erode(mask, None, iterations=2)
-    mask = cv2.dilate(mask, None, iterations=4)
-    mask = cv2.erode(mask, None, iterations=2)
     cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     return cnts

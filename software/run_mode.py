@@ -30,7 +30,7 @@ args = parser.parse_args()
 mode = eval(args.mode)
 print(args)
 loop = asyncio.get_event_loop()
-loop.set_debug(False)
+loop.set_debug(True)
 
 
 

@@ -79,9 +79,16 @@ class Barrel:
         if self.colour==other.colour:
             offset = self.pos - other.pos
             distance = np.hypot(*offset)
-            if distance < 200:
-                return True
+            if distance < 350:
+                return distance
         return False
+        
+    def nearest(self, lst):
+        contenders = [b for b in lst if b.near(self)]
+        if contenders:
+            return min(contenders, key=lambda b: b.near(self))
+        return None
+            
             
 class BarrelMap:
     def __init__(self):
@@ -100,6 +107,9 @@ class BarrelMap:
         
     def empty(self):
         return len(self.barrels)==0
+        
+    def clear(self):
+        self.barrels = []
         
     def get_nearest(self, pos):
         barrel = min(self.barrels, key= lambda x: np.hypot(*(x.pos-pos)))
@@ -124,10 +134,7 @@ class BarrelMap:
         return route
         
     def known(self, barrel):
-        for b in self.barrels:
-            if b.near(barrel):
-                return b
-        return None
+        return barrel.nearest(self.barrels)
 
     def draw(self, arena):
         h = arena.screen.get_height()

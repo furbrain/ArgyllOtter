@@ -63,19 +63,20 @@ class CameraPosition(mode.Interactive):
             distances.append(dist)
             self.laser.on()
             await self.wait_for_button()
-        self.camera.calibration.fit_curve(ys, distances)
-        print(self.camera.calibration.distance_params)
+        pose = self.camera.pose
+        pose.fit_curve(ys, distances)
+        print(self.camera.pose.distance_params)
         if contour is not None:        
 	        x_min = min(contour[:,:,0])[0]
 	        x_max = max(contour[:,:,0])[0]
 	        dist = await self.laser.get_distance(self.laser.MEDIUM)
-	        cal = self.camera.calibration
 	        degrees_subtended = math.atan2(OBJECT_WIDTH,dist)*180/math.pi
-	        cal.degrees_per_pixel = degrees_subtended/(x_max-x_min)
-	        cal.zero_degree_pixel = (x_min+x_max)/2
-	        cal.calibrated = True
+	        pose.degrees_per_pixel = degrees_subtended/(x_max-x_min)
+	        pose.zero_degree_pixel = (x_min+x_max)/2
+	        pose.calibrated = True
         else:
             self.display.draw_text("Nuffin")
+        pose.save()
 
 class Lens(mode.Mode):
     HARDWARE = ('camera', 'display')
@@ -117,16 +118,13 @@ class Lens(mode.Mode):
 
                 corners2 = cv2.cornerSubPix(gray,corners,(7,7),(-1,-1),criteria)
                 imgpoints.append(corners2)
-                
-                # Draw and display the corners
-                img = cv2.drawChessboardCorners(image, (9,7), corners2,ret)
+
             else:
                 self.display.draw_text("Bad")
                     
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
-        np.savez("/home/pi/camera_calibration.npz", mtx=mtx, dist=dist)
-        self.camera.set_calibration(mtx, dist)
-        self.camera.save_calibration()
+        self.camera.lens.set_calibration(mtx, dist)
+        self.camera.lens.save()
         self.display.draw_text("Saved")
         await asyncio.sleep(2)
 

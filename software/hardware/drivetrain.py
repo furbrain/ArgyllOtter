@@ -177,7 +177,7 @@ class Drive:
         else:
             left = -max_speed
             slow_left = -slow_speed
-        if accurate:
+        if False: ##FIXME was 'if accurate:'
             right = 0
             slow_right = 0
             if angle>0:

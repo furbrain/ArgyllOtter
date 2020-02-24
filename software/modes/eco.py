@@ -162,6 +162,8 @@ class Process(mode.Mode):
     async def retrieve_barrel(self, barrel):
         self.display.draw_text("Hunting")
         self.grabber.open()
+        await self.shetty.turn(barrel.get_relative_bearing(self.shetty.pos, self.shetty.azimuth))
+        await self.fine_tune_grab(barrel)
         await self.goto_pos(barrel.pos, shorten=150)
         expected_distance = 100
         count = 0 
@@ -218,6 +220,8 @@ class Process(mode.Mode):
         await self.create_map(270,90)
         self.eyeball.track_barrels = True
         target = self.barrel_map.get_nearest(self.shetty.pos)
+        print(target)
+        print(self.barrel_map)
         await self.process_barrel(target)
 
         #scan barrels from other direction        

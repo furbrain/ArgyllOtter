@@ -10,29 +10,29 @@ class Grabber(mode.Interactive):
         super().on_start()
         self.angle = 0
 
-    def handle_event(self, event):
-        if super().handle_event(event):
-            return True
-        if isinstance(event, messages.EncoderChangeMessage):
-            if event.pos:
-                self.angle +=30
-            else:
-                self.angle -=30
-            self.grabber.servo.set_pos(self.angle)
-            return True
-        return False
+    def change_event(self, up):
+        if up:
+            self.angle +=30
+        else:
+            self.angle -=30
+        self.grabber.servo.set_pos(self.angle)
+
+    def down_event(self):
+        self.angle -=30
+        self.grabber.servo.set_pos(self.angle)
         
     async def run(self):
+        cal = self.grabber.positions
         self.display.draw_text("Open")
         await self.wait_for_button()
-        opened = self.angle
+        cal.opened = self.angle
         self.display.draw_text("Closed")
         await self.wait_for_button()
-        closed = self.angle
+        cal.closed = self.angle
         self.display.draw_text("Release")
         await self.wait_for_button()
-        released = self.angle
-        self.grabber.set_positions(opened, closed, released)
+        cal.released = self.angle
+        cal.save()
         self.display.clear()
         self.grabber.open()
         await asyncio.sleep(2)
