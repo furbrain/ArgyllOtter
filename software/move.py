@@ -3,4 +3,4 @@ from hardware import Drive
 import sys
 d = Drive()
 distance = int(sys.argv[1])
-d.goto(200, distance)
+d.goto(400, distance)
