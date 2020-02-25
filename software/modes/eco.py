@@ -170,15 +170,17 @@ class Process(mode.Mode):
         self.grabber.open()
         azimuth, _  = self.shetty.get_azimuth_and_distance_to(barrel.pos)
         await self.shetty.turn_to_azimuth(azimuth)
+        await self.eyeball.just_looking()
         on_target = await self.fine_tune_grab(barrel)
         if not on_target:
             return False
         distance = barrel.get_distance(self.shetty.pos)
+        print("Distance to barrel: %d" % distance)
         if distance < 500:
             distance = await self.get_distance() #get accurate laser distance
-            self.shetty.move(distance-50, speed=400)
+            await self.shetty.move(distance-50, speed=400)
         else:
-            self.shetty.move(distance-200)
+            await self.shetty.move(distance-200)
             expected_distance = 100
             count = 0 
             while True:
@@ -197,7 +199,7 @@ class Process(mode.Mode):
                     #can't find it - has it rolled away?
                     self.barrel_map.remove(barrel)
                     return False
-        await self.shetty.move(distance - 50, speed=400)
+            await self.shetty.move(distance - 50, speed=400)
         self.grabber.close()
         self.barrel_map.remove(barrel)
         return True

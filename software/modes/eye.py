@@ -110,7 +110,7 @@ class Ball:
         note we need access to contours for this..."""
         reds, greens = await self.look()
         barrels = self.find_barrels(reds, greens, ignore_edges=False)
-        self.classify_barrels(barrels)
+        #self.classify_barrels(barrels)
         contours = reds+greens
         for c, b in zip(contours, barrels):
             if b.near(target):
@@ -126,7 +126,7 @@ class Ball:
         """ give correction needed to line up on this barrel"""
         reds, greens = await self.look()
         barrels = self.find_barrels(reds, greens, ignore_edges=False)
-        self.classify_barrels(barrels)
+        #self.classify_barrels(barrels)
         nearest = target.nearest(barrels)
         print("nearest", nearest, nearest.get_relative_bearing(self.shetty.pos, self.shetty.azimuth))
         if nearest:
