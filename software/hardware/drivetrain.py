@@ -168,7 +168,7 @@ class Drive:
     
     @logged    
     async def spin(self, angle, max_speed, soft_start = False, reset_position=True, accurate=False):
-        slow_speed = min(max_speed, 300)
+        slow_speed = min(abs(max_speed), 300)
         slowed = False
         self.orientation.start_rotation()
         if angle > 0:

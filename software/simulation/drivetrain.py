@@ -86,14 +86,14 @@ class Drive:
         
     def get_spin_rate(self, left, right):
         width=200#mm
-        rate = 360*(left-right)/(width*2*np.pi)
+        rate = 90*(left-right)/(width*2*np.pi)
         return rate
     
     @logged    
     async def spin(self, angle, max_speed, soft_start = False, reset_position=True, accurate=False):
         self.shetty.stop()
 
-        slow_speed = min(max_speed, 300)
+        slow_speed = min(abs(max_speed), 300)
         slowed = False
 
         if angle > 0:
@@ -101,13 +101,13 @@ class Drive:
             slow_left = slow_speed
         else:
             left = -max_speed
-            slow_left = slow_speed
-        if accurate:
+            slow_left = -slow_speed
+        if False: #FIXME was "if accurate:" - may want to leave as is currently
             right = 0
             slow_right = 0
         else:
             right = -left
-            slow_right = slow_left
+            slow_right = -slow_left
 
         current_angle = 0
         start_angle = self.shetty.direction
@@ -118,7 +118,7 @@ class Drive:
             if not slowed:
                 if abs(current_angle - angle) < 30:
                     logging.debug("Spin: Current angle %f: slowed" % current_angle)
-                    self.drive(left, right, soft_start=False, reset_position=False)
+                    self.drive(slow_left, slow_right, soft_start=False, reset_position=False)
                     slowed = True
             if abs(current_angle) > abs(angle):
                 logging.debug("Spin: Current angle %f: stopped" % current_angle)
