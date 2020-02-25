@@ -236,9 +236,11 @@ class ShettyCloud:
             pt = [int(x*arena.SCALE) for x in pos]
             pt[1] = height-pt[1]
             arena.screen.set_at(pt, (255,255,255))
-        pt = [int(x*arena.SCALE) for x in self.get_pos()]
-        pt[1] = height-pt[1]
+        pt = arena.coords(self.get_pos())
+        direction =self.get_pos() + 300 * get_coeffs(self.azimuth)
+        direction = arena.coords(direction)
         draw_cross(arena.screen, "white", pt, 15)
+        pygame.draw.line(arena.screen, (255,255,255), pt, direction)
 
 if __name__=="__main__":
     s = ShettyCloud((1100,400),0)

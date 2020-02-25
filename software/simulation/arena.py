@@ -106,6 +106,16 @@ class Arena:
     def poll(self):
         """ called every few seconds """
         pass
+        
+    def coords(self, coords):
+        local = np.copy(coords)
+        local *= self.SCALE
+        h = self.screen.get_height()
+        if local.ndim == 1:
+            local[1] = h - local[1]
+        else:
+            local[:,1] = h - local[:,1]
+        return local.astype("int") 
 
     async def pygame_loop(self):
         while True:
