@@ -122,15 +122,21 @@ class Process(mode.Mode):
         #find most leftward barrels
         await self.shetty.turn_to_azimuth(start_angle)
         while not angle_over(finish_angle, self.shetty.azimuth):
-            barrel = await self.eyeball.find_leftmost_unknown_barrel()
-            if barrel is None:
-                await self.shetty.turn(15)
+            if False: ##FIXME this is code for fine tuning, but we may lose accuracy in movement...
+                barrel = await self.eyeball.find_leftmost_unknown_barrel()
+                if barrel is None:
+                    await self.shetty.turn(15)
+                else:
+                    barrel = await self.pinpoint_barrel(barrel)   
+                    if barrel is not None:      
+                        if barrel.in_bounds():
+                            self.barrel_map.add(barrel)
             else:
-                barrel = await self.pinpoint_barrel(barrel)   
-                if barrel is not None:      
+                known, unknown = await self.eyeball.find_and_classify_barrels()
+                for barrel in unknown:
                     if barrel.in_bounds():
                         self.barrel_map.add(barrel)
-                
+                await self.shetty.turn(15)
                 
     
     @logged    
@@ -162,27 +168,35 @@ class Process(mode.Mode):
     async def retrieve_barrel(self, barrel):
         self.display.draw_text("Hunting")
         self.grabber.open()
-        await self.shetty.turn(barrel.get_relative_bearing(self.shetty.pos, self.shetty.azimuth))
-        await self.fine_tune_grab(barrel)
-        await self.goto_pos(barrel.pos, shorten=150)
-        expected_distance = 100
-        count = 0 
-        while True:
-            on_target = await self.fine_tune_grab(barrel)
-            if on_target:
-                distance = await self.get_distance()
-                if distance < barrel.get_distance(self.shetty.pos) + expected_distance: ### looking good
-                    break
-                else:
-                    print("bad distance: ", distance, expected_distance)
-            #something has gone wrong. Back off a bit and try again
-            await self.shetty.move(-50)        
-            expected_distance += 50
-            count +=1
-            if count > 5:
-                #can't find it - has it rolled away?
-                self.barrel_map.remove(barrel)
-                return False
+        azimuth, _  = self.shetty.get_azimuth_and_distance_to(barrel.pos)
+        await self.shetty.turn_to_azimuth(azimuth)
+        on_target = await self.fine_tune_grab(barrel)
+        if not on_target:
+            return False
+        distance = barrel.get_distance(self.shetty.pos)
+        if distance < 500:
+            distance = await self.get_distance() #get accurate laser distance
+            self.shetty.move(distance-50, speed=400)
+        else:
+            self.shetty.move(distance-200)
+            expected_distance = 100
+            count = 0 
+            while True:
+                on_target = await self.fine_tune_grab(barrel)
+                if on_target:
+                    distance = await self.get_distance()
+                    if distance < barrel.get_distance(self.shetty.pos) + expected_distance: ### looking good
+                        break
+                    else:
+                        print("bad distance: ", distance, expected_distance)
+                #something has gone wrong. Back off a bit and try again
+                await self.shetty.move(-50)        
+                expected_distance += 50
+                count +=1
+                if count > 5:
+                    #can't find it - has it rolled away?
+                    self.barrel_map.remove(barrel)
+                    return False
         await self.shetty.move(distance - 50, speed=400)
         self.grabber.close()
         self.barrel_map.remove(barrel)
@@ -233,7 +247,7 @@ class Process(mode.Mode):
                 await self.create_map(90,270)
                 if self.barrel_map.empty():
                     break
-            target = self.barrel_map.get_highest()
+            target = self.barrel_map.get_nearest(self.shetty.pos)
             if not await self.process_barrel(target):
                 await self.create_map(0, 359)
             i +=1
