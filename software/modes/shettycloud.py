@@ -13,8 +13,8 @@ TURN_ERROR = 2
 DISTANCE_ERROR = 10
 AXIS_OFFSET = -150
 AXIS_BEARING = 0
-DEBUG_AXIS_BEARING = -30
-DEBUG_AXIS_OFFSET = -180
+DEBUG_AXIS_BEARING = 0
+DEBUG_AXIS_OFFSET = -150
 
 CAMERA_ANGLE_ERROR = 6
 CAMERA_DISTANCE_ERROR = 80
@@ -39,7 +39,7 @@ class Shetty:
     TURN_SPEED = 600
     DRIVE_SPEED = 800
 
-    TURN_RADIUS = 100
+    TURN_RADIUS = 0
     
     def __init__(self, pos, azimuth, drive):
         self.drive = drive
