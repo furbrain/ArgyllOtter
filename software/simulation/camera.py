@@ -20,12 +20,11 @@ class Calibration:
         return size * self.degrees_per_pixel
 
 class Camera:
-    camera = None
-    calibration = Calibration()
 
     def __init__(self, arena, iso=800):
         self.iso = iso
         self.arena = arena
+        self.pose = Calibration()
 
     def set_exposure(self, shutter_speed, awb_gains):
         pass        
@@ -66,13 +65,13 @@ class Camera:
         
     def get_position(self, x, y):
         y = 240-y
-        angle = -y * self.calibration.degrees_per_pixel
+        angle = -y * self.pose.degrees_per_pixel
         print("angle", angle)
         height = 100
         newy = height/np.tan(np.deg2rad(angle))
-        x = x- self.calibration.zero_degree_pixel
+        x = x- self.pose.zero_degree_pixel
         print(x,y)
-        angle = x  * self.calibration.degrees_per_pixel
+        angle = x  * self.pose.degrees_per_pixel
         print("angle", angle)
         newx = newy * np.tan(np.deg2rad(angle))
         return np.array([newx, newy])

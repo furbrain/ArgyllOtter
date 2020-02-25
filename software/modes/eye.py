@@ -21,15 +21,16 @@ class Ball:
         self.barrel_map = barrel_map
         self.track_barrels = False
         
-    def find_barrels_from_contour(self, contours, colour):
+    def find_barrels_from_contour(self, contours, colour, ignore_edges=True):
         results = []
         for c in contours:
             x_min = min(c[:,:,0])[0]
             x_max = max(c[:,:,0])[0]
-            if x_min == 0:
-                continue #ignore as at edge of image
-            if x_max >= 638:
-                continue #ignore as at edge of image
+            if ignore_edges:
+                if x_min == 0:
+                    continue #ignore as at edge of image
+                if x_max >= 638:
+                    continue #ignore as at edge of image
         
             centre = (x_min+x_max)/2
             size = x_max-x_min
@@ -67,9 +68,9 @@ class Ball:
         self.find_zones(blues, "blue")
         return reds, greens
         
-    def find_barrels(self, reds, greens):         
-        barrels = self.find_barrels_from_contour(reds,"red")
-        barrels += self.find_barrels_from_contour(greens,"green")
+    def find_barrels(self, reds, greens, ignore_edges=True):         
+        barrels = self.find_barrels_from_contour(reds, "red", ignore_edges)
+        barrels += self.find_barrels_from_contour(greens, "green", ignore_edges)
         return barrels
         
     def classify_barrels(self, barrels):
@@ -87,6 +88,12 @@ class Ball:
                 unknown_barrels.append(b)
         return known_barrels, unknown_barrels
         
+    async def find_and_classify_barrels(self):
+        reds, greens = await self.look()
+        barrels = self.find_barrels(reds, greens)
+        known, unknown = self.classify_barrels(barrels)
+        return known, unknown
+                
     async def find_leftmost_unknown_barrel(self):
         """return leftmost barrel that has not been found before"""
         reds, greens = await self.look()
@@ -102,7 +109,7 @@ class Ball:
         """give correction needed to line up laser on specified barrel
         note we need access to contours for this..."""
         reds, greens = await self.look()
-        barrels = self.find_barrels(reds, greens)
+        barrels = self.find_barrels(reds, greens, ignore_edges=False)
         self.classify_barrels(barrels)
         contours = reds+greens
         for c, b in zip(contours, barrels):
@@ -118,10 +125,9 @@ class Ball:
     async def line_up_for_grab(self, target):
         """ give correction needed to line up on this barrel"""
         reds, greens = await self.look()
-        barrels = self.find_barrels(reds, greens)
+        barrels = self.find_barrels(reds, greens, ignore_edges=False)
         self.classify_barrels(barrels)
         nearest = target.nearest(barrels)
-        print("grab list", reds, greens, barrels)
         print("nearest", nearest, nearest.get_relative_bearing(self.shetty.pos, self.shetty.azimuth))
         if nearest:
             return nearest.get_relative_bearing(self.shetty.pos, self.shetty.azimuth)

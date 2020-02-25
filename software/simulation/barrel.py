@@ -23,7 +23,7 @@ class Barrel:
         
         
     def grab(self, grabber):
-        if np.hypot(*(grabber.get_pos()-self.pos)) < self.size/2:
+        if np.hypot(*(grabber.get_pos()-self.pos)) < self.size:
             self.grabber = grabber
         
     def release(self, grabber):

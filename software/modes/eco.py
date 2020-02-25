@@ -13,7 +13,7 @@ from .shettycloud import Shetty
 from . import eye
 
 TURN_SPEED = 600
-MIN_TURN_SPEED = 150
+MIN_TURN_SPEED = 50
 DRIVE_SPEED = 800
 
 

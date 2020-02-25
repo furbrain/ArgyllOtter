@@ -32,7 +32,7 @@ class Barrel:
         self.precise = precise
         
     def __str__(self):
-        return "Barrel: (%s), %s, %s" % (self.pos,self.colour, self.precise)
+        return "Barrel: <%s, %s, %s>" % (self.pos,self.colour, self.precise)
         
     def __repr__(self):
         return str(self)
