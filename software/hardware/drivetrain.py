@@ -3,6 +3,8 @@ import smbus
 import gpiozero
 import math
 import struct
+
+from calibrate import Settings
 from . import orientation
 import numpy as np
 import time
@@ -20,21 +22,12 @@ DRIVE_CAL_FILE="/home/pi/drivetrain.npz"
 class DriveError(Exception):
     pass
 
-class DriveCalibration:
-    def __init__(self):
-        try:
-            d = np.load(DRIVE_CAL_FILE)
-            self.spin_k = d['spin_k']
-            self.forward_k = d['forward_k']
-            self.reverse_k = d['reverse_k']
-        except IOError:
-            self.spin_k = 0
-            self.forward_k = 0
-            self.reverse_k = 0
-            
-    def save(self):
-        np.savez(DRIVE_CAL_FILE, spin_k = self.spin_k, forward_k=self.forward_k, reverse_k=self.reverse_k)
-                
+class DriveCalibration(Settings):
+    def default(self):
+        self.spin_k = 0
+        self.forward_k = 0
+        self.reverse_k = 0
+
 class Drive:
     def __init__(self, bus=None, wheel_diameter=70.0, clicks_per_revolution=374):
         if bus is None:
