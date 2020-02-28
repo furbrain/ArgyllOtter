@@ -1,11 +1,10 @@
 import cv2
-import numpy as np
 import PIL
 import asyncio
 
 from compute import vision
+from compute.colours import Colours
 from modes import mode
-from . import settings
 import util
 
 MIN_HUE = 1
@@ -13,16 +12,6 @@ MAX_HUE = 2
 MIN_SAT = 3
 MIN_VAL = 4
 
-class Colours(settings.Settings):
-    def default(self):
-        self.red = ([-10,80,30],[10,255,255])
-        self.yellow = ([25,120,30],[35,255,255])
-        self.green = ([50,80,30],[70,255,255])
-        self.blue = ([110,50,30],[130,255,255])
-
-    def get_colour(self, text):
-        return getattr(self, text)
-        
 
 class CalColour(mode.Interactive):
     HARDWARE = ["camera", "display"]

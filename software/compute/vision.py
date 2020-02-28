@@ -21,11 +21,12 @@ def find_colour(image, colour, smoothed=True):
         mask = cv2.erode(mask, None, iterations=2)
         mask = cv2.dilate(mask, None, iterations=4)
         mask = cv2.erode(mask, None, iterations=2)
+
     return mask
-    
+
 def find_all_contours(image, colour):
-    mask = find_colour(image,colour)    
-    #get rid of random blobs	
+    mask = find_colour(image,colour)
+    #get rid of random blobs
     cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     return cnts

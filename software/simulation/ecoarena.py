@@ -42,7 +42,7 @@ class Target:
 class EcoArena(Arena):
     def __init__(self):
         super().__init__(size=(2200,2200))
-        np.random.seed(1)
+        np.random.seed(12)
         barrels = np.empty((0,2))
         i=0
         # do red barrels

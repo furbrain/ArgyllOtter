@@ -6,7 +6,7 @@ import cv2
 from .barrels import Barrel
 from compute import vision
 from util import spawn
-from calibrate import Colours
+from compute.colours import Colours
 
 ZONES = {'blue' : (( 400, 2200), (1000, 2200)),
          'yellow'   : ((1200, 2200), (1800, 2200))}
@@ -128,6 +128,11 @@ class Ball:
         barrels = self.find_barrels(reds, greens, ignore_edges=False)
         #self.classify_barrels(barrels)
         nearest = target.nearest(barrels)
+        print("target", target)
+        print("grab list", barrels)
+        if nearest is None:
+            print("BAAARRRRFFFFF")
+            await asyncio.sleep(1000)
         print("nearest", nearest, nearest.get_relative_bearing(self.shetty.pos, self.shetty.azimuth))
         if nearest:
             return nearest.get_relative_bearing(self.shetty.pos, self.shetty.azimuth)
