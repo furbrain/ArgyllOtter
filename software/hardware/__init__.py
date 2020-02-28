@@ -9,6 +9,7 @@ from .display import Display
 from .controller import Controller
 from .pixels import Pixels
 from .camera import Camera
+from .stabber import Stabber
 
 class Hardware:
     def __init__(self, queue):
