@@ -36,4 +36,5 @@ class Hardware:
             self.shooter = Shooter()        
         except IOError:
             self.shooter = None
-            self.grabber = Grabber()
+        self.grabber = Grabber()
+        self.stabber = Stabber()

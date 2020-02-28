@@ -26,6 +26,7 @@ class Hardware:
         self.display = Display()
         self.shooter = None
         self.grabber = Grabber(self.shetty, self.arena)
+        self.stabber = None
         
     @classmethod
     def set_arena(cls, arena):
