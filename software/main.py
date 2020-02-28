@@ -55,7 +55,7 @@ class Main:
                 ("Camera Pos", calibrate.CameraPosition),
                 ("Turning", calibrate.Spin),
                 ("Grabber", calibrate.Grabber),
-                ("Stabber". calibrate.StabberCal)
+                ("Stabber", calibrate.StabberCal)
             ]),
             ("STOP", self.hardware.drive.stop),
             ("Debug", [
