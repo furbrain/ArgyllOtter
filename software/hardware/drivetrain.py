@@ -4,7 +4,7 @@ import gpiozero
 import math
 import struct
 
-from calibrate import Settings
+import settings
 from . import orientation
 import numpy as np
 import time
@@ -22,7 +22,7 @@ DRIVE_CAL_FILE="/home/pi/drivetrain.npz"
 class DriveError(Exception):
     pass
 
-class DriveCalibration(Settings):
+class DriveCalibration(settings.Settings):
     def default(self):
         self.spin_k = 0
         self.forward_k = 0

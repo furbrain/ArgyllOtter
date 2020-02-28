@@ -7,7 +7,7 @@ import numpy as np
 import asyncio
 import logging
 from util import logged
-import calibrate
+import settings
 
 BMP388_ADDRESS = 0x77
 CAL_RANGE = (-100,900,50)
@@ -40,7 +40,7 @@ class Pressure:
             result = None
         return result
 
-class BarrelPositions(calibrate.Settings):
+class BarrelPositions(settings.Settings):
     def default(self):
         rng = range(*CAL_RANGE)
         self.range = np.arange(*CAL_RANGE)

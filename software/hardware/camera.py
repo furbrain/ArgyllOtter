@@ -8,14 +8,14 @@ import scipy.optimize
 import asyncio
 import time
 
-import calibrate
+import settings
 
 ISO = 800
 RESOLUTION=(640,480)
 
 
 
-class CameraPose(calibrate.Settings):
+class CameraPose(settings.Settings):
     def default(self):
         self.calibrated = False
         self.degrees_per_pixel = 53.5/640
@@ -38,7 +38,7 @@ class CameraPose(calibrate.Settings):
         return size * self.degrees_per_pixel
 
 
-class CameraLens(calibrate.Settings):
+class CameraLens(settings.Settings):
     def default(self):
         self.mtx = None
         self.dist = None

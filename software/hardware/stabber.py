@@ -1,7 +1,7 @@
-import calibrate
+import settings
 import hardware.servo
 
-class StabberPosition(calibrate.Settings):
+class StabberPosition(settings.Settings):
 
     def default(self):
         self.stab = 400

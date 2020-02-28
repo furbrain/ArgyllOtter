@@ -1,4 +1,4 @@
-from calibrate import settings
+import settings
 
 
 class Colours(settings.Settings):

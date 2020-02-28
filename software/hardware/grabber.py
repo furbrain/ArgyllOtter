@@ -3,9 +3,9 @@ from .servo import Servo
 import logging
 from util import logged
 import numpy as np
-import calibrate
+import settings
 
-class GrabPositions(calibrate.Settings):
+class GrabPositions(settings.Settings):
     def default(self):
         self.opened = 300
         self.closed = -500
