@@ -12,8 +12,8 @@ from .barrels import Barrel, BarrelMap
 from .shettycloud import Shetty
 from . import eye
 
-TURN_SPEED = 600
-MIN_TURN_SPEED = 50
+TURN_SPEED = 400
+MIN_TURN_SPEED = 150
 DRIVE_SPEED = 800
 
 
@@ -80,31 +80,34 @@ class Process(mode.Mode):
     async def fine_tune_laser(self, barrel):
         speed = TURN_SPEED/2
         lost = False
-        while True:
-            adjustment = await self.eyeball.line_up_for_laser(barrel)
-            if adjustment is None:
-                return False
-                break
-            if abs(adjustment) < 1:
-                return True
-                break
-            await self.shetty.turn(adjustment, speed=speed)
-            speed = max(speed/2, MIN_TURN_SPEED)
+        with self.stabber:
+            while True:
+                adjustment = await self.eyeball.line_up_for_laser(barrel)
+                if adjustment is None:
+                    return False
+                    break
+                if abs(adjustment) < 1:
+                    return True
+                    break
+                await self.shetty.turn(adjustment, speed=speed)
+                speed = max(speed/2, MIN_TURN_SPEED)
             
     async def fine_tune_grab(self, barrel):        
         speed = TURN_SPEED/2
         lost = False
-        while True:
-            adjustment = await self.eyeball.line_up_for_grab(barrel)
-            if adjustment is None:
-                return False
-                break
-            if abs(adjustment) < 3:
-                return True
-                break
-            await self.shetty.turn(adjustment, speed=speed)
-            speed = max(speed/2, MIN_TURN_SPEED)
-            
+        with self.stabber:
+            for i in range(5):
+                adjustment, target = await self.eyeball.line_up_for_grab(barrel)
+                if adjustment is None:
+                    return False, None
+                if abs(adjustment) < 5:
+                    return True, target
+                if target.get_distance(self.shetty.pos) < 200:
+                    return True, target
+                await self.shetty.turn(adjustment, speed=speed)
+                speed = max(speed/2, MIN_TURN_SPEED)
+        return True, target
+
     async def pinpoint_barrel(self, barrel):
         return barrel
         angle,_ = self.shetty.get_azimuth_and_distance_to(barrel.pos)
@@ -126,23 +129,25 @@ class Process(mode.Mode):
     async def create_map(self, start_angle, finish_angle):
         self.display.draw_text("Mapping")
         #find most leftward barrels
-        await self.shetty.turn_to_azimuth(start_angle)
-        while not angle_over(finish_angle, self.shetty.azimuth):
-            if False: ##FIXME this is code for fine tuning, but we may lose accuracy in movement...
-                barrel = await self.eyeball.find_leftmost_unknown_barrel()
-                if barrel is None:
-                    await self.shetty.turn(15)
+        with self.stabber:
+            await self.shetty.turn_to_azimuth(start_angle)
+            while not angle_over(finish_angle, self.shetty.azimuth):
+                if False: ##FIXME this is code for fine tuning, but we may lose accuracy in movement...
+                    barrel = await self.eyeball.find_leftmost_unknown_barrel()
+                    if barrel is None:
+                        await self.shetty.turn(12)
+                    else:
+                        barrel = await self.pinpoint_barrel(barrel)
+                        if barrel is not None:
+                            if barrel.in_bounds():
+                                self.barrel_map.add(barrel)
                 else:
-                    barrel = await self.pinpoint_barrel(barrel)   
-                    if barrel is not None:      
+                    known, unknown = await self.eyeball.find_and_classify_barrels()
+                    for barrel in unknown:
                         if barrel.in_bounds():
                             self.barrel_map.add(barrel)
-            else:
-                known, unknown = await self.eyeball.find_and_classify_barrels()
-                for barrel in unknown:
-                    if barrel.in_bounds():
-                        self.barrel_map.add(barrel)
-                await self.shetty.turn(15)
+                    self.update_pixels()
+                    await self.shetty.turn(12)
                 
     
     @logged    
@@ -154,7 +159,8 @@ class Process(mode.Mode):
                 await self.goto_pos((waypoint-self.shetty.pos)/2 + self.shetty.pos)
                 await self.goto_pos(waypoint)
             else:
-                await self.shetty.turn_to_azimuth(bearing)
+                with self.stabber:
+                    await self.shetty.turn_to_azimuth(bearing)
                 await self.eyeball.just_looking()
                 await self.shetty.move(distance)
                 await self.eyeball.just_looking()
@@ -175,31 +181,36 @@ class Process(mode.Mode):
         self.display.draw_text("Hunting")
         self.grabber.open()
         azimuth, _  = self.shetty.get_azimuth_and_distance_to(barrel.pos)
-        await self.shetty.turn_to_azimuth(azimuth)
+        with self.stabber:
+            await self.shetty.turn_to_azimuth(azimuth)
         await self.eyeball.just_looking()
-        on_target = await self.fine_tune_grab(barrel)
+        on_target, target = await self.fine_tune_grab(barrel)
         if not on_target:
-            return False
-        distance = barrel.get_distance(self.shetty.pos)
+            await self.shetty.move(-150)
+            on_target, target = await self.fine_tune_grab(barrel)
+            if not on_target:
+                return False
+        print(target, self.shetty.pos)
+        distance = target.get_distance(self.shetty.pos)
         print("Distance to barrel: %d" % distance)
-        if distance < 500:
+        if distance < 600:
             distance = await self.get_distance() #get accurate laser distance
             await self.shetty.move(distance-50, speed=400)
         else:
-            await self.shetty.move(distance-200)
+            await self.shetty.move(distance-300)
             expected_distance = 100
             count = 0 
             while True:
-                on_target = await self.fine_tune_grab(barrel)
+                on_target, target = await self.fine_tune_grab(barrel)
                 if on_target:
-                    distance = await self.get_distance()
+                    distance = target.get_distance(self.shetty.pos)
                     if distance < barrel.get_distance(self.shetty.pos) + expected_distance: ### looking good
                         break
                     else:
                         print("bad distance: ", distance, expected_distance)
                 #something has gone wrong. Back off a bit and try again
-                await self.shetty.move(-50)        
-                expected_distance += 50
+                await self.shetty.move(-100)        
+                expected_distance += 100
                 count +=1
                 if count > 5:
                     #can't find it - has it rolled away?
@@ -230,11 +241,13 @@ class Process(mode.Mode):
         self.route = await self.barrel_map.calculate_route(self.shetty.pos, destination)
         await self.follow_route(shorten=50)
         self.grabber.release()
+        self.update_pixels()
         await asyncio.sleep(0.5)
         await self.shetty.move(-250)
         return True
         
     async def run(self):
+        self.stabber.release()
         await self.shetty.move(-100.0)
         self.grabber.release()
         
@@ -257,7 +270,8 @@ class Process(mode.Mode):
                     break
             target = self.barrel_map.get_nearest(self.shetty.pos)
             if not await self.process_barrel(target):
-                await self.create_map(0, 359)
+                self.barrel_map.clear()
+                await self.create_map(90, 270)
             i +=1
         self.route = [self.shetty.pos, [1100,1000]]
         await self.follow_route(shorten=0)
