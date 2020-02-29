@@ -133,6 +133,9 @@ class ShettyCloud:
         self.swarm.azimuth %= 360
 
     def normalize_weights(self):
+        self.swarm.weight[np.isnan(self.swarm.weight)] = 0
+        if np.sum(self.swarm.weight)==0:
+            self.swarm.weight = np.ones_like(self.swarm.weight)
         self.swarm.weight /= np.sum(self.swarm.weight)
 
     def resample(self):
@@ -193,6 +196,7 @@ class ShettyCloud:
             self.swarm.azimuth += offset
             self.swarm.weight *= weighting
         self.wrap_azimuth()
+        self.normalize_weights()
         self.dirty = True
 
     def move(self, distance, error=DISTANCE_ERROR):
@@ -210,6 +214,7 @@ class ShettyCloud:
         offsets = coeff * distance
         self.swarm.xy += offsets.T
         self.swarm.weight *= weighting
+        self.normalize_weights()
         self.dirty = True
 
     def adjust_pos(self, offset, error=DISTANCE_ERROR):

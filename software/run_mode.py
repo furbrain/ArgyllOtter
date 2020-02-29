@@ -3,6 +3,8 @@ import argparse
 import asyncio
 import logging
 
+import modes
+import calibrate
 from main import Main
 
 logging.basicConfig(filename='run_mode.log', level=logging.INFO)
