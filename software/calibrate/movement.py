@@ -72,12 +72,4 @@ class Spin(mode.Mode):
             await self.test(speed, accurate, rev)
 
     async def run(self):
-        #await self.do_calibration()
-        self.drive.cal.spin_k = 0
-        self.drive.cal.forward_k = 0
-        self.drive.cal.reverse_k = 0
-
-        #await self.do_testing(False)
-        #await self.do_testing(True)        
-        await self.do_testing(True, rev=False)        
-        await self.do_testing(True, rev=True)                
+        await self.do_calibration()
