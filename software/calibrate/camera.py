@@ -4,7 +4,7 @@ import math
 import cv2
 import numpy as np
 
-from compute import vision
+from compute import vision, colours
 from modes import mode
 from util import spawn
 
@@ -49,34 +49,21 @@ class CameraPosition(mode.Interactive):
         await asyncio.sleep(1)
         self.laser.off()       
         await asyncio.sleep(2)
-        ys = []
-        distances = []
-        for i in range(4):
+        dist = await self.laser.get_distance(self.laser.MEDIUM)
+        image = self.camera.get_image()
+        contour = await spawn(vision.find_biggest_contour, image, colours.Colours().red)
+        if contour is not None:
+            x_min = min(contour[:,:,0])[0]
+            x_max = max(contour[:,:,0])[0]
             dist = await self.laser.get_distance(self.laser.MEDIUM)
-            image = self.camera.get_image()
-            contour = await spawn(vision.find_biggest_contour, image, "green")
-            if contour is None:
-                self.display.draw_text("Nuffin")
-                return
-            y_max = max(contour[:,:,1])[0]
-            ys.append(y_max)
-            distances.append(dist)
-            self.laser.on()
-            await self.wait_for_button()
-        pose = self.camera.pose
-        pose.fit_curve(ys, distances)
-        print(self.camera.pose.distance_params)
-        if contour is not None:        
-	        x_min = min(contour[:,:,0])[0]
-	        x_max = max(contour[:,:,0])[0]
-	        dist = await self.laser.get_distance(self.laser.MEDIUM)
-	        degrees_subtended = math.atan2(OBJECT_WIDTH,dist)*180/math.pi
-	        pose.degrees_per_pixel = degrees_subtended/(x_max-x_min)
-	        pose.zero_degree_pixel = (x_min+x_max)/2
-	        pose.calibrated = True
+            degrees_subtended = math.atan2(OBJECT_WIDTH,dist)*180/math.pi
+            pose = self.camera.pose
+            pose.degrees_per_pixel = degrees_subtended/(x_max-x_min)
+            pose.zero_degree_pixel = (x_min+x_max)/2
+            pose.calibrated = True
+            pose.save()
         else:
             self.display.draw_text("Nuffin")
-        pose.save()
 
 class Lens(mode.Mode):
     HARDWARE = ('camera', 'display')
