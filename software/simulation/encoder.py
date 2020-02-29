@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import logging
 import time
-from util import logged
+
 from modes import messages
+from util import logged
+
 
 class Encoder():
     def __init__(self, event_queue, pins=None):
@@ -23,8 +24,6 @@ class Encoder():
     @logged
     def pressed(self):
         now = time.time()
-        if now > (self.last_press+0.5):
+        if now > (self.last_press + 0.5):
             self.add_event(messages.EncoderPressMessage())
             self.last_press = now
-        
-

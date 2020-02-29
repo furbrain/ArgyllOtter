@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-from modes import mode, messages
 import asyncio
 import time
+
 import numpy as np
+
+from modes import mode
+
 
 class Spin(mode.Mode):
     HARDWARE = ('drive', 'display')
 
     def on_start(self):
         self.o = self.drive.orientation
-    
+
     async def get_k(self):
         start = time.time()
         self.o.start_rotation()
@@ -29,8 +32,8 @@ class Spin(mode.Mode):
         self.drive.stop()
         final_rot, _ = self.o.get_total_rotation()
         print("v ", v)
-        s = final_rot-rot
-        k = s/(v*v)
+        s = final_rot - rot
+        k = s / (v * v)
         await asyncio.sleep(0.1)
         return abs(k)
 
@@ -41,9 +44,9 @@ class Spin(mode.Mode):
         true_angle = await self.drive.spin(angle, speed, accurate=accurate)
         offset = true_angle - angle
         print("Speed: %d, angle, %.4g error %.4g" % (speed, angle, offset))
-        
+
     async def do_calibration(self):
-        spin  = []
+        spin = []
         forward = []
         reverse = []
         for speed in [200, 250, 300, 350, 400]:
@@ -59,7 +62,7 @@ class Spin(mode.Mode):
             k = await self.get_k()
             if k < 0.001:
                 reverse.append(k)
-            
+
         self.drive.cal.spin_k = np.mean(spin)
         self.drive.cal.forward_k = np.mean(forward)
         self.drive.cal.reverse_k = np.mean(reverse)

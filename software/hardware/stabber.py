@@ -1,7 +1,8 @@
 import time
 
-import settings
 import hardware.servo
+import settings
+
 
 class StabberPosition(settings.Settings):
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-from modes import mode, messages
 import asyncio
-import time
+
+from modes import mode
+
 
 class Grabber(mode.Interactive):
     HARDWARE = ('grabber', 'display')
@@ -12,15 +13,15 @@ class Grabber(mode.Interactive):
 
     def change_event(self, up):
         if up:
-            self.angle +=30
+            self.angle += 30
         else:
-            self.angle -=30
+            self.angle -= 30
         self.grabber.servo.set_pos(self.angle)
 
     def down_event(self):
-        self.angle -=30
+        self.angle -= 30
         self.grabber.servo.set_pos(self.angle)
-        
+
     async def run(self):
         cal = self.grabber.positions
         self.display.draw_text("Open")

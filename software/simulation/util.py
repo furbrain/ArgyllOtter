@@ -1,5 +1,6 @@
 import vtk
 
+
 def make_actor(source):
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(source.GetOutputPort())

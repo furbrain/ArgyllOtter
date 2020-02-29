@@ -1,7 +1,9 @@
 import asyncio
+
+from approxeng.input.selectbinder import ControllerResource
+
 from modes import messages
 from util import start_task
-from approxeng.input.selectbinder import ControllerResource
 
 
 class Controller:
@@ -20,15 +22,14 @@ class Controller:
             try:
                 controller = ControllerResource(dead_zone=0.05, hot_zone=0.1)
             except IOError:
-                #no joystick found, wait a bit and try again
+                # no joystick found, wait a bit and try again
                 await asyncio.sleep(1.0)
             else:
                 with controller as joystick:
                     joystick.buttons.register_button_handler(self.button_handler,
-                        list(joystick.buttons.buttons.keys()))
-                        
+                                                             list(joystick.buttons.buttons.keys()))
+
                     self.add_event(messages.ControllerConnectedMessage(True, joystick))
                     while joystick.connected:
                         await asyncio.sleep(poll_time)
                 self.add_event(messages.ControllerConnectedMessage(False))
-        

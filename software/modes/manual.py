@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-from . import mode
-from . import messages
-from util import start_task
 import asyncio
+
+from util import start_task
+from . import messages
+from . import mode
+
 
 class Manual(mode.Mode):
     HARDWARE = ('drive',)
+
     def on_start(self):
         self.slow_speed = 40
         self.normal_speed = 200
@@ -24,10 +27,10 @@ class Manual(mode.Mode):
         if super().handle_event(event):
             return True
         if isinstance(event, messages.ControllerButtonMessage):
-            if event.button=="l2":
+            if event.button == "l2":
                 start_task(self.turn(-90))
                 return True
-            elif event.button=="r2":
+            elif event.button == "r2":
                 start_task(self.turn(90))
                 return True
         return False
@@ -48,10 +51,10 @@ class Manual(mode.Mode):
             A pair of power_left, power_right integer values to send to the motor driver
         """
         # make curves wider radius at high speed
-        if max_power*throttle > 300:
+        if max_power * throttle > 300:
             yaw = max(-0.5, yaw)
             yaw = min(0.5, yaw)
-        
+
         # invert steering in reverse (more intuitive)
         if throttle < -0.1:
             yaw = -yaw
@@ -71,15 +74,14 @@ class Manual(mode.Mode):
                         self.drive.stop()
                     else:
                         if self.joystick['r1']:
-                            self.speed=self.boost_speed
+                            self.speed = self.boost_speed
                         elif self.joystick['l1']:
-                            self.speed=self.slow_speed
+                            self.speed = self.slow_speed
                         else:
-                            self.speed=self.normal_speed
+                            self.speed = self.normal_speed
                         # Get power from mixer function
                         power_left, power_right = self.mixer(yaw=x_axis, throttle=y_axis, max_power=self.speed)
                         # Set motor speeds
                         self.drive.drive(power_left, power_right)
             else:
                 self.drive.stop()
-

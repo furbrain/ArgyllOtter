@@ -1,8 +1,10 @@
 import numpy as np
+
 from modes import mode
 
+
 class Shooter(mode.Mode):
-    HARDWARE = ['shooter']            
+    HARDWARE = ['shooter']
 
     async def run(self):
         barrel = self.shooter.barrel

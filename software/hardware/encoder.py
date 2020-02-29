@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-from gpiozero import Button
-import logging
 import time
-from util import logged
+
+from gpiozero import Button
+
 from modes import messages
+from util import logged
+
 
 class Encoder():
     def __init__(self, event_queue, pins=None):
@@ -15,7 +17,7 @@ class Encoder():
         self.data = Button(pins[1])
         self.switch = Button(pins[2])
         self.clock.when_pressed = self.movement
-        self.switch.when_pressed = self.pressed    
+        self.switch.when_pressed = self.pressed
         self.last_press = time.time()
 
     def add_event(self, msg):
@@ -31,12 +33,12 @@ class Encoder():
     @logged
     def pressed(self):
         now = time.time()
-        if now > (self.last_press+0.5):
+        if now > (self.last_press + 0.5):
             self.add_event(messages.EncoderPressMessage())
             self.last_press = now
-        
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     # noinspection PyTypeChecker
     enc = Encoder(print, lambda: print("Button"))
     input("press Enter to finish")
