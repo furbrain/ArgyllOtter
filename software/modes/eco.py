@@ -71,6 +71,8 @@ class Process(mode.Mode):
                     return False
                 if abs(adjustment) < 1:
                     return True
+                self.stabber.stab()
+                await asyncio.sleep(0.1)
                 await self.shetty.turn(adjustment, speed=speed)
                 speed = max(speed / 2, MIN_TURN_SPEED)
 
@@ -85,30 +87,33 @@ class Process(mode.Mode):
                     return True, target
                 if target.get_distance(self.shetty.pos) < 200:
                     return True, target
+                self.stabber.stab()
+                await asyncio.sleep(0.1)
                 await self.shetty.turn(adjustment, speed=speed)
                 speed = max(speed / 2, MIN_TURN_SPEED)
         return True, target
 
     async def pinpoint_barrel(self, barrel):
         angle, _ = self.shetty.get_azimuth_and_distance_to(barrel.pos)
-        await self.shetty.turn_to_azimuth(angle)
-        found = await self.fine_tune_laser(barrel)
-        if found:
-            distance = await self.get_distance()
-            if distance is None:
-                return barrel
-            precise_barrel = Barrel.fromPolar(self.shetty.pos, self.shetty.azimuth, distance, barrel.colour)
-            if barrel.near(precise_barrel):
-                return precise_barrel
-            else:  # oops, probably another barrel in the way or we just missed with the laser
-                return barrel  # use position from camera
-        return None
+        with self.stabber.stab():
+            await self.shetty.turn_to_azimuth(angle)
+            found = await self.fine_tune_laser(barrel)
+            if found:
+                distance = await self.get_distance()
+                if distance is None:
+                    return barrel
+                precise_barrel = Barrel.fromPolar(self.shetty.pos, self.shetty.azimuth, distance, barrel.colour)
+                if barrel.near(precise_barrel):
+                    return precise_barrel
+                else:  # oops, probably another barrel in the way or we just missed with the laser
+                    return barrel  # use position from camera
+            return None
 
     @logged
     async def create_map(self, start_angle, finish_angle):
         self.display.draw_text("Mapping")
         # find most leftward barrels
-        with self.stabber:
+        with self.stabber.stab():
             await self.shetty.turn_to_azimuth(start_angle)
             while not angle_over(finish_angle, self.shetty.azimuth):
                 known, unknown = await self.eyeball.find_and_classify_barrels()
@@ -127,7 +132,7 @@ class Process(mode.Mode):
             await self.goto_pos((waypoint - self.shetty.pos) / 2 + self.shetty.pos)
             await self.goto_pos(waypoint)
         else:
-            with self.stabber:
+            with self.stabber.stab():
                 await self.shetty.turn_to_azimuth(bearing)
             await self.eyeball.just_looking()
             await self.shetty.move(distance)
@@ -148,7 +153,7 @@ class Process(mode.Mode):
         self.display.draw_text("Hunting")
         self.grabber.open()
         azimuth, _ = self.shetty.get_azimuth_and_distance_to(barrel.pos)
-        with self.stabber:
+        with self.stabber.stab():
             await self.shetty.turn_to_azimuth(azimuth)
         await self.eyeball.just_looking()
         on_target, target = await self.fine_tune_grab(barrel)
