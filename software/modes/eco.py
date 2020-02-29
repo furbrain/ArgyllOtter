@@ -33,18 +33,24 @@ def angle_over(target, angle):
     return False
     
 class Process(mode.Mode):
-    HARDWARE = ('drive', 'camera', 'laser', 'grabber', 'display')
+    HARDWARE = ('drive', 'camera', 'laser', 'grabber', 'display', 'stabber', 'pixels')
     
     def on_start(self):
         self.barrel_map = BarrelMap()
         self.shetty = Shetty(np.array((1100, 550)), 0, self.drive)
         self.eyeball = eye.Ball(self.camera, self.shetty, self.barrel_map)
         self.route = []
-        self.red_count=0
-        self.green_count=0
+        self.red_count = 0
+        self.green_count = 0
 
-                        
-        
+    def update_pixels(self):
+        self.pixels.clear()
+        for i in range(self.barrel_map.count("red")):
+            self.pixels.setPixelColorRGB(i,80,0,0)
+        for i in range(self.barrel_map.count("green")):
+            self.pixels.setPixelColorRGB(11-i, 0, 80, 0)
+        self.pixels.show()
+
     async def get_distance(self):
         for i in range(3):
             try:

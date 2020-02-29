@@ -136,6 +136,9 @@ class BarrelMap:
     def known(self, barrel):
         return barrel.nearest(self.barrels)
 
+    def count(self, colour):
+        return len([b for b in self.barrels if b.colour==colour])
+
     def draw(self, arena):
         h = arena.screen.get_height()
         for barrel in self.barrels:
