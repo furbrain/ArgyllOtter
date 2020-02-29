@@ -28,8 +28,10 @@ class Ball:
             x_max = max(c[:,:,0])[0]
             if ignore_edges:
                 if x_min == 0:
+                    print("ignoring edge case")
                     continue #ignore as at edge of image
                 if x_max >= 638:
+                    print("ignoring edge case")
                     continue #ignore as at edge of image
         
             centre = (x_min+x_max)/2
@@ -80,10 +82,10 @@ class Ball:
             found = self.barrel_map.known(b)
             if found:
                 known_barrels.append(found)
-                if self.track_barrels:
-                    print(b.colour)
-                    angle = b.get_relative_bearing(self.shetty.pos, self.shetty.azimuth)
-                    self.shetty.observed(angle, found.pos, np.hypot(*(self.shetty.pos-b.pos)))
+                #if self.track_barrels:
+                    #print(b.colour)
+                    #angle = b.get_relative_bearing(self.shetty.pos, self.shetty.azimuth)
+                    #self.shetty.observed(angle, found.pos, np.hypot(*(self.shetty.pos-b.pos)))
             else:
                 unknown_barrels.append(b)
         return known_barrels, unknown_barrels
@@ -130,14 +132,10 @@ class Ball:
         nearest = target.nearest(barrels)
         print("target", target)
         print("grab list", barrels)
-        if nearest is None:
-            print("BAAARRRRFFFFF")
-            await asyncio.sleep(1000)
-        print("nearest", nearest, nearest.get_relative_bearing(self.shetty.pos, self.shetty.azimuth))
         if nearest:
-            return nearest.get_relative_bearing(self.shetty.pos, self.shetty.azimuth)
+            return nearest.get_relative_bearing(self.shetty.pos, self.shetty.azimuth), nearest
         else:
-            return None
+            return None, None
         
     async def just_looking(self):
         """ driving around having a looky-see, lets correct...."""

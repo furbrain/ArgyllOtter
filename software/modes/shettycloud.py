@@ -16,9 +16,10 @@ AXIS_BEARING = 0
 DEBUG_AXIS_BEARING = 0
 DEBUG_AXIS_OFFSET = -150
 
-CAMERA_ANGLE_ERROR = 6
+CAMERA_ANGLE_ERROR = 2
 CAMERA_DISTANCE_ERROR = 80
 
+WEIGHT_MOVEMENT = True
 
 def draw_cross(surface, colour, pos, size, width=1):
     x = pos[0]
@@ -36,8 +37,8 @@ class Shetty:
     It will keep track of where it is and update itself as needed
     """
     
-    TURN_SPEED = 600
-    DRIVE_SPEED = 800
+    TURN_SPEED = 400
+    DRIVE_SPEED = 600
 
     TURN_RADIUS = 0
     
@@ -183,7 +184,10 @@ class ShettyCloud:
         self.swarm.azimuth += angle
         if error != 0:
             offset = np.random.normal(0, error/2, SWARM_SIZE)
-            weighting = stats.norm.pdf(offset, scale=error/2)
+            if WEIGHT_MOVEMENT:
+                weighting = stats.norm.pdf(offset, scale=error/2)
+            else:
+                weighting = 1
             self.swarm.azimuth += offset
             self.swarm.weight *= weighting
         self.wrap_azimuth()
@@ -194,7 +198,10 @@ class ShettyCloud:
         coeff = get_coeffs(self.swarm.azimuth)
         if error != 0:
             offset = np.random.normal(distance, error/2, SWARM_SIZE)
-            weighting = stats.norm.pdf(offset, loc=distance, scale=error/2)
+            if WEIGHT_MOVEMENT:
+                weighting = stats.norm.pdf(offset, loc=distance, scale=error/2)
+            else:
+                weighting = 1
             distance = offset
         else:
             weighting = 1
