@@ -37,5 +37,6 @@ class Encoder():
         
 
 if __name__=="__main__":
+    # noinspection PyTypeChecker
     enc = Encoder(print, lambda: print("Button"))
     input("press Enter to finish")

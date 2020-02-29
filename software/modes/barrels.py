@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 import numpy as np
 import pygame
-import asyncio
-
 import pyvisgraph as vg
+import shapely.affinity as affinity
 import shapely.geometry as geom
 import shapely.ops as ops
-import shapely.affinity as affinity
 
-from compute import vision
 from util import get_coeffs, spawn
+
 
 def get_visgraph(points_list):
     graph = vg.VisGraph()

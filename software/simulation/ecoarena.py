@@ -25,6 +25,7 @@ class Target:
         self.assembly = vtk.vtkAssembly()
         for d in dims:
             cube = vtk.vtkCubeSource()
+            # noinspection PyArgumentList
             cube.SetBounds(d)
             actor = make_actor(cube)
             actor.GetProperty().SetColor(self.colour/255)  

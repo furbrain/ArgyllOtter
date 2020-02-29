@@ -11,6 +11,8 @@ os.environ['SDL_VIDEO_WINDOW_POS'] = "640,0"
 from .util import make_actor
 from .shetty import Shetty
 
+
+# noinspection PyArgumentList
 class Walls:
     def __init__(self, a, b):
         self.a = a

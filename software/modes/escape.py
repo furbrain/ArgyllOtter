@@ -80,6 +80,7 @@ class Walk(mode.Mode):
                 if wall < 3000:
                     break
                 self.drive.stop()
+            # noinspection PyUnboundLocalVariable,PyUnboundLocalVariable
             if (wall - cur_pos) < 400:
                 #shit we're too close.
                 #stop and spin and try again...

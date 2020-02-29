@@ -122,7 +122,7 @@ class Drive:
                     slowed = True
             if abs(current_angle) > abs(angle):
                 logging.debug("Spin: Current angle %f: stopped" % current_angle)
-                break;
+                break
         self.stop() #this sometimes is not received, so repeat after a short interval
         if accurate:
             await asyncio.sleep(0.14)
@@ -145,9 +145,8 @@ class Drive:
             current_angle = self.shetty.direction - start_angle
             if abs(current_angle) > abs(angle):
                 logging.info("Fast_turn: Current angle %f: finished" % current_angle)
-                break;
-                    
-                    
+                break
+
     async def dance(self):
         # do a little dance
         self.drive(-800, 800)

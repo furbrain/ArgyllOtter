@@ -108,7 +108,8 @@ class Lens(mode.Mode):
 
             else:
                 self.display.draw_text("Bad")
-                    
+
+        # noinspection PyUnboundLocalVariable
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
         self.camera.lens.set_calibration(mtx, dist)
         self.camera.lens.save()

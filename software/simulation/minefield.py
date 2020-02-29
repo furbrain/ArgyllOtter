@@ -17,6 +17,7 @@ class Mine:
         self.make_shape()
         self.size = np.array((width, width))
         cube = vtk.vtkCubeSource()
+        # noinspection PyArgumentList
         cube.SetBounds((0,width,0,depth,0,width))
         self.actor = make_actor(cube)
         self.actor.GetProperty().SetColor(self.colour/255)  

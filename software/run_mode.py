@@ -27,7 +27,7 @@ parser.add_argument("mode", help="Mode to run", nargs='?', default="escape.Learn
 parser.add_argument("-s", "--simulation", help="Run in a simulation", nargs='?', const="simulation.Arena")
 args = parser.parse_args()
 
-mode = eval(args.mode)
+run_mode = eval(args.mode)
 print(args)
 loop = asyncio.get_event_loop()
 loop.set_debug(True)
@@ -48,10 +48,11 @@ m = Main(hardware)
 main_task = loop.create_task(m.run())
 
 if args.simulation:
+    # noinspection PyUnboundLocalVariable,PyUnboundLocalVariable
     arena.add_object(m)
 
 try:
-    loop.run_until_complete(go(m, main_task, mode, pygame_task))
+    loop.run_until_complete(go(m, main_task, run_mode, pygame_task))
 finally:
     m.hardware.drive.stop()
     

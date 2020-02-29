@@ -109,6 +109,7 @@ class Drive:
                 time.sleep(0.01)
                 continue
             return self.c2mm(*positions)
+        # noinspection PyUnboundLocalVariable
         raise DriveError("Couldn't get reasonable positions, latest readings are" + ', '.join(str(x) for x in positions))
 
     @logged    
@@ -192,7 +193,7 @@ class Drive:
                     slowed = True
             if abs(current_angle) > (abs(angle) - k*v*v): #kvv correction helps us stop on target
                 logging.debug("Spin: Current angle %f: stopped" % current_angle)
-                break;
+                break
         self.stop() #this sometimes is not received, so repeat after a short interval
         await asyncio.sleep(0.01)
         self.stop()
@@ -215,8 +216,8 @@ class Drive:
             current_angle = self.orientation.get_total_rotation()
             if abs(current_angle) > abs(angle):
                 logging.info("Fast_turn: Current angle %f: finished" % current_angle)
-                break;
-                    
+                break
+
     async def dance(self):
         # do a little dance
         self.drive(-800, 800)

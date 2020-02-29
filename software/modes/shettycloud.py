@@ -259,8 +259,8 @@ if __name__=="__main__":
     s.move(100)
     s.turn(90)
     
-    s.observation(0.0, np.array((1100,2200)))
-    s.observation(90.0, np.array((1800,500)))
+    s.observation(0.0, np.array((1100,2200)), None)
+    s.observation(90.0, np.array((1800,500)), None)
     s.turn(10)
     print(np.average(s.swarm.xy, axis=0))
     print(np.average(s.swarm.xy, weights=s.swarm.weight, axis=0))

@@ -103,6 +103,7 @@ class Shetty:
         corners = self.get_corners()
         if self.laser:
             laser_line = self.get_laser_line(arena)
+            # noinspection PyTypeChecker
             coords = np.array(laser_line)
             pygame.draw.line(arena.screen, (255,0,0), coords[0] * arena.SCALE, coords[1] * arena.SCALE)
         pygame.draw.polygon(arena.screen, self.colour, corners * arena.SCALE)
@@ -121,6 +122,7 @@ if __name__=="__main__":
     for i in range(5):
         s.update()
         print(s)
+        # noinspection PyTypeChecker
         s.draw(None)
         time.sleep(0.1)
     s.stop()

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-from picamera.array import PiRGBArray
-from picamera import PiCamera
+import asyncio
+
 import cv2
 import numpy as np
 import scipy.optimize
-import asyncio
-import time
+from picamera import PiCamera
+from picamera.array import PiRGBArray
 
 import settings
 
@@ -114,4 +114,3 @@ if __name__=="__main__":
     c = Camera()
     #calibrate()        
     #process()
-    c.get_pose()
