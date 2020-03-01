@@ -85,10 +85,10 @@ class Ball:
             found = self.barrel_map.known(b)
             if found:
                 known_barrels.append(found)
-                # if self.track_barrels:
+                if self.track_barrels:
                 # print(b.colour)
-                # angle = b.get_relative_bearing(self.shetty.pos, self.shetty.azimuth)
-                # self.shetty.observed(angle, found.pos, np.hypot(*(self.shetty.pos-b.pos)))
+                    angle = b.get_relative_bearing(self.shetty.pos, self.shetty.azimuth)
+                    self.shetty.observed(angle, found.pos, b.get_distance(self.shetty.pos)))
             else:
                 unknown_barrels.append(b)
         return known_barrels, unknown_barrels
