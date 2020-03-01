@@ -14,7 +14,7 @@ MIN_TURN_SPEED = 150
 DRIVE_SPEED = 800
 
 
-##FIXME
+# FIXME
 # so there are two problems
 # one is we get lost and don't correctly navigate to the final zones
 # could we put a higher laser range finder to measure distance accurately to end zones?
@@ -186,7 +186,7 @@ class EcoDisaster(mode.Mode):
                 on_target, target = await self.fine_tune_grab(barrel)
                 if on_target:
                     distance = target.get_distance(self.shetty.pos)
-                    if distance < barrel.get_distance(self.shetty.pos) + expected_distance:  ### looking good
+                    if distance < barrel.get_distance(self.shetty.pos) + expected_distance:  # looking good
                         break
                     else:
                         print("bad distance: ", distance, expected_distance)

@@ -13,6 +13,14 @@ class Mode:
 
     def __init__(self, joystick, hardware):
         self.joystick = joystick
+        self.drive = None
+        self.display = None
+        self.camera = None
+        self.pixels = None
+        self.grabber = None
+        self.shooter = None
+        self.stabber = None
+        self.laser = None
         for item in self.HARDWARE:
             if getattr(hardware, item) is None:
                 raise HardwareNotFoundError(item)
