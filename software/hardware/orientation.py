@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import math
 import struct
+import time
 
 import numpy as np
 import smbus

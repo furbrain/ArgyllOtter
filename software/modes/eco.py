@@ -176,7 +176,7 @@ class EcoDisaster(mode.Mode):
         distance = target.get_distance(self.shetty.pos)
         print("Distance to barrel: %d" % distance)
         if distance < 600:
-            distance = await self.get_distance()  # get accurate laser distance
+            #distance = await self.get_distance()  # get accurate laser distance
             await self.shetty.move(distance - 50, speed=400)
         else:
             await self.shetty.move(distance - 300)
@@ -215,10 +215,12 @@ class EcoDisaster(mode.Mode):
         if not await self.retrieve_barrel(barrel):
             return False
         if barrel.colour == "green":
-            destination = (450 + self.green_count * 100, 2100)
+            destination = (700, 2100)
+            #destination = (450 + self.green_count * 100, 2100)
             self.green_count += 1
         else:
-            destination = (1750 - self.red_count * 100, 2100)
+            destination = (1500, 2100)
+            #destination = (1750 - self.red_count * 100, 2100)
             self.red_count += 1
         self.route = await self.barrel_map.calculate_route(self.shetty.pos, destination)
         await self.follow_route(shorten=50)
