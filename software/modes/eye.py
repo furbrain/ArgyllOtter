@@ -136,6 +136,13 @@ class Ball:
         if nearest:
             return nearest.get_relative_bearing(self.shetty.pos, self.shetty.azimuth), nearest
         else:
+            print("lost a barrel")
+            print("expected azimuth and distance: ", target.get_relative_bearing(self.shetty.pos, self.shetty.azimuth),
+                  target.get_distance(self.shetty.pos))
+            print("available barrels: ")
+            for b in barrels:
+                print(b.get_relative_bearing(self.shetty.pos, self.shetty.azimuth), b.get_distance(self.shetty.pos))
+
             return None, None
 
     async def just_looking(self):

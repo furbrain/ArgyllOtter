@@ -14,6 +14,16 @@ MIN_TURN_SPEED = 150
 DRIVE_SPEED = 800
 
 
+##FIXME
+# so there are two problems
+# one is we get lost and don't correctly navigate to the final zones
+# could we put a higher laser range finder to measure distance accurately to end zones?
+# and focus in on end zones during final part of route finding...
+# note we aren't using the lower range finder at all now...
+
+# second is we seem to lose green barrels, even when pointing directly at them?
+# let's check the range and relative azimuths of what we get out
+
 def draw_cross(surface, colour, pos, size, width=1):
     x = pos[0]
     y = pos[1]
