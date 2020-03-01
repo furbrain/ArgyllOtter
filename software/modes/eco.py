@@ -250,14 +250,16 @@ class EcoDisaster(mode.Mode):
 
         while True:
             # if we think we've finished, or we've got four barrels
-            if self.barrel_map.empty() or i % 4 == 0:
+            if self.barrel_map.empty() or i >= 4:
                 await self.create_map(90, 270)
                 if self.barrel_map.empty():
                     break
+                i = 0
             target = self.barrel_map.get_nearest(self.shetty.pos)
             if not await self.process_barrel(target):
                 self.barrel_map.clear()
                 await self.create_map(90, 270)
+                i = 0
             i += 1
         self.route = [self.shetty.pos, [1100, 1000]]
         await self.follow_route(shorten=0)
