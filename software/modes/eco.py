@@ -53,11 +53,13 @@ class EcoDisaster(mode.Mode):
 
     def update_pixels(self):
         self.pixels.clear()
-        for i in range(self.barrel_map.count("red")):
-            self.pixels.setPixelColorRGB(i, 80, 0, 0)
-        for i in range(self.barrel_map.count("green")):
-            self.pixels.setPixelColorRGB(11 - i, 0, 80, 0)
-        self.pixels.show()
+        #for i in range(self.barrel_map.count("red")):
+        #    self.pixels.setPixelColorRGB(i, 80, 0, 0)
+        #for i in range(self.barrel_map.count("green")):
+        #    self.pixels.setPixelColorRGB(11 - i, 0, 80, 0)
+        #self.pixels.show()
+        #for c in "red", "green":
+        #    print(c, self.barrel_map.count(c))
 
     async def get_distance(self):
         for i in range(3):

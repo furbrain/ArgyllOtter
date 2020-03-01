@@ -54,11 +54,11 @@ class Ball:
             x_max = max(c[:, :, 0])[0]
             if x_max - x_min > 30:  # make sure is a decent sized patch...
                 if x_min > 2:
-                    print(colour)
+                    #print(colour)
                     angle = self.camera.pose.get_bearing(x_min)
                     self.shetty.observed(angle, ZONES[colour][0])
                 if x_max < 478:
-                    print(colour)
+                    #print(colour)
                     angle = self.camera.pose.get_bearing(x_max)
                     self.shetty.observed(angle, ZONES[colour][1])
 
@@ -133,8 +133,8 @@ class Ball:
         barrels = self.find_barrels(reds, greens, ignore_edges=False)
         # self.classify_barrels(barrels)
         nearest = target.nearest(barrels)
-        print("target", target)
-        print("grab list", barrels)
+        #print("target", target)
+        #print("grab list", barrels)
         if nearest:
             return nearest.get_relative_bearing(self.shetty.pos, self.shetty.azimuth), nearest
         else:
