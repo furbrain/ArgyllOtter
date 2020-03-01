@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import time
 
 import cv2
 import numpy as np
@@ -22,6 +23,7 @@ class Ball:
         self.shetty = shetty
         self.barrel_map = barrel_map
         self.track_barrels = False
+        self.image = None
 
     def find_barrels_from_contour(self, contours, colour, ignore_edges=True):
         results = []
@@ -61,9 +63,9 @@ class Ball:
                     self.shetty.observed(angle, ZONES[colour][1])
 
     async def look(self):
-        image = self.camera.get_image()
-        high_image = image[235:240, :]  # only look at middle bit for yellow and blue
-        barrel_image = image[240:, :]
+        self.image = self.camera.get_image()
+        high_image = self.image[235:240, :]  # only look at middle bit for yellow and blue
+        barrel_image = self.image[240:, :]
         tasks = [spawn(vision.find_all_contours, barrel_image, col) for col in (self.colour.red, self.colour.green)]
         tasks += [spawn(vision.find_all_contours, high_image, col) for col in (self.colour.yellow, self.colour.blue)]
         reds, greens, yellows, blues = await asyncio.gather(*tasks)
@@ -142,7 +144,10 @@ class Ball:
             print("available barrels: ")
             for b in barrels:
                 print(b.get_relative_bearing(self.shetty.pos, self.shetty.azimuth), b.get_distance(self.shetty.pos))
-
+            tm = time.time()
+            filename = str(tm) + ".jpg"
+            print("saving image as:", filename)
+            cv2.imwrite(filename, self.image)
             return None, None
 
     async def just_looking(self):
