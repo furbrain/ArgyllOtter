@@ -46,7 +46,7 @@ class Main:
                 ("Minesweeper", None),
                 ("Eco-disaster", [
                     ("Test", eco.Test),
-                    ("Main", eco.Process),
+                    ("Main", eco.EcoDisaster),
                 ]),
             ]),
             ("Calibrate", [

@@ -30,7 +30,7 @@ def angle_over(target, angle):
     return False
 
 
-class Process(mode.Mode):
+class EcoDisaster(mode.Mode):
     HARDWARE = ('drive', 'camera', 'laser', 'grabber', 'display', 'stabber', 'pixels')
 
     def on_start(self):
@@ -250,7 +250,7 @@ class Process(mode.Mode):
         await self.drive.dance()
 
 
-class Test(Process):
+class Test(EcoDisaster):
 
     async def run(self):
         await self.create_map(270, 90, thorough=True)
