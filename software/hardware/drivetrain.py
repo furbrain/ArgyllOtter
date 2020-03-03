@@ -190,7 +190,7 @@ class Drive:
             k = self.cal.spin_k
         self.drive(left, right, soft_start=soft_start, reset_position=reset_position)
         while True:
-            await asyncio.sleep(0.007)
+            await asyncio.sleep(0.01)
             current_angle, v = self.orientation.get_total_rotation()
             if not slowed:
                 if abs(current_angle - angle) < 30:
@@ -205,8 +205,8 @@ class Drive:
         self.stop()
         if True:
             for i in range(20):
+                await asyncio.sleep(0.01)
                 current_angle, _ = self.orientation.get_total_rotation()
-                await asyncio.sleep(0.007)
         return current_angle
 
     @logged
