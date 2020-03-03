@@ -109,7 +109,8 @@ class Drive:
             data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x10, 0x10)
             positions = struct.unpack("4i", bytes(data))
             if any(abs(x) > 10000 for x in positions):
-                time.sleep(0.01)
+                print("bad position, trying again")
+                time.sleep(0.02)
                 continue
             return self.c2mm(*positions)
         # noinspection PyUnboundLocalVariable
@@ -149,7 +150,7 @@ class Drive:
                 time.sleep(0.01)
                 continue
             return powers
-        raise DriveError("Couldn't get reasonable powers, latest readings are" + ', '.join(str(x) for x in positions))
+        raise DriveError("Couldn't get reasonable powers, latest readings are" + ', '.join(str(x) for x in powers))
 
     @logged
     def get_currents(self):
