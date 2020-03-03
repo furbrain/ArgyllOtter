@@ -88,7 +88,7 @@ class Ball:
                 if self.track_barrels:
                 # print(b.colour)
                     angle = b.get_relative_bearing(self.shetty.pos, self.shetty.azimuth)
-                    self.shetty.observed(angle, found.pos, b.get_distance(self.shetty.pos)))
+                    self.shetty.observed(angle, found.pos, b.get_distance(self.shetty.pos))
             else:
                 unknown_barrels.append(b)
         return known_barrels, unknown_barrels

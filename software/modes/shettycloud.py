@@ -11,8 +11,8 @@ from util import get_coeffs
 START_POS_ERROR = 10
 START_AZ_ERROR = 5
 SWARM_SIZE = 200
-TURN_ERROR = 2
-DISTANCE_ERROR = 10
+TURN_ERROR = 6
+DISTANCE_ERROR = 100
 AXIS_OFFSET = -150
 AXIS_BEARING = 0
 DEBUG_AXIS_BEARING = 0
@@ -174,6 +174,8 @@ class ShettyCloud:
 
     def observation(self, angle, pos, distance):
         """the camera has seen feature at known pos, with given angle"""
+        print("observation: ", self.get_pos(), angle, pos)
+        print("current:", self.get_azimuth())
         bearings = self.get_bearing_to_pos(pos)
         error = bearings - angle
         # convert to  interval of -180 -> +180
@@ -187,6 +189,7 @@ class ShettyCloud:
             self.swarm.weight *= weighting
         self.normalize_weights()
         self.dirty = True
+        print("after: ", self.get_azimuth())
 
     def turn(self, angle, error=TURN_ERROR):
         self.resample()

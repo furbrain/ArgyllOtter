@@ -105,7 +105,7 @@ class EcoDisaster(mode.Mode):
 
     async def pinpoint_barrel(self, barrel):
         angle, _ = self.shetty.get_azimuth_and_distance_to(barrel.pos)
-        async with self.stabber.stab():
+        async with await self.stabber.stab():
             await self.shetty.turn_to_azimuth(angle)
             found = await self.fine_tune_laser(barrel)
             if found:
@@ -123,7 +123,7 @@ class EcoDisaster(mode.Mode):
     async def create_map(self, start_angle, finish_angle):
         self.display.draw_text("Mapping")
         # find most leftward barrels
-        async with self.stabber.stab():
+        async with await self.stabber.stab():
             await self.shetty.turn_to_azimuth(start_angle)
             while not angle_over(finish_angle, self.shetty.azimuth):
                 known, unknown = await self.eyeball.find_and_classify_barrels()
@@ -142,7 +142,7 @@ class EcoDisaster(mode.Mode):
             await self.goto_pos((waypoint - self.shetty.pos) / 2 + self.shetty.pos)
             await self.goto_pos(waypoint)
         else:
-            async with self.stabber.stab():
+            async with await self.stabber.stab():
                 await self.shetty.turn_to_azimuth(bearing)
             await self.eyeball.just_looking()
             await self.shetty.move(distance)
@@ -163,7 +163,7 @@ class EcoDisaster(mode.Mode):
         self.display.draw_text("Hunting")
         self.grabber.open()
         azimuth, _ = self.shetty.get_azimuth_and_distance_to(barrel.pos)
-        async with self.stabber.stab():
+        async with await self.stabber.stab():
             await self.shetty.turn_to_azimuth(azimuth)
         await self.eyeball.just_looking()
         on_target, target = await self.fine_tune_grab(barrel)
@@ -177,7 +177,7 @@ class EcoDisaster(mode.Mode):
         print("Distance to barrel: %d" % distance)
         if distance < 600:
             #distance = await self.get_distance()  # get accurate laser distance
-            await self.shetty.move(distance - 50, speed=400)
+            await self.shetty.move(distance - 20, speed=400)
         else:
             await self.shetty.move(distance - 300)
             expected_distance = 100
@@ -198,7 +198,7 @@ class EcoDisaster(mode.Mode):
                     # can't find it - has it rolled away?
                     self.barrel_map.remove(barrel)
                     return False
-            await self.shetty.move(distance - 50, speed=400)
+            await self.shetty.move(distance - 20, speed=400)
         self.grabber.close()
         await asyncio.sleep(0.1)
         self.barrel_map.remove(barrel)

@@ -59,7 +59,7 @@ class CameraPosition(mode.Interactive):
             dist = await self.laser.get_distance(self.laser.MEDIUM)
             degrees_subtended = math.atan2(OBJECT_WIDTH, dist) * 180 / math.pi
             pose = self.camera.pose
-            pose.degrees_per_pixel = degrees_subtended / (x_max - x_min)
+            #pose.degrees_per_pixel = degrees_subtended / (x_max - x_min)
             pose.zero_degree_pixel = (x_min + x_max) / 2
             pose.calibrated = True
             pose.save()
