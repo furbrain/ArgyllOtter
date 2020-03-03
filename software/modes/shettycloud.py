@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+import asyncio
+
 import numpy as np
 import pygame
 import scipy.stats as stats
@@ -59,6 +61,7 @@ class Shetty:
     async def turn(self, angle, speed=TURN_SPEED):
         true_angle = await self.drive.spin(angle, speed, accurate=True)
         self.correct_position(true_angle)
+        await asyncio.sleep(0.1)
 
     async def turn_to_azimuth(self, azimuth):
         azimuth %= 360
@@ -87,6 +90,7 @@ class Shetty:
     async def move(self, distance, speed=DRIVE_SPEED):
         distance = await self.drive.a_goto(speed, distance, accurate=True)
         self.cloud.move(distance)
+        await asyncio.sleep(0.1)
 
     def get_azimuth_and_distance_to(self, pos):
         if self.debug:
