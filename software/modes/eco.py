@@ -76,21 +76,20 @@ class EcoDisaster(mode.Mode):
     @logged
     async def fine_tune_laser(self, barrel):
         speed = TURN_SPEED / 2
-        with self.stabber:
+        async with self.stabber:
             while True:
                 adjustment = await self.eyeball.line_up_for_laser(barrel)
                 if adjustment is None:
                     return False
                 if abs(adjustment) < 1:
                     return True
-                self.stabber.stab()
-                await asyncio.sleep(0.1)
+                await self.stabber.stab()
                 await self.shetty.turn(adjustment, speed=speed)
                 speed = max(speed / 2, MIN_TURN_SPEED)
 
     async def fine_tune_grab(self, barrel):
         speed = TURN_SPEED / 2
-        with self.stabber:
+        async with self.stabber:
             for i in range(5):
                 adjustment, target = await self.eyeball.line_up_for_grab(barrel)
                 if adjustment is None:
@@ -99,15 +98,14 @@ class EcoDisaster(mode.Mode):
                     return True, target
                 if target.get_distance(self.shetty.pos) < 200:
                     return True, target
-                self.stabber.stab()
-                await asyncio.sleep(0.1)
+                await self.stabber.stab()
                 await self.shetty.turn(adjustment, speed=speed)
                 speed = max(speed / 2, MIN_TURN_SPEED)
         return True, target
 
     async def pinpoint_barrel(self, barrel):
         angle, _ = self.shetty.get_azimuth_and_distance_to(barrel.pos)
-        with self.stabber.stab():
+        async with self.stabber.stab():
             await self.shetty.turn_to_azimuth(angle)
             found = await self.fine_tune_laser(barrel)
             if found:
@@ -125,7 +123,7 @@ class EcoDisaster(mode.Mode):
     async def create_map(self, start_angle, finish_angle):
         self.display.draw_text("Mapping")
         # find most leftward barrels
-        with self.stabber.stab():
+        async with self.stabber.stab():
             await self.shetty.turn_to_azimuth(start_angle)
             while not angle_over(finish_angle, self.shetty.azimuth):
                 known, unknown = await self.eyeball.find_and_classify_barrels()
@@ -144,7 +142,7 @@ class EcoDisaster(mode.Mode):
             await self.goto_pos((waypoint - self.shetty.pos) / 2 + self.shetty.pos)
             await self.goto_pos(waypoint)
         else:
-            with self.stabber.stab():
+            async with self.stabber.stab():
                 await self.shetty.turn_to_azimuth(bearing)
             await self.eyeball.just_looking()
             await self.shetty.move(distance)
@@ -165,7 +163,7 @@ class EcoDisaster(mode.Mode):
         self.display.draw_text("Hunting")
         self.grabber.open()
         azimuth, _ = self.shetty.get_azimuth_and_distance_to(barrel.pos)
-        with self.stabber.stab():
+        async with self.stabber.stab():
             await self.shetty.turn_to_azimuth(azimuth)
         await self.eyeball.just_looking()
         on_target, target = await self.fine_tune_grab(barrel)
@@ -202,6 +200,7 @@ class EcoDisaster(mode.Mode):
                     return False
             await self.shetty.move(distance - 50, speed=400)
         self.grabber.close()
+        await asyncio.sleep(0.1)
         self.barrel_map.remove(barrel)
         return True
 

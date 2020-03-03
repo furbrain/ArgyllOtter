@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 import hardware.servo
@@ -17,16 +18,18 @@ class Stabber:
         self.positions = StabberPosition()
         self.active = False
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.active:
             self.release()
+        await asyncio.sleep(0.1)
 
-    def stab(self):
+    async def stab(self):
         self.servo.set_pos(self.positions.stab)
         self.active = True
+        await asyncio.sleep(0.1)
         return self
 
     def release(self):

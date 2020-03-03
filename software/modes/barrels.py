@@ -144,3 +144,4 @@ class BarrelMap:
             b = affinity.scale(blockage, xfact=arena.SCALE, yfact=arena.SCALE, origin=(0, 0))
             b = affinity.scale(b, xfact=1, yfact=-1, origin=(0, h / 2))
             pygame.draw.lines(arena.screen, (128, 128, 128), True, b.exterior.coords)
+
