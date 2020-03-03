@@ -5,7 +5,7 @@ import logging
 
 import numpy as np
 
-pool = concurrent.futures.ProcessPoolExecutor()
+pool = concurrent.futures.ProcessPoolExecutor(max_workers=8)
 
 
 def logged(func):

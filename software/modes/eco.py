@@ -2,6 +2,7 @@ import asyncio
 
 import numpy as np
 import pygame
+import time
 
 from modes import mode
 from util import logged
@@ -268,8 +269,11 @@ class EcoDisaster(mode.Mode):
 class Test(EcoDisaster):
 
     async def run(self):
-        await self.create_map(270, 90, thorough=True)
-        target = self.barrel_map.get_nearest(self.shetty.pos)
-        colour = await self.retrieve_barrel(target)
-        print("Got a %s barrel" % colour)
-        self.grabber.off()
+        a = time.time()
+        await self.eyeball.just_looking()
+        await self.eyeball.just_looking()
+        await self.eyeball.just_looking()
+        await self.eyeball.just_looking()
+        await self.eyeball.just_looking()
+        b = time.time()
+        print("time:", b-a)

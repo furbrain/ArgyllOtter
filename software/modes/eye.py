@@ -63,12 +63,11 @@ class Ball:
                     self.shetty.observed(angle, ZONES[colour][1])
 
     async def look(self):
-        self.image = self.camera.get_image()
+        self.image = self.camera.get_image(fast=True)
         high_image = self.image[235:240, :]  # only look at middle bit for yellow and blue
         barrel_image = self.image[240:, :]
-        tasks = [spawn(vision.find_all_contours, barrel_image, col) for col in (self.colour.red, self.colour.green)]
-        tasks += [spawn(vision.find_all_contours, high_image, col) for col in (self.colour.yellow, self.colour.blue)]
-        reds, greens, yellows, blues = await asyncio.gather(*tasks)
+        reds, greens = [vision.find_all_contours(barrel_image, col) for col in (self.colour.red, self.colour.green)]
+        yellows, blues = [vision.find_all_contours(high_image, col) for col in (self.colour.yellow, self.colour.blue)]
         self.find_zones(yellows, "yellow")
         self.find_zones(blues, "blue")
         return reds, greens
