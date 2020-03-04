@@ -52,6 +52,7 @@ class Ball:
             c = max(contours, key=cv2.contourArea)
             x_min = min(c[:, :, 0])[0]
             x_max = max(c[:, :, 0])[0]
+            print(c[0,0,0])
             if x_max - x_min > 30:  # make sure is a decent sized patch...
                 if x_min > 2:
                     #print(colour)
@@ -63,7 +64,7 @@ class Ball:
                     self.shetty.observed(angle, ZONES[colour][1])
 
     async def look(self):
-        self.image = self.camera.get_image(fast=True)
+        self.image = await self.camera.get_async_image(latency=0)
         high_image = self.image[235:240, :]  # only look at middle bit for yellow and blue
         barrel_image = self.image[240:, :]
         reds, greens = [vision.find_all_contours(barrel_image, col) for col in (self.colour.red, self.colour.green)]

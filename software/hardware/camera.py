@@ -7,12 +7,43 @@ import numpy as np
 import scipy.optimize
 from picamera import PiCamera
 from picamera.array import PiRGBArray
-
+import threading
+import time
 import settings
+
 
 ISO = 800
 RESOLUTION = (640, 480)
+raw_capture = None
 
+class MultiLock:
+    """This class allows one to use a threading lock in async settings"""
+    def __init__(self, *args, **kwargs):
+        self._lock = threading.Lock(*args, **kwargs)
+
+    def acquire(self, *args, **kwargs):
+        return self._lock.acquire(*args, **kwargs)
+
+    def release(self, *args, **kwargs):
+        return self._lock.release(*args, **kwargs)
+
+    def locked(self):
+        return self._lock.locked()
+
+
+    def __enter__(self):
+        return self._lock.__enter__()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self._lock.__exit__(exc_type, exc_val, exc_tb)
+
+    async def __aenter__(self):
+        while not self._lock.acquire(blocking=False):
+            await asyncio.sleep(0.0001)
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return self._lock.__exit__(exc_type, exc_val, exc_tb)
 
 class CameraPose(settings.Settings):
     def default(self):
@@ -59,9 +90,28 @@ class CameraLens(settings.Settings):
         dst = dst[y:y + h, x:x + w]
         return dst
 
+class Recorder(threading.Thread):
+    def __init__(self, camera):
+        super().__init__()
+        self.camera = camera
+        self.lock = MultiLock()
+        self.rawCapture = PiRGBArray(self.camera)
+        self.terminate = False
+        self.timestamp = 0
+        self.image = None
+
+    def run(self):
+        while not self.terminate:
+            self.rawCapture.truncate(0)
+            self.camera.capture(self.rawCapture, format="bgr", use_video_port=True)
+            with self.lock:
+                self.image = self.rawCapture.array.copy()
+                self.timestamp = time.time()
+
 
 class Camera:
     def __init__(self, iso=ISO):
+        global raw_capture
         self.camera = PiCamera(framerate=20)
         self.camera.hflip = True
         self.camera.vflip = True
@@ -70,9 +120,11 @@ class Camera:
         self.camera.awb_mode = "fluorescent"
         # self.camera.iso = 800
         self.iso = iso
-        self.rawCapture = PiRGBArray(self.camera)
         self.pose = CameraPose()
         self.lens = CameraLens()
+        self.recorder = Recorder(self.camera)
+        self.recorder.start()
+
 
     def set_exposure(self, shutter_speed, awb_gains):
         self.camera.exposure_mode = 'off'
@@ -88,6 +140,14 @@ class Camera:
         await asyncio.sleep(2)
         # Now return the values
         return (self.camera.exposure_speed, self.camera.awb_gains)
+
+    async def get_async_image(self, latency=0):
+        start = time.time()
+        while True:
+            async with self.recorder.lock:
+                if self.recorder.timestamp > start - latency:
+                    return self.recorder.image.copy()
+            await asyncio.sleep(0.001)
 
     def get_raw_image(self, fast=False):
         self.rawCapture.truncate(0)

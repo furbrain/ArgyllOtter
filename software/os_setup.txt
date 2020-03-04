@@ -5,6 +5,6 @@ with neopixels.
 Set to 1us output resolution, set output 0 only
 Need to install jgarffs neopixel python lib - which needs to be installed from source as seems to be using an old version of main lib
 Install simple-pid python thingy - needs to be installed from github as not on raspbian currently (not currently used...)
-Need opencv, imutils, shapely, pyvisgraph, tqdm from pip3
+Need opencv, imutils, shapely, pyvisgraph, tqdm, sharedarray from pip3
 sudo apt install libgeos-dev
 

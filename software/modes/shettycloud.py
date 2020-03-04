@@ -174,8 +174,6 @@ class ShettyCloud:
 
     def observation(self, angle, pos, distance):
         """the camera has seen feature at known pos, with given angle"""
-        print("observation: ", self.get_pos(), angle, pos)
-        print("current:", self.get_azimuth())
         bearings = self.get_bearing_to_pos(pos)
         error = bearings - angle
         # convert to  interval of -180 -> +180
@@ -189,7 +187,6 @@ class ShettyCloud:
             self.swarm.weight *= weighting
         self.normalize_weights()
         self.dirty = True
-        print("after: ", self.get_azimuth())
 
     def turn(self, angle, error=TURN_ERROR):
         self.resample()
