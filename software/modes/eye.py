@@ -40,7 +40,7 @@ class Ball:
             size = x_max - x_min
             angle = self.camera.pose.get_bearing(centre)
             distance = BARREL_WIDTH / np.tan(np.deg2rad(self.camera.pose.get_angle_width(size)))
-            b = Barrel.fromCamera(self.shetty.pos, self.shetty.azimuth, angle, distance, colour)
+            b = Barrel.from_camera(self.shetty.pos, self.shetty.azimuth, angle, distance, colour)
             results.append(b)
         return results
 
@@ -149,7 +149,7 @@ class Ball:
             return None, None
 
     async def just_looking(self):
-        """ driving around having a looky-see, lets correct...."""
+        """ driving around having a look-see, lets correct...."""
         reds, greens = await self.look()
         barrels = self.find_barrels(reds, greens)
         self.classify_barrels(barrels)

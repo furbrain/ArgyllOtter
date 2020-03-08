@@ -81,20 +81,20 @@ class Main:
         while not self.finished:
             await asyncio.sleep(0.1)
 
-    async def enter_mode(self, mode):
+    # noinspection PyBroadException
+    async def enter_mode(self, modus):
         if self.mode:
             self.mode.cancel()
         self.clear_displays()
         if self.hardware.display:
-            self.hardware.display.draw_text(mode.__name__)
-        # noinspection PyBroadException
+            self.hardware.display.draw_text(modus.__name__)
         try:
-            self.mode = mode(self.joystick, self.hardware)
+            self.mode = modus(self.joystick, self.hardware)
             await self.mode.task
         except asyncio.CancelledError:
             pass
-        except:
-            print("%s raised exception!" % mode.__name__)
+        except Exception:
+            print("%s raised exception!" % modus.__name__)
             traceback.print_exc()
         finally:
             await self.mode.finish()
@@ -102,7 +102,8 @@ class Main:
         self.menu.draw()
 
     def handle_menu_select_item(self, item):
-        if item is None: return
+        if item is None:
+            return
         if isinstance(item, type) and issubclass(item, mode.Mode):
             start_task(self.enter_mode(item))
         else:
@@ -148,6 +149,7 @@ class Main:
         if self.mode:
             self.mode.draw(arena)
 
+    # noinspection PyMethodMayBeStatic
     def get_shape(self):
         return None
 
@@ -164,5 +166,5 @@ class Main:
 # get up and running...
 if __name__ == "__main__":
     m = Main()
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(m.run())
+    lp = asyncio.get_event_loop()
+    lp.run_until_complete(m.run())

@@ -44,6 +44,6 @@ if __name__ == "__main__":
     import time
 
     p = MPU9250(address=0x69)
-    for x in range(100):
+    for i in range(100):
         time.sleep(0.5)
         print(p.get_angle())

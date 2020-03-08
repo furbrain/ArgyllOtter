@@ -5,8 +5,10 @@ import math
 import struct
 import time
 
+# noinspection PyUnresolvedReferences
 import gpiozero
 import numpy as np
+# noinspection PyUnresolvedReferences
 import smbus
 
 import settings
@@ -25,6 +27,7 @@ class DriveError(Exception):
     pass
 
 
+# noinspection PyAttributeOutsideInit,PyAttributeOutsideInit,PyAttributeOutsideInit
 class DriveCalibration(settings.Settings):
     def default(self):
         self.spin_k = 0
@@ -94,6 +97,7 @@ class Drive:
         if left is None:
             left = right
         args = self.mm2c(left, right, max_speed)
+        # noinspection SpellCheckingInspection
         command = struct.pack("<BBiih", cmd, flags, *args)
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
 
@@ -101,6 +105,7 @@ class Drive:
     def set_powers(self, fr, fl, rr, rl, soft_start=False, reset_position=False):
         args = fr, fl, rr, rl
         flags = self.get_flags(soft_start, reset_position)
+        # noinspection SpellCheckingInspection
         command = struct.pack("<BBhhhh", 4, flags, *args)
         self.bus.write_i2c_block_data(I2C_ADDRESS, 0x0, list(command))
 
@@ -144,6 +149,7 @@ class Drive:
 
     @logged
     def get_powers(self):
+        powers = [0, 0, 0, 0]
         for i in range(5):
             data = self.bus.read_i2c_block_data(I2C_ADDRESS, 0x20, 0x10)
             powers = struct.unpack("<8h", bytes(data))[4:]
@@ -178,17 +184,9 @@ class Drive:
         else:
             left = -max_speed
             slow_left = -slow_speed
-        if False:  ##FIXME was 'if accurate:'
-            right = 0
-            slow_right = 0
-            if angle > 0:
-                k = self.cal.forward_k
-            else:
-                k = self.cal.reverse_k
-        else:
-            right = -left
-            slow_right = -slow_left
-            k = self.cal.spin_k
+        right = -left
+        slow_right = -slow_left
+        k = self.cal.spin_k
         self.drive(left, right, soft_start=soft_start, reset_position=reset_position)
         while True:
             await asyncio.sleep(0.01)
@@ -204,7 +202,7 @@ class Drive:
         self.stop()  # this sometimes is not received, so repeat after a short interval
         await asyncio.sleep(0.01)
         self.stop()
-        if True:
+        if accurate:
             for i in range(20):
                 await asyncio.sleep(0.01)
                 current_angle, _ = self.orientation.get_total_rotation()
@@ -212,7 +210,6 @@ class Drive:
 
     @logged
     async def fast_turn(self, angle, max_speed, differential=0.333, soft_start=False, reset_position=True):
-        current_angle = 0
         self.orientation.start_rotation()
         if angle > 0:
             self.drive(max_speed, max_speed * differential, soft_start=soft_start, reset_position=reset_position)

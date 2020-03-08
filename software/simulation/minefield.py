@@ -10,6 +10,7 @@ from .shetty import Shetty
 from .util import make_actor
 
 
+# noinspection PyAttributeOutsideInit
 class Mine:
     def __init__(self):
         depth = 0.2
@@ -30,6 +31,7 @@ class Mine:
     def get_actor(self):
         return self.actor
 
+    # noinspection PyMethodMayBeStatic
     def get_shape(self):
         return None
 
@@ -63,9 +65,9 @@ class MineField(Arena):
         self.shetty = Shetty(pos=(800, 800), direction=45)
 
     def poll(self):
-        if (self.mine.on_target(self.shetty) and
-                self.shetty.speed == 0 and
-                self.shetty.angular_velocity == 0):
+        if (self.mine.on_target(self.shetty)
+                and self.shetty.speed == 0
+                and self.shetty.angular_velocity == 0):
             if not self.winning:
                 self.start_time = time.time()
                 self.winning = True

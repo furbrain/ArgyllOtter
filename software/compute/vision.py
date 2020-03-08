@@ -26,15 +26,15 @@ def find_colour(image, colour, smoothed=True):
 def find_all_contours(image, colour):
     mask = find_colour(image, colour)
     # get rid of random blobs
-    cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = imutils.grab_contours(cnts)
-    return cnts
+    contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours = imutils.grab_contours(contours)
+    return contours
 
 
 def find_biggest_contour(image, colour="red"):
-    cnts = find_all_contours(image, colour)
-    if len(cnts) > 0:
-        c = max(cnts, key=cv2.contourArea)
+    contours = find_all_contours(image, colour)
+    if len(contours) > 0:
+        c = max(contours, key=cv2.contourArea)
         return c
     else:
         return None

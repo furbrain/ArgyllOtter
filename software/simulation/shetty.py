@@ -67,12 +67,12 @@ class Shetty:
 
     def get_corners(self):
         s, c = self.get_coeffs()
-        R = np.array([[c, s], [-s, c]])
+        rot_matrix = np.array([[c, s], [-s, c]])
         corners = np.array([[-self.width, self.length],
                             [self.width, self.length],
                             [self.width, -self.length],
                             [-self.width, -self.length]]) / 2
-        corners = corners @ R.T
+        corners = corners @ rot_matrix.T
         corners += self.pos
         return corners
 
@@ -112,26 +112,26 @@ class Shetty:
 
 
 if __name__ == "__main__":
-    s = Shetty()
-    print(s)
-    s.move(10)
+    shetty = Shetty()
+    print(shetty)
+    shetty.move(10)
     for i in range(10):
-        s.update()
-        print(s)
+        shetty.update()
+        print(shetty)
         time.sleep(0.1)
-    s.stop()
-    s.spin(90)
+    shetty.stop()
+    shetty.spin(90)
     for i in range(5):
-        s.update()
-        print(s)
+        shetty.update()
+        print(shetty)
         # noinspection PyTypeChecker
-        s.draw(None)
+        shetty.draw(None)
         time.sleep(0.1)
-    s.stop()
-    print(s)
-    s.move(10)
+    shetty.stop()
+    print(shetty)
+    shetty.move(10)
     for i in range(10):
-        s.update()
-        print(s)
+        shetty.update()
+        print(shetty)
         time.sleep(0.1)
-    s.stop()
+    shetty.stop()

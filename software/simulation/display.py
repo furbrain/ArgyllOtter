@@ -1,3 +1,4 @@
+# noinspection PyMethodMayBeStatic,PyUnusedLocal
 class Display:
     def __init__(self):
         self.oled = None

@@ -1,6 +1,7 @@
 import modes
 
 
+# noinspection PyAttributeOutsideInit
 class StabberCal(modes.Interactive):
     HARDWARE = ('stabber', 'display')
 

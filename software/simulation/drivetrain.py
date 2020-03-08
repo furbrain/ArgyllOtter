@@ -11,6 +11,7 @@ class DriveError(Exception):
     pass
 
 
+# noinspection PyUnusedLocal
 class Drive:
     def __init__(self, shetty):
         self.shetty = shetty
@@ -107,14 +108,9 @@ class Drive:
         else:
             left = -max_speed
             slow_left = -slow_speed
-        if False:  # FIXME was "if accurate:" - may want to leave as is currently
-            right = 0
-            slow_right = 0
-        else:
-            right = -left
-            slow_right = -slow_left
+        right = -left
+        slow_right = -slow_left
 
-        current_angle = 0
         start_angle = self.shetty.direction
         self.drive(left, right, soft_start=soft_start, reset_position=reset_position)
         while True:

@@ -28,6 +28,6 @@ class Hardware:
         self.stabber = None
 
     @classmethod
-    def set_arena(cls, arena):
-        cls.arena = arena
-        cls.shetty = arena.get_shetty()
+    def set_arena(cls, area):
+        cls.arena = area
+        cls.shetty = area.get_shetty()

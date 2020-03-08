@@ -5,7 +5,7 @@ and then returns the barrel to the current aim angle
 
 Load state:
    Pump off 
-   Drop barrel to -15 degs
+   Drop barrel to -15 degrees
    Pump on
    if pressure increases above limit:
       pump off

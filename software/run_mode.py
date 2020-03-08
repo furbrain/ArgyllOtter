@@ -3,23 +3,25 @@ import argparse
 import asyncio
 import logging
 
-import modes
+# noinspection PyUnresolvedReferences
 import calibrate
+# noinspection PyUnresolvedReferences
+import modes
 from main import Main
 
 logging.basicConfig(filename='run_mode.log', level=logging.INFO)
 
 
-async def go(main, main_task, mode, pygame_task):
+async def go(m, task, mode, pg_task):
     await asyncio.sleep(0.1)
-    if pygame_task:
-        done, pending = await asyncio.wait((m.enter_mode(mode), pygame_task), return_when=asyncio.FIRST_COMPLETED)
+    if pg_task:
+        done, pending = await asyncio.wait((m.enter_mode(mode), pg_task), return_when=asyncio.FIRST_COMPLETED)
         for d in done:
             d.result()
     else:
         await m.enter_mode(mode)
     m.exit()
-    await main_task
+    await task
     print("Main has finished")
 
 
@@ -44,14 +46,14 @@ else:
     hardware = None
     pygame_task = None
 
-m = Main(hardware)
-main_task = loop.create_task(m.run())
+main = Main(hardware)
+main_task = loop.create_task(main.run())
 
 if args.simulation:
     # noinspection PyUnboundLocalVariable,PyUnboundLocalVariable
-    arena.add_object(m)
+    arena.add_object(main)
 
 try:
-    loop.run_until_complete(go(m, main_task, run_mode, pygame_task))
+    loop.run_until_complete(go(main, main_task, run_mode, pygame_task))
 finally:
-    m.hardware.drive.stop()
+    main.hardware.drive.stop()

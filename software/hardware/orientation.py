@@ -41,7 +41,7 @@ class Orientation:
     def get_rotation(self):
         data = self.bus.read_i2c_block_data(self.address, 0x43, 0x06)
         rots = struct.unpack(">3h", bytes(data))
-        return [(x * 1000 / 0x8000) for x in rots]
+        return np.array([(x * 1000 / 0x8000) for x in rots])
 
     def calibrate_gyro(self):
         results = []
@@ -68,6 +68,6 @@ if __name__ == "__main__":
     import time
 
     p = MPU9250(address=0x69)
-    for x in range(100):
+    for count in range(100):
         time.sleep(0.5)
         print(p.get_angle())

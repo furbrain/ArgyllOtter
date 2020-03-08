@@ -56,15 +56,15 @@ class CameraPosition(mode.Interactive):
         if contour is not None:
             x_min = min(contour[:, :, 0])[0]
             x_max = max(contour[:, :, 0])[0]
-            dist = await self.laser.get_distance(self.laser.MEDIUM)
             degrees_subtended = math.atan2(OBJECT_WIDTH, dist) * 180 / math.pi
+            print(dist, degrees_subtended)
             pose = self.camera.pose
             # pose.degrees_per_pixel = degrees_subtended / (x_max - x_min)
             pose.zero_degree_pixel = (x_min + x_max) / 2
             pose.calibrated = True
             pose.save()
         else:
-            self.display.draw_text("Nuffin")
+            self.display.draw_text("Not found")
 
 
 class Lens(mode.Mode):
@@ -75,12 +75,12 @@ class Lens(mode.Mode):
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
         # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-        objp = np.zeros((9 * 7, 3), np.float32)
-        objp[:, :2] = np.mgrid[0:9, 0:7].T.reshape(-1, 2)
+        object_points = np.zeros((9 * 7, 3), np.float32)
+        object_points[:, :2] = np.mgrid[0:9, 0:7].T.reshape(-1, 2)
 
         # Arrays to store object points and image points from all the images.
-        objpoints = []  # 3d point in real world space
-        imgpoints = []  # 2d points in image plane.
+        world_points = []  # 3d point in real world space
+        image_points = []  # 2d points in image plane.
 
         self.display.draw_text("Ready")
         await asyncio.sleep(1.5)
@@ -101,16 +101,16 @@ class Lens(mode.Mode):
             if ret:
                 good += 1
                 self.display.draw_text("%d/12" % good)
-                objpoints.append(objp)
+                world_points.append(object_points)
 
                 corners2 = cv2.cornerSubPix(gray, corners, (7, 7), (-1, -1), criteria)
-                imgpoints.append(corners2)
+                image_points.append(corners2)
 
             else:
                 self.display.draw_text("Bad")
 
         # noinspection PyUnboundLocalVariable
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+        _, mtx, dist, _, _ = cv2.calibrateCamera(world_points, image_points, gray.shape[::-1], None, None)
         self.camera.lens.set_calibration(mtx, dist)
         self.camera.lens.save()
         self.display.draw_text("Saved")

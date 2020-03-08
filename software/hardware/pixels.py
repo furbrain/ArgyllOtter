@@ -11,6 +11,7 @@ def clear_pixels(pixels):
     pixels.show()
 
 
+# noinspection PyPep8Naming
 def Pixels(num_pixels=12):
     strip = rpi_ws281x.PixelStrip(num_pixels, PIN, channel=1)
     strip.begin()

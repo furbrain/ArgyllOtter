@@ -6,6 +6,7 @@ from . import messages
 from . import mode
 
 
+# noinspection PyAttributeOutsideInit
 class Manual(mode.Mode):
     HARDWARE = ('drive',)
 

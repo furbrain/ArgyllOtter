@@ -9,6 +9,7 @@ else:
     SETTINGS_DIR = "/home/phil/shetty_settings/"
 
 
+# noinspection PyAttributeOutsideInit
 class Settings:
     def __init__(self):
         self.default()
@@ -38,6 +39,7 @@ class Settings:
 
 
 if __name__ == "__main__":
+    # noinspection PyAttributeOutsideInit,PyAttributeOutsideInit
     class TestSettings(Settings):
         def default(self):
             self.a = 1

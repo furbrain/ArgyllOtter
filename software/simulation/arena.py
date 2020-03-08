@@ -7,10 +7,10 @@ import pygame
 import shapely.geometry as geom
 import vtk
 
-os.environ['SDL_VIDEO_WINDOW_POS'] = "640,0"
-
-from .util import make_actor
 from .shetty import Shetty
+from .util import make_actor
+
+os.environ['SDL_VIDEO_WINDOW_POS'] = "640,0"
 
 
 # noinspection PyArgumentList
@@ -66,11 +66,11 @@ class Arena:
         self.objects = []
         self.ren = vtk.vtkRenderer()
         self.ren.SetBackground(0.5, 0.5, 0.5)
-        self.renwin = vtk.vtkRenderWindow()
-        self.renwin.AddRenderer(self.ren)
-        self.renwin.SetSize(640, 480)
+        self.render_window = vtk.vtkRenderWindow()
+        self.render_window.AddRenderer(self.ren)
+        self.render_window.SetSize(640, 480)
         self.image = vtk.vtkWindowToImageFilter()
-        self.image.SetInput(self.renwin)
+        self.image.SetInput(self.render_window)
         self.image.SetInputBufferTypeToRGBA()
         self.image.ReadFrontBufferOff()
         self.image.Update()
@@ -132,7 +132,7 @@ class Arena:
                 obj.draw(self)
             pygame.display.flip()
             self.ren.SetActiveCamera(self.camera)
-            self.renwin.Render()
+            self.render_window.Render()
             self.image.Modified()
             self.image.Update()
             self.poll()

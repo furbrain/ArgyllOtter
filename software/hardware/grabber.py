@@ -4,6 +4,7 @@ from util import logged
 from .servo import Servo
 
 
+# noinspection PyAttributeOutsideInit,PyAttributeOutsideInit,PyAttributeOutsideInit
 class GrabPositions(settings.Settings):
     def default(self):
         self.opened = 300

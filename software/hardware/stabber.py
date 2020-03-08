@@ -5,6 +5,7 @@ import hardware.servo
 import settings
 
 
+# noinspection PyAttributeOutsideInit,PyAttributeOutsideInit
 class StabberPosition(settings.Settings):
 
     def default(self):

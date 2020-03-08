@@ -38,6 +38,7 @@ class Laser:
     def off(self):
         self.shetty.laser = False
 
+    # noinspection PyUnusedLocal
     @logged
     async def get_distance(self, speed=FAST):
         """Get laser range distance in mm"""

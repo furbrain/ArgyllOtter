@@ -65,7 +65,6 @@ class Lava(mode.Mode):
         return end1 | end2
 
     def get_next_line(self, lines, direction):
-        matches = []
         if len(lines) == 0:
             return None, None
         x1, y1, x2, y2, angle, rho = lines.T
@@ -79,15 +78,15 @@ class Lava(mode.Mode):
         matches = lines[matches]
         x1, y1, x2, y2, angle, rho = matches.T
         if direction == "r":
-            startx = np.minimum(x1, x2)
-            endx = np.maximum(x1, x2)
+            start_x = np.minimum(x1, x2)
+            end_x = np.maximum(x1, x2)
         else:
-            startx = np.maximum(x1, x2)
-            endx = np.minimum(x1, x2)
-        starty = np.maximum(y1, y2)
-        endy = np.minimum(y1, y2)
-        start = self.camera.get_position(np.mean(startx), np.mean(starty) + 240)
-        end = self.camera.get_position(np.mean(endx), np.mean(endy) + 240)
+            start_x = np.maximum(x1, x2)
+            end_x = np.minimum(x1, x2)
+        start_y = np.maximum(y1, y2)
+        end_y = np.minimum(y1, y2)
+        start = self.camera.get_position(np.mean(start_x), np.mean(start_y) + 240)
+        end = self.camera.get_position(np.mean(end_x), np.mean(end_y) + 240)
         vector = end - start
         angle = np.arctan2(vector[1], vector[0])
         return np.rad2deg(angle), start[1]
@@ -139,7 +138,6 @@ class Lava(mode.Mode):
             else:
                 await self.drive.fast_turn(-45, TURN_SPEED, differential=0)
             while True:
-                break
                 lines = await self.find_lines()
                 current, _, _ = self.get_current_line(lines)
                 if current is not None:

@@ -1,8 +1,8 @@
 import asyncio
+import time
 
 import numpy as np
 import pygame
-import time
 
 from modes import mode
 from util import logged
@@ -41,6 +41,7 @@ def angle_over(target, angle):
     return False
 
 
+# noinspection PyAttributeOutsideInit
 class EcoDisaster(mode.Mode):
     HARDWARE = ('drive', 'camera', 'laser', 'grabber', 'display', 'stabber', 'pixels')
 
@@ -113,7 +114,7 @@ class EcoDisaster(mode.Mode):
                 distance = await self.get_distance()
                 if distance is None:
                     return barrel
-                precise_barrel = Barrel.fromPolar(self.shetty.pos, self.shetty.azimuth, distance, barrel.colour)
+                precise_barrel = Barrel.from_polar(self.shetty.pos, self.shetty.azimuth, distance, barrel.colour)
                 if barrel.near(precise_barrel):
                     return precise_barrel
                 else:  # oops, probably another barrel in the way or we just missed with the laser

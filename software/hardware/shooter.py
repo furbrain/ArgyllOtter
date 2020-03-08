@@ -49,9 +49,9 @@ class Pressure:
         return result
 
 
+# noinspection PyAttributeOutsideInit,PyAttributeOutsideInit,PyAttributeOutsideInit
 class BarrelPositions(settings.Settings):
     def default(self):
-        rng = range(*CAL_RANGE)
         self.range = np.arange(*CAL_RANGE)
         self.up = self.range[:]
         self.down = self.range[:]
@@ -72,7 +72,7 @@ class Barrel:
         self.cal = BarrelPositions()
 
     @logged
-    def getAngle(self):
+    def get_angle(self):
         return self.orientation.get_angle()
 
     @logged
@@ -115,10 +115,12 @@ class Barrel:
         print("set_angle finished")
 
 
+# noinspection PyPep8Naming
 def Pointer():
     return gpiozero.LED(22)
 
 
+# noinspection PyPep8Naming
 def Pump():
     return gpiozero.LED(27)
 

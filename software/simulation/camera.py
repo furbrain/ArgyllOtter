@@ -31,9 +31,6 @@ class Camera:
     def set_exposure(self, shutter_speed, awb_gains):
         pass
 
-    async def get_exposure(self):
-        return 10000, (1, 1)
-
     def set_calibration(self, mtx, dist):
         pass
 
@@ -55,12 +52,12 @@ class Camera:
         image = self.arena.get_image()
         rows, cols, _ = image.GetDimensions()
         scalars = image.GetPointData().GetScalars()
-        resultingNumpyArray = numpy_support.vtk_to_numpy(scalars)
-        resultingNumpyArray = resultingNumpyArray.reshape(cols, rows, -1)
-        red, green, blue, alpha = np.dsplit(resultingNumpyArray, resultingNumpyArray.shape[-1])
-        resultingNumpyArray = np.stack([blue, green, red, alpha], 2).squeeze()
-        resultingNumpyArray = np.flip(resultingNumpyArray, 0)
-        return resultingNumpyArray
+        image = numpy_support.vtk_to_numpy(scalars)
+        image = image.reshape(cols, rows, -1)
+        red, green, blue, alpha = np.dsplit(image, image.shape[-1])
+        image = np.stack([blue, green, red, alpha], 2).squeeze()
+        image = np.flip(image, 0)
+        return image
 
     def get_pose(self):
         raise NotImplemented
@@ -70,10 +67,10 @@ class Camera:
         angle = -y * self.pose.degrees_per_pixel
         print("angle", angle)
         height = 100
-        newy = height / np.tan(np.deg2rad(angle))
+        new_y = height / np.tan(np.deg2rad(angle))
         x = x - self.pose.zero_degree_pixel
         print(x, y)
         angle = x * self.pose.degrees_per_pixel
         print("angle", angle)
-        newx = newy * np.tan(np.deg2rad(angle))
-        return np.array([newx, newy])
+        new_x = new_y * np.tan(np.deg2rad(angle))
+        return np.array([new_x, new_y])

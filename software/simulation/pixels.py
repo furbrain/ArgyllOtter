@@ -1,3 +1,4 @@
+# noinspection PyPep8Naming
 class Pixels:
     def __init__(self):
         pass
@@ -14,5 +15,6 @@ class Pixels:
     def fill(self):
         pass
 
+    # noinspection PyMethodMayBeStatic
     def numPixels(self):
         return 10

@@ -11,7 +11,6 @@ START_POS = np.array((0, 400))
 
 class Line:
     def __init__(self, start, end, colour):
-        depth = 0.2
         width = 19
         self.colour = np.array(colour)
         self.start = np.array(start)
@@ -37,6 +36,7 @@ class Line:
     def get_actor(self):
         return self.assembly
 
+    # noinspection PyMethodMayBeStatic
     def get_shape(self):
         return None
 

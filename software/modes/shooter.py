@@ -5,6 +5,7 @@ from util import start_task
 from . import manual, messages
 
 
+# noinspection PyAttributeOutsideInit
 class Shooter(manual.Manual):
     HARDWARE = ('drive', 'shooter', 'laser', 'display')
 
@@ -14,12 +15,13 @@ class Shooter(manual.Manual):
         self.state = None
         self.state_task = None
         self.aimable = False
-        self.set_state(self.Off)
+        self.set_state(self.off)
         print("Shooter initialised")
 
     def set_state(self, state):
-        print("Setting state to ", state.__name__)
-        self.display.draw_text(state.__name__)
+        name = state.__name__.capitalize()
+        print("Setting state to ", name)
+        self.display.draw_text(name)
         if self.state_task is not None:
             self.state_task.cancel()
         self.state = state
@@ -30,11 +32,11 @@ class Shooter(manual.Manual):
             return True
         if isinstance(event, messages.ControllerButtonMessage):
             if event.button == "triangle":
-                self.set_state(self.Load)
+                self.set_state(self.load)
             elif event.button == "circle":
-                self.set_state(self.Off)
+                self.set_state(self.off)
             elif event.button == "square":
-                self.set_state(self.Reload)
+                self.set_state(self.reload)
             if self.aimable:
                 if event.button == "dup":
                     self.angle += 10
@@ -43,9 +45,9 @@ class Shooter(manual.Manual):
                     self.angle -= 10
                     self.shooter.barrel.set_pos(self.angle)
                 elif event.button == "cross":
-                    self.set_state(self.Fire)
+                    self.set_state(self.fire)
 
-    async def EngageBall(self):
+    async def engage_ball(self):
         self.shooter.pump.on()
         while True:
             await asyncio.sleep(0.03)
@@ -53,26 +55,26 @@ class Shooter(manual.Manual):
                 self.shooter.pump.off()
                 break
 
-    async def Load(self):
+    async def load(self):
         self.shooter.pump.off()
         self.shooter.pointer.off()
         self.shooter.barrel.set_angle_quick(-20)
         await asyncio.sleep(0.3)
         try:
-            await asyncio.wait_for(self.EngageBall(), 2.0)
+            await asyncio.wait_for(self.engage_ball(), 2.0)
         except asyncio.TimeoutError:
             # ball not engaged...
             self.shooter.pump.off()
             self.shooter.barrel.set_angle_quick(20)
             await asyncio.sleep(0.3)
             # start again...
-            self.set_state(self.Load)
+            self.set_state(self.load)
         else:
             # ball in correct position, move on to Aim mode
             self.shooter.pump.off()
-            self.set_state(self.Aim)
+            self.set_state(self.aim)
 
-    async def Aim(self):
+    async def aim(self):
         angle_task = start_task(
             asyncio.wait_for(
                 self.shooter.barrel.set_angle(self.angle), 2.0))
@@ -92,8 +94,8 @@ class Shooter(manual.Manual):
                 self.angle = self.shooter.barrel.get_pos()
                 angle_task = None
 
-    async def Fire(self):
-        self.angle = self.shooter.barrel.getAngle()
+    async def fire(self):
+        self.angle = self.shooter.barrel.get_angle()
         self.aimable = False
         self.shooter.pump.on()
         self.shooter.pointer.off()
@@ -101,24 +103,24 @@ class Shooter(manual.Manual):
         while True:
             await asyncio.sleep(0.1)
             if self.shooter.pressure.get_pressure() > 108000:
-                start_task(self.Load())
+                start_task(self.load())
                 break
 
-    async def Off(self):
+    async def off(self):
         self.shooter.pointer.off()
         self.shooter.pump.off()
         self.shooter.barrel.set_angle_quick(-20)
         await asyncio.sleep(0.3)
         self.shooter.barrel.servo.off()
 
-    async def Reload(self):
+    async def reload(self):
         self.shooter.pointer.off()
         self.shooter.pump.off()
         self.shooter.barrel.set_angle_quick(60)
 
     async def run(self):
         start_task(super().run())
-        self.set_state(self.Off)
+        self.set_state(self.off)
         while True:
             if self.joystick and self.joystick.connected:
                 if self.aimable:

@@ -1,6 +1,8 @@
 from PIL import ImageFont
 
+# noinspection PyUnresolvedReferences,PyUnresolvedReferences
 from oled.device import sh1106, const
+# noinspection PyUnresolvedReferences
 from oled.render import canvas
 
 

@@ -9,7 +9,7 @@ import shapely.ops as ops
 from util import get_coeffs, spawn
 
 
-def get_visgraph(points_list):
+def get_visibility_graph(points_list):
     graph = vg.VisGraph()
     graph.build(points_list, workers=3, status=False)
     return graph
@@ -36,13 +36,13 @@ class Barrel:
         return str(self)
 
     @staticmethod
-    def fromPolar(origin, azimuth, distance, colour, precise=True):
+    def from_polar(origin, azimuth, distance, colour, precise=True):
         pos = origin + get_coeffs(azimuth) * distance
         return Barrel(pos, colour, precise)
 
     @staticmethod
-    def fromCamera(origin, azimuth, angle, distance, colour):
-        b = Barrel.fromPolar(origin, azimuth + angle, distance, colour, False)
+    def from_camera(origin, azimuth, angle, distance, colour):
+        b = Barrel.from_polar(origin, azimuth + angle, distance, colour, False)
         return b
 
     def get_distance(self, pos):
@@ -125,7 +125,7 @@ class BarrelMap:
         if isinstance(self.blockages, geom.polygon.Polygon):
             self.blockages = [self.blockages]
         vg_points = [[vg.Point(x, y) for x, y in pts.exterior.coords] for pts in self.blockages]
-        graph = await spawn(get_visgraph, vg_points)
+        graph = await spawn(get_visibility_graph, vg_points)
         route = graph.shortest_path(vg.Point(*start), vg.Point(*destination))
         route = np.array([[p.x, p.y] for p in route])
         return route

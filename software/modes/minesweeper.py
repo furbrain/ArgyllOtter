@@ -17,28 +17,29 @@ STOP = 3
 
 class Blob:
     def __init__(self, contour):
-        self.minx = min(contour[:, :, 0])[0]
-        self.maxx = max(contour[:, :, 0])[0]
-        self.centrex = (self.minx + self.maxx) / 2
-        self.maxy = max(contour[:, :, 1])[0]
+        self.min_x = min(contour[:, :, 0])[0]
+        self.max_x = max(contour[:, :, 0])[0]
+        self.centre_x = (self.min_x + self.max_x) / 2
+        self.max_y = max(contour[:, :, 1])[0]
 
     def at_left(self):
-        return self.minx < 10
+        return self.min_x < 10
 
     def at_right(self):
-        return self.maxx > 630
+        return self.max_x > 630
 
     def get_direction(self):
-        if 220 < self.centrex < 420:
-            if self.maxy > 460:
+        if 220 < self.centre_x < 420:
+            if self.max_y > 460:
                 return STOP
             return FORWARD
-        if self.centrex < 260:
+        if self.centre_x < 260:
             return LEFT
-        if self.centrex > 380:
+        if self.centre_x > 380:
             return RIGHT
 
 
+# noinspection PyAttributeOutsideInit
 class MineSweeper(mode.Mode):
     HARDWARE = ('drive', 'camera', 'display')
 

@@ -39,6 +39,7 @@ class Target:
     def get_actor(self):
         return self.assembly
 
+    # noinspection PyMethodMayBeStatic
     def get_shape(self):
         return None
 
@@ -62,7 +63,6 @@ class EcoArena(Arena):
                 barrels = np.append(barrels, point, axis=0)
                 if i % 2 == 0:
                     colour = (255, 0, 0)
-                    rel_point = point[0] - START_POS
                 else:
                     colour = (0, 255, 0)
                 barrel = Barrel(point[0], colour=colour)

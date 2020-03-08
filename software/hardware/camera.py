@@ -7,7 +7,9 @@ import time
 import cv2
 import numpy as np
 import scipy.optimize
+# noinspection PyUnresolvedReferences
 from picamera import PiCamera
+# noinspection PyUnresolvedReferences
 from picamera.array import PiRGBArray
 
 import settings
@@ -46,6 +48,7 @@ class MultiLock:
         return self._lock.__exit__(exc_type, exc_val, exc_tb)
 
 
+# noinspection PyAttributeOutsideInit
 class CameraPose(settings.Settings):
     def default(self):
         self.calibrated = False
@@ -70,22 +73,23 @@ class CameraPose(settings.Settings):
         return size * self.degrees_per_pixel
 
 
+# noinspection PyAttributeOutsideInit
 class CameraLens(settings.Settings):
     def default(self):
         self.mtx = None
         self.dist = None
-        self.newmtx = None
+        self.new_matrix = None
         self.roi = None
 
     def set_distortion(self, mtx, dist):
         self.matrix = mtx
         self.dist = dist
-        self.newmtx, self.roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (640, 480), 1, (640, 480))
+        self.new_matrix, self.roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (640, 480), 1, (640, 480))
 
     def undistort_image(self, image):
         if self.mtx is None:
             return image
-        dst = cv2.undistort(image, self.mtx, self.dist, None, self.newmtx)
+        dst = cv2.undistort(image, self.mtx, self.dist, None, self.new_matrix)
 
         # crop the image
         x, y, w, h = self.roi
@@ -160,10 +164,10 @@ class Camera:
         return image
 
     def get_position(self, x, y):
-        newy = self.pose.get_distance(y)
+        new_y = self.pose.get_distance(y)
         angle = self.pose.get_bearing(x)
-        newx = newy * np.tan(np.deg2rad(angle))
-        return np.array([newx, newy])
+        new_x = new_y * np.tan(np.deg2rad(angle))
+        return np.array([new_x, new_y])
 
     async def finish(self):
         if self.recorder:

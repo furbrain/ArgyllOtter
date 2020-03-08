@@ -24,6 +24,7 @@ walking = Handling(400, 300, 0.53, 50)
 running = Handling(600, 300, 0.62, 0.33)
 
 
+# noinspection PyAttributeOutsideInit
 class Learn(mode.Mode):
     HARDWARE = ('drive', 'laser')
 
@@ -52,6 +53,7 @@ class Learn(mode.Mode):
         await self.drive.dance()
 
 
+# noinspection PyAttributeOutsideInit
 class Walk(mode.Mode):
     HARDWARE = ('drive', 'laser')
 
@@ -60,7 +62,7 @@ class Walk(mode.Mode):
 
     async def get_distance(self):
         """return the distance of the wall in front and current position
-        using the current offseet in the driver"""
+        using the current offset in the driver"""
         pos1 = self.drive.get_positions()
         x1 = np.mean(pos1)
         y = await self.laser.get_distance()
@@ -75,7 +77,6 @@ class Walk(mode.Mode):
         return False
 
     async def run(self):
-        running = False
         self.drive.drive(self.handling.speed, reset_position=True)
         powers = None
         for i in ORDER:
@@ -89,7 +90,7 @@ class Walk(mode.Mode):
             if (wall - cur_pos) < 400:
                 # shit we're too close.
                 # stop and spin and try again...
-                print("AAAAAAAAGGGGHHHHH")
+                print("TOO CLOSE")
                 self.drive.stop()
                 await asyncio.sleep(0.5)
                 if i in "rR":
@@ -98,7 +99,7 @@ class Walk(mode.Mode):
                     await self.drive.spin(-90, LEARN_SPIN_SPEED)
             else:
                 if i in "RL":
-                    turn_start = 500 + self.handling.clearance  # values taken from piwars website
+                    turn_start = 500 + self.handling.clearance  # values taken from pi wars website
                 else:
                     turn_start = 700 + self.handling.clearance
 
@@ -125,6 +126,7 @@ class Walk(mode.Mode):
         await self.drive.dance()
 
 
+# noinspection PyAttributeOutsideInit,PyAttributeOutsideInit
 class Run(mode.Mode):
     HARDWARE = ('drive', 'laser')
 

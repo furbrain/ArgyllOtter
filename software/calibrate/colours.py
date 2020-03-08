@@ -15,6 +15,7 @@ MIN_SAT = 3
 MIN_VAL = 4
 
 
+# noinspection PyAttributeOutsideInit
 class CalColour(mode.Interactive):
     HARDWARE = ["camera", "display"]
 
@@ -59,10 +60,10 @@ class CalColour(mode.Interactive):
             self.current_col[x][y] -= 4
 
     def show_status(self, canvas):
-        mode = self.get_mode_text()
+        mode_name = self.get_mode_text()
         x, y = self.get_val_location()
         value = str(self.current_col[x][y])
-        self.display.draw_text_on_canvas(mode, canvas, x=4, y=0, big=False)
+        self.display.draw_text_on_canvas(mode_name, canvas, x=4, y=0, big=False)
         self.display.draw_text_on_canvas(value, canvas, x=98, y=0, big=False)
 
     async def show_image(self):

@@ -4,6 +4,7 @@ import asyncio
 from modes import mode
 
 
+# noinspection PyAttributeOutsideInit
 class Grabber(mode.Interactive):
     HARDWARE = ('grabber', 'display')
 

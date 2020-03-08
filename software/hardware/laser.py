@@ -70,8 +70,8 @@ class Laser:
 
 if __name__ == "__main__":
     async def run():
-        l = Laser()
-        print(await l.get_distance())
+        laser = Laser()
+        print(await laser.get_distance())
 
 
     loop = asyncio.get_event_loop()

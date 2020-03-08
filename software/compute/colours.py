@@ -1,6 +1,7 @@
 import settings
 
 
+# noinspection PyAttributeOutsideInit,PyAttributeOutsideInit,PyAttributeOutsideInit,PyAttributeOutsideInit
 class Colours(settings.Settings):
     def default(self):
         self.red = ([-10, 80, 30], [10, 255, 255])

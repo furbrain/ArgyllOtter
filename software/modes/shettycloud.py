@@ -80,7 +80,7 @@ class Shetty:
             bearing_adjust = AXIS_BEARING
             offset = AXIS_OFFSET
 
-        self.cloud.turn(bearing_adjust, error=0)  # axis of rotation is about 7 cm 45 degrees to rigth behind camera
+        self.cloud.turn(bearing_adjust, error=0)  # axis of rotation is about 7 cm 45 degrees to right behind camera
         self.cloud.move(offset, error=0)
         self.cloud.turn(angle)
         self.cloud.move(-offset, error=0)
@@ -117,9 +117,10 @@ class Shetty:
         self.cloud.draw(arena)
 
 
+# noinspection PyAttributeOutsideInit,PyAttributeOutsideInit
 class ShettyCloud:
     """
-    This reperesents a monte carlo particle filter of Shetty's
+    This represents a monte carlo particle filter of Shetty's
     it has three main variables: azimuth, xy and weight
     xy refers to the camera position (not centre as previously)
     """
@@ -144,16 +145,16 @@ class ShettyCloud:
 
     def resample(self):
         self.normalize_weights()
-        Ninv = 1 / SWARM_SIZE
+        n_inv = 1 / SWARM_SIZE
         new_swarm = np.zeros(SWARM_SIZE, dtype=self.dtype)
-        r = np.random.uniform(0, Ninv)
+        r = np.random.uniform(0, n_inv)
         # weight
         c = self.swarm.weight[0]
         i = 0
         for j in range(0, SWARM_SIZE):
             # Or j-1 if out of range
-            U = r + j * Ninv
-            while U > c:
+            u = r + j * n_inv
+            while u > c:
                 i = i + 1
                 c = c + self.swarm.weight[i]
             new_swarm[j] = self.swarm[i]
@@ -205,7 +206,7 @@ class ShettyCloud:
 
     def move(self, distance, error=DISTANCE_ERROR):
         self.resample()
-        coeff = get_coeffs(self.swarm.azimuth)
+        coeffs = get_coeffs(self.swarm.azimuth)
         if error != 0:
             offset = np.random.normal(distance, error / 2, SWARM_SIZE)
             if WEIGHT_MOVEMENT:
@@ -215,7 +216,7 @@ class ShettyCloud:
             distance = offset
         else:
             weighting = 1
-        offsets = coeff * distance
+        offsets = coeffs * distance
         self.swarm.xy += offsets.T
         self.swarm.weight *= weighting
         self.normalize_weights()

@@ -7,6 +7,7 @@ import numpy as np
 from modes import mode
 
 
+# noinspection PyAttributeOutsideInit
 class Spin(mode.Mode):
     HARDWARE = ('drive', 'display')
 

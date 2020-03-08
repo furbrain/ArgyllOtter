@@ -45,8 +45,6 @@ class Barrel:
         try:
             f = np.load(CAL_FILE)
         except IOError:
-            rng = range(*CAL_RANGE)
-            rv = reversed(rng)
             self.cal_range = np.arange(*CAL_RANGE)
             self.cal_up = self.cal_range[:]
             self.cal_down = self.cal_range[:]
@@ -57,7 +55,7 @@ class Barrel:
                 self.cal_down = f['down']
 
     @logged
-    def getAngle(self):
+    def get_angle(self):
         return self.orientation.get_angle()
 
     @logged
@@ -118,10 +116,12 @@ class Barrel:
         np.savez(CAL_FILE, range=rng, up=up, down=down)
 
 
+# noinspection PyPep8Naming
 def Pointer():
     return gpiozero.LED(22)
 
 
+# noinspection PyPep8Naming
 def Pump():
     return gpiozero.LED(27)
 

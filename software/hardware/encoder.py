@@ -2,6 +2,7 @@
 
 import time
 
+# noinspection PyUnresolvedReferences
 from gpiozero import Button
 
 from modes import messages
