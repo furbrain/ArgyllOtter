@@ -46,7 +46,7 @@ class Barrel:
         return b
 
     def get_distance(self, pos):
-        return np.hypot(*(self.pos) - pos)
+        return np.hypot(*self.pos - pos)
 
     def get_relative_bearing(self, origin, azimuth):
         pos = self.pos - origin

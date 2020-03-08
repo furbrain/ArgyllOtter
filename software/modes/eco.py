@@ -54,12 +54,12 @@ class EcoDisaster(mode.Mode):
 
     def update_pixels(self):
         self.pixels.clear()
-        #for i in range(self.barrel_map.count("red")):
+        # for i in range(self.barrel_map.count("red")):
         #    self.pixels.setPixelColorRGB(i, 80, 0, 0)
-        #for i in range(self.barrel_map.count("green")):
+        # for i in range(self.barrel_map.count("green")):
         #    self.pixels.setPixelColorRGB(11 - i, 0, 80, 0)
-        #self.pixels.show()
-        #for c in "red", "green":
+        # self.pixels.show()
+        # for c in "red", "green":
         #    print(c, self.barrel_map.count(c))
 
     async def get_distance(self):
@@ -177,7 +177,7 @@ class EcoDisaster(mode.Mode):
         distance = target.get_distance(self.shetty.pos)
         print("Distance to barrel: %d" % distance)
         if distance < 600:
-            #distance = await self.get_distance()  # get accurate laser distance
+            # distance = await self.get_distance()  # get accurate laser distance
             await self.shetty.move(distance - 20, speed=400)
         else:
             await self.shetty.move(distance - 300)
@@ -218,11 +218,11 @@ class EcoDisaster(mode.Mode):
             return False
         if barrel.colour == "green":
             destination = (700, 2100)
-            #destination = (450 + self.green_count * 100, 2100)
+            # destination = (450 + self.green_count * 100, 2100)
             self.green_count += 1
         else:
             destination = (1500, 2100)
-            #destination = (1750 - self.red_count * 100, 2100)
+            # destination = (1750 - self.red_count * 100, 2100)
             self.red_count += 1
         self.route = await self.barrel_map.calculate_route(self.shetty.pos, destination)
         await self.follow_route(shorten=50)
@@ -276,4 +276,4 @@ class Test(EcoDisaster):
         await self.eyeball.just_looking()
         await self.eyeball.just_looking()
         b = time.time()
-        print("time:", b-a)
+        print("time:", b - a)

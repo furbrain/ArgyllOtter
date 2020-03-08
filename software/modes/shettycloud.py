@@ -128,8 +128,8 @@ class ShettyCloud:
         self.dtype = np.dtype([('azimuth', 'float64'), ('xy', 'float64', (2,)), ('weight', 'float64')])
         temp_swarm = np.zeros(SWARM_SIZE, dtype=self.dtype)
         temp_swarm['xy'] = np.random.normal(pos, START_POS_ERROR / 2, (SWARM_SIZE, 2))
-        temp_swarm['azimuth'] = np.random.normal(azimuth, START_AZ_ERROR / 2, (SWARM_SIZE))
-        temp_swarm['weight'] = np.ones((SWARM_SIZE))
+        temp_swarm['azimuth'] = np.random.normal(azimuth, START_AZ_ERROR / 2, SWARM_SIZE)
+        temp_swarm['weight'] = np.ones(SWARM_SIZE)
         self.swarm = temp_swarm.view(np.recarray)
         self.dirty = True
 
@@ -138,7 +138,7 @@ class ShettyCloud:
 
     def normalize_weights(self):
         self.swarm.weight[np.isnan(self.swarm.weight)] = 0
-        if np.sum(self.swarm.weight)==0:
+        if np.sum(self.swarm.weight) == 0:
             self.swarm.weight = np.ones_like(self.swarm.weight)
         self.swarm.weight /= np.sum(self.swarm.weight)
 
@@ -152,7 +152,7 @@ class ShettyCloud:
         i = 0
         for j in range(0, SWARM_SIZE):
             # Or j-1 if out of range
-            U = r + (j) * Ninv
+            U = r + j * Ninv
             while U > c:
                 i = i + 1
                 c = c + self.swarm.weight[i]

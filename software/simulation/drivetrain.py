@@ -82,13 +82,14 @@ class Drive:
 
     @logged
     def get_currents(self):
-        return (0, 0, 0, 0)
+        return 0, 0, 0, 0
 
     @logged
     def get_voltages(self):
-        return (5, 11.6)
+        return 5, 11.6
 
-    def get_spin_rate(self, left, right):
+    @staticmethod
+    def get_spin_rate(left, right):
         width = 200  # mm
         rate = 90 * (left - right) / (width * 2 * np.pi)
         return rate

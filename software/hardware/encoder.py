@@ -8,7 +8,7 @@ from modes import messages
 from util import logged
 
 
-class Encoder():
+class Encoder:
     def __init__(self, event_queue, pins=None):
         if pins is None:
             pins = (26, 6, 19)

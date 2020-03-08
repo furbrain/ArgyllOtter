@@ -8,11 +8,11 @@ COLORS = ((0, 0, 80),
           (60, 0, 60))
 
 
-class BackMenuItem():
+class BackMenuItem:
     pass
 
 
-class Menu():
+class Menu:
     """This class takes a nested array of pairs in key, value format
     where key is a text to show on a menu, and value is either a sub-menu
     or a single callback that takes no arguments"""

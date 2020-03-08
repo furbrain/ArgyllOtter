@@ -1,6 +1,7 @@
 import asyncio
 
 import PIL
+import PIL.Image
 import cv2
 
 import util

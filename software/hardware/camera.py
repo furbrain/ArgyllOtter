@@ -15,6 +15,7 @@ import settings
 ISO = 800
 RESOLUTION = (640, 480)
 
+
 class MultiLock:
     """This class allows one to use a threading lock in async settings"""
 
@@ -30,7 +31,6 @@ class MultiLock:
     def locked(self):
         return self._lock.locked()
 
-
     def __enter__(self):
         return self._lock.__enter__()
 
@@ -45,6 +45,7 @@ class MultiLock:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         return self._lock.__exit__(exc_type, exc_val, exc_tb)
 
+
 class CameraPose(settings.Settings):
     def default(self):
         self.calibrated = False
@@ -52,7 +53,8 @@ class CameraPose(settings.Settings):
         self.zero_degree_pixel = 320
         self.distance_params = np.array([100, np.deg2rad(53.5 / 640.0), 240])
 
-    def _get_distance(self, x, h, k, offset):
+    @staticmethod
+    def _get_distance(x, h, k, offset):
         return h / np.tan(k * (x + offset))
 
     def fit_curve(self, y, distance):
@@ -89,6 +91,7 @@ class CameraLens(settings.Settings):
         x, y, w, h = self.roi
         dst = dst[y:y + h, x:x + w]
         return dst
+
 
 class Recorder(threading.Thread):
     def __init__(self, camera):
@@ -140,7 +143,7 @@ class Camera:
         # Wait for the automatic gain control to settle
         await asyncio.sleep(2)
         # Now return the values
-        return (self.camera.exposure_speed, self.camera.awb_gains)
+        return self.camera.exposure_speed, self.camera.awb_gains
 
     async def get_async_image(self, latency=0, undistorted=False):
         start = time.time()
@@ -167,6 +170,7 @@ class Camera:
             self.recorder.terminate = True
         while self.recorder.is_alive():
             await asyncio.sleep(0.1)
+
 
 if __name__ == "__main__":
     c = Camera()

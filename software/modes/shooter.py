@@ -49,7 +49,7 @@ class Shooter(manual.Manual):
         self.shooter.pump.on()
         while True:
             await asyncio.sleep(0.03)
-            if (self.shooter.pressure.get_pressure() < 100000):
+            if self.shooter.pressure.get_pressure() < 100000:
                 self.shooter.pump.off()
                 break
 
@@ -78,7 +78,7 @@ class Shooter(manual.Manual):
                 self.shooter.barrel.set_angle(self.angle), 2.0))
         while True:
             await asyncio.sleep(0.1)
-            if (self.shooter.pressure.get_pressure() > 105000):
+            if self.shooter.pressure.get_pressure() > 105000:
                 self.shooter.pump.on()
             else:
                 self.shooter.pump.off()
@@ -100,7 +100,7 @@ class Shooter(manual.Manual):
         # FIXME create firing solution here and implement it
         while True:
             await asyncio.sleep(0.1)
-            if (self.shooter.pressure.get_pressure() > 108000):
+            if self.shooter.pressure.get_pressure() > 108000:
                 start_task(self.Load())
                 break
 

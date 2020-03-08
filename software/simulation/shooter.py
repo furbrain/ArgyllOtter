@@ -86,7 +86,7 @@ class Barrel:
         await asyncio.sleep(0.3)
         on_pos_count = 0
         while True:
-            if (abs(angle - cur_angle) < 0.5):
+            if abs(angle - cur_angle) < 0.5:
                 on_pos_count += 1
                 if on_pos_count >= 2:
                     break

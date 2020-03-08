@@ -32,7 +32,7 @@ class Camera:
         pass
 
     async def get_exposure(self):
-        return (10000, (1, 1))
+        return 10000, (1, 1)
 
     def set_calibration(self, mtx, dist):
         pass

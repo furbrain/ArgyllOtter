@@ -26,6 +26,7 @@ class Shooter:
         self.pointer.off()
         self.barrel.servo.off()
 
+
 class Pressure:
     def __init__(self, bus=None, address=BMP388_ADDRESS):
         if bus is None:
@@ -52,8 +53,8 @@ class BarrelPositions(settings.Settings):
     def default(self):
         rng = range(*CAL_RANGE)
         self.range = np.arange(*CAL_RANGE)
-        self.up = self.cal_range[:]
-        self.down = self.cal_range[:]
+        self.up = self.range[:]
+        self.down = self.range[:]
 
     def get_up_position(self, angle):
         return np.interp(angle, self.up, self.range)
@@ -98,7 +99,7 @@ class Barrel:
         await asyncio.sleep(0.3)
         on_pos_count = 0
         while True:
-            if (abs(angle - cur_angle) < 0.5):
+            if abs(angle - cur_angle) < 0.5:
                 on_pos_count += 1
                 if on_pos_count >= 2:
                     break

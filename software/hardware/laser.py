@@ -67,6 +67,7 @@ class Laser:
     async def finish(self):
         self.off()
 
+
 if __name__ == "__main__":
     async def run():
         l = Laser()

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import asyncio
 import time
 
 import cv2
@@ -7,7 +6,6 @@ import numpy as np
 
 from compute import vision
 from compute.colours import Colours
-from util import spawn
 from .barrels import Barrel
 
 ZONES = {'blue': ((400, 2200), (1000, 2200)),
@@ -52,14 +50,14 @@ class Ball:
             c = max(contours, key=cv2.contourArea)
             x_min = min(c[:, :, 0])[0]
             x_max = max(c[:, :, 0])[0]
-            print(c[0,0,0])
+            print(c[0, 0, 0])
             if x_max - x_min > 30:  # make sure is a decent sized patch...
                 if x_min > 2:
-                    #print(colour)
+                    # print(colour)
                     angle = self.camera.pose.get_bearing(x_min)
                     self.shetty.observed(angle, ZONES[colour][0])
                 if x_max < 478:
-                    #print(colour)
+                    # print(colour)
                     angle = self.camera.pose.get_bearing(x_max)
                     self.shetty.observed(angle, ZONES[colour][1])
 
@@ -86,7 +84,7 @@ class Ball:
             if found:
                 known_barrels.append(found)
                 if self.track_barrels:
-                # print(b.colour)
+                    # print(b.colour)
                     angle = b.get_relative_bearing(self.shetty.pos, self.shetty.azimuth)
                     self.shetty.observed(angle, found.pos, b.get_distance(self.shetty.pos))
             else:
@@ -133,8 +131,8 @@ class Ball:
         barrels = self.find_barrels(reds, greens, ignore_edges=False)
         # self.classify_barrels(barrels)
         nearest = target.nearest(barrels)
-        #print("target", target)
-        #print("grab list", barrels)
+        # print("target", target)
+        # print("grab list", barrels)
         if nearest:
             return nearest.get_relative_bearing(self.shetty.pos, self.shetty.azimuth), nearest
         else:

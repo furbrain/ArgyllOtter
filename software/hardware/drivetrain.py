@@ -48,7 +48,8 @@ class Drive:
     def __str__(self):
         return "Drive instance"
 
-    def get_flags(self, soft_start, reset_position):
+    @staticmethod
+    def get_flags(soft_start, reset_position):
         flags = 0
         if soft_start:
             flags |= SOFT_START
@@ -164,7 +165,7 @@ class Drive:
         peripheral, _, main, _ = struct.unpack("4h", bytes(data))
         peripheral /= 1000.0
         main /= 1000.0
-        return (peripheral, main)
+        return peripheral, main
 
     @logged
     async def spin(self, angle, max_speed, soft_start=False, reset_position=True, accurate=False):

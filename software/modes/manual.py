@@ -35,7 +35,8 @@ class Manual(mode.Mode):
                 return True
         return False
 
-    def mixer(self, yaw, throttle, max_power):
+    @staticmethod
+    def mixer(yaw, throttle, max_power):
         """
         Mix a pair of joystick axes, returning a pair of wheel speeds. This is where the mapping from
         joystick positions to wheel powers is defined, so any changes to how the robot drives should

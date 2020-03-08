@@ -37,7 +37,8 @@ class Lava(mode.Mode):
         print("|")
         self.drive.drive(DRIVE_SPEED)
 
-    def get_current_line(self, lines):
+    @staticmethod
+    def get_current_line(lines):
         matches = []
         for x1, y1, x2, y2, angle, rho in lines:
             if -40 < angle < 40:
@@ -56,7 +57,8 @@ class Lava(mode.Mode):
             right = np.array(max(matches))
             return (left + right) / 2
 
-    def line_ends_at_centre(self, lines):
+    @staticmethod
+    def line_ends_at_centre(lines):
         x1, y1, x2, y2, angle, rho = lines.T
         end1 = (240 < x1) & (x1 < 400) & (y1 > 180)
         end2 = (240 < x2) & (x2 < 400) & (y2 > 180)

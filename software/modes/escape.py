@@ -68,7 +68,7 @@ class Walk(mode.Mode):
         x2 = np.mean(pos2)
         distance = y + x1 + (x2 - x1) * 0.55
         print("get_distance: ", x1, x2, y, distance, pos1, pos2)
-        return (distance, x2)
+        return distance, x2
 
     def handle_event(self, event):
         """Autonomous; no events handled"""

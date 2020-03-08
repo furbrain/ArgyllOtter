@@ -87,6 +87,7 @@ class Main:
         self.clear_displays()
         if self.hardware.display:
             self.hardware.display.draw_text(mode.__name__)
+        # noinspection PyBroadException
         try:
             self.mode = mode(self.joystick, self.hardware)
             await self.mode.task
@@ -113,7 +114,8 @@ class Main:
             self.mode.cancel()
             self.mode = None
 
-    def event_is_exit(self, event):
+    @staticmethod
+    def event_is_exit(event):
         if isinstance(event, messages.ControllerButtonMessage) and event.button == "home":
             return True
         # if isinstance(event, messages.EncoderPressMessage):
