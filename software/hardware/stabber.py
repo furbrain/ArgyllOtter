@@ -37,3 +37,6 @@ class Stabber:
         self.active = False
         time.sleep(0.1)
         return self
+
+    async def finish(self):
+        self.servo.off()

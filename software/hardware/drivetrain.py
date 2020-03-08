@@ -240,6 +240,9 @@ class Drive:
         await asyncio.sleep(0.3)
         self.stop()
 
+    async def finish(self):
+        self.stop()
+
 
 if __name__ == "__main__":
     async def go():

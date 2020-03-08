@@ -96,7 +96,7 @@ class Main:
             print("%s raised exception!" % mode.__name__)
             traceback.print_exc()
         finally:
-            self.hardware.drive.stop()
+            await self.mode.finish()
         self.mode = None
         self.menu.draw()
 

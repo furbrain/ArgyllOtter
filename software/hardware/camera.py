@@ -1,31 +1,31 @@
 #!/usr/bin/env python3
 
 import asyncio
+import threading
+import time
 
 import cv2
 import numpy as np
 import scipy.optimize
 from picamera import PiCamera
 from picamera.array import PiRGBArray
-import threading
-import time
-import settings
 
+import settings
 
 ISO = 800
 RESOLUTION = (640, 480)
-raw_capture = None
 
 class MultiLock:
     """This class allows one to use a threading lock in async settings"""
-    def __init__(self, *args, **kwargs):
-        self._lock = threading.Lock(*args, **kwargs)
+
+    def __init__(self):
+        self._lock = threading.Lock()
 
     def acquire(self, *args, **kwargs):
         return self._lock.acquire(*args, **kwargs)
 
-    def release(self, *args, **kwargs):
-        return self._lock.release(*args, **kwargs)
+    def release(self):
+        return self._lock.release()
 
     def locked(self):
         return self._lock.locked()
@@ -111,7 +111,6 @@ class Recorder(threading.Thread):
 
 class Camera:
     def __init__(self, iso=ISO):
-        global raw_capture
         self.camera = PiCamera(framerate=20)
         self.camera.hflip = True
         self.camera.vflip = True
@@ -122,9 +121,11 @@ class Camera:
         self.iso = iso
         self.pose = CameraPose()
         self.lens = CameraLens()
+        self.recorder = None
+
+    def start_recorder(self):
         self.recorder = Recorder(self.camera)
         self.recorder.start()
-
 
     def set_exposure(self, shutter_speed, awb_gains):
         self.camera.exposure_mode = 'off'
@@ -141,23 +142,19 @@ class Camera:
         # Now return the values
         return (self.camera.exposure_speed, self.camera.awb_gains)
 
-    async def get_async_image(self, latency=0):
+    async def get_async_image(self, latency=0, undistorted=False):
         start = time.time()
+        if self.recorder is None:
+            self.start_recorder()
         while True:
             async with self.recorder.lock:
                 if self.recorder.timestamp > start - latency:
-                    return self.recorder.image.copy()
+                    image = self.recorder.image.copy()
+                    break
             await asyncio.sleep(0.001)
-
-    def get_raw_image(self, fast=False):
-        self.rawCapture.truncate(0)
-        self.camera.capture(self.rawCapture, format="bgr", use_video_port=fast)
-        image = self.rawCapture.array
+        if undistorted:
+            image = self.lens.undistort_image(image)
         return image
-
-    def get_image(self, fast=False):
-        image = self.get_raw_image(fast)
-        return self.lens.undistort_image(image)
 
     def get_position(self, x, y):
         newy = self.pose.get_distance(y)
@@ -165,6 +162,11 @@ class Camera:
         newx = newy * np.tan(np.deg2rad(angle))
         return np.array([newx, newy])
 
+    async def finish(self):
+        if self.recorder:
+            self.recorder.terminate = True
+        while self.recorder.is_alive():
+            await asyncio.sleep(0.1)
 
 if __name__ == "__main__":
     c = Camera()

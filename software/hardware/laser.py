@@ -64,6 +64,8 @@ class Laser:
             raise LaserBadReadingError()
         return int(float(dist.group(1)) * 1000)
 
+    async def finish(self):
+        self.off()
 
 if __name__ == "__main__":
     async def run():

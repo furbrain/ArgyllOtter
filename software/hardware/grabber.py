@@ -31,3 +31,6 @@ class Grabber:
     @logged
     def off(self):
         self.servo.off()
+
+    async def finish(self):
+        self.servo.off()

@@ -50,6 +50,12 @@ class Mode:
     async def run(self):
         pass
 
+    async def finish(self):
+        for item in self.HARDWARE:
+            hw = getattr(self, item)
+            if hasattr(hw, "finish"):
+                await hw.finish()
+
 
 class Interactive(Mode):
     def __init__(self, joystick, hardware):

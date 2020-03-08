@@ -21,6 +21,10 @@ class Shooter:
         self.pointer = Pointer()
         self.barrel = Barrel()
 
+    async def finish(self):
+        self.pump.off()
+        self.pointer.off()
+        self.barrel.servo.off()
 
 class Pressure:
     def __init__(self, bus=None, address=BMP388_ADDRESS):
@@ -133,9 +137,3 @@ async def test():
             barrel.servo.set_pos(-10)
             pointer.off()
         await asyncio.sleep(0.05)
-
-
-if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    b = Barrel()
-    loop.run_until_complete(b.calibrate())
