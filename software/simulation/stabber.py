@@ -1,6 +1,5 @@
 import asyncio
 
-import hardware.servo
 import settings
 
 
@@ -14,7 +13,6 @@ class StabberPosition(settings.Settings):
 
 class Stabber:
     def __init__(self):
-        self.servo = hardware.servo.Servo(pin="1")
         self.positions = StabberPosition()
         self.active = False
 
@@ -27,15 +25,13 @@ class Stabber:
         await asyncio.sleep(0.1)
 
     async def stab(self):
-        self.servo.set_pos(self.positions.stab)
         self.active = True
         await asyncio.sleep(0.1)
         return self
 
     def release(self):
-        self.servo.set_pos(self.positions.release)
         self.active = False
         return self
 
     async def finish(self):
-        self.servo.off()
+        pass

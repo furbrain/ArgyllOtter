@@ -12,6 +12,7 @@ from .lava import LavaArena
 from .minefield import MineField
 from .pixels import Pixels
 from .shetty import Shetty
+from .stabber import Stabber
 
 
 class Hardware:
@@ -25,7 +26,7 @@ class Hardware:
         self.display = Display()
         self.shooter = None
         self.grabber = Grabber(self.shetty, self.arena)
-        self.stabber = None
+        self.stabber = Stabber()
 
     @classmethod
     def set_arena(cls, area):

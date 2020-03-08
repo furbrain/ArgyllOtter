@@ -43,7 +43,7 @@ class Camera:
     def undistort_image(self, image):
         raise NotImplemented
 
-    async def a_get_image(self):
+    async def get_async_image(self, latency=0, undistorted=False):
         image = self.get_image()
         await asyncio.sleep(0.15)
         return image
