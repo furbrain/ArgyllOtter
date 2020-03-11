@@ -1,6 +1,3 @@
-import asyncio
-import time
-
 import numpy as np
 import pygame
 
@@ -43,7 +40,7 @@ def angle_over(target, angle):
 
 # noinspection PyAttributeOutsideInit
 class EcoDisaster(mode.Mode):
-    HARDWARE = ('drive', 'camera', 'laser', 'grabber', 'display', 'stabber', 'pixels')
+    HARDWARE = ('drive', 'camera', 'laser', 'grabber', 'display', 'stabber')
 
     def on_start(self):
         self.barrel_map = BarrelMap()
@@ -54,7 +51,8 @@ class EcoDisaster(mode.Mode):
         self.green_count = 0
 
     def update_pixels(self):
-        self.pixels.clear()
+        pass
+        # self.pixels.clear()
         # for i in range(self.barrel_map.count("red")):
         #    self.pixels.setPixelColorRGB(i, 80, 0, 0)
         # for i in range(self.barrel_map.count("green")):
@@ -128,6 +126,7 @@ class EcoDisaster(mode.Mode):
         async with await self.stabber.stab():
             await self.shetty.turn_to_azimuth(start_angle)
             while not angle_over(finish_angle, self.shetty.azimuth):
+                print("Pos:", self.shetty.pos)
                 known, unknown = await self.eyeball.find_and_classify_barrels()
                 for barrel in unknown:
                     if barrel.in_bounds():
@@ -154,6 +153,7 @@ class EcoDisaster(mode.Mode):
     async def follow_route(self, shorten=0):
         self.display.draw_text("Storing")
         for waypoint in self.route[1:]:
+            print("Pos:", self.shetty.pos)
             if np.allclose(waypoint, self.route[-1]):
                 shortening = shorten
             else:
@@ -202,7 +202,6 @@ class EcoDisaster(mode.Mode):
                     return False
             await self.shetty.move(distance - 20, speed=400)
         self.grabber.close()
-        await asyncio.sleep(0.1)
         self.barrel_map.remove(barrel)
         return True
 
@@ -229,7 +228,6 @@ class EcoDisaster(mode.Mode):
         await self.follow_route(shorten=50)
         self.grabber.release()
         self.update_pixels()
-        await asyncio.sleep(0.5)
         await self.shetty.move(-250)
         return True
 
@@ -270,11 +268,8 @@ class EcoDisaster(mode.Mode):
 class Test(EcoDisaster):
 
     async def run(self):
-        a = time.time()
-        await self.eyeball.just_looking()
-        await self.eyeball.just_looking()
-        await self.eyeball.just_looking()
-        await self.eyeball.just_looking()
-        await self.eyeball.just_looking()
-        b = time.time()
-        print("time:", b - a)
+        import asyncio
+        await asyncio.sleep(2)
+        async with await self.stabber.stab():
+            await asyncio.sleep(2)
+        await asyncio.sleep(2)

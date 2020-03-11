@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import math
 import struct
+import time
 
 import numpy as np
 import smbus
@@ -65,8 +66,6 @@ class Orientation:
 
 
 if __name__ == "__main__":
-    import time
-
     p = MPU9250(address=0x69)
     for count in range(100):
         time.sleep(0.5)

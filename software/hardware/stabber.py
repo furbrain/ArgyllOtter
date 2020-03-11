@@ -24,12 +24,12 @@ class Stabber:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.active:
             self.release()
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.15)
 
     async def stab(self):
         self.servo.set_pos(self.positions.stab)
         self.active = True
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.2)
         return self
 
     def release(self):

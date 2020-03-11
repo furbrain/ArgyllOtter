@@ -172,8 +172,8 @@ class Camera:
     async def finish(self):
         if self.recorder:
             self.recorder.terminate = True
-        while self.recorder.is_alive():
-            await asyncio.sleep(0.1)
+            while self.recorder.is_alive():
+                await asyncio.sleep(0.1)
 
 
 if __name__ == "__main__":
